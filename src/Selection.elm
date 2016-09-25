@@ -15,7 +15,6 @@ module Selection exposing
 
 import Svg
 import Svg.Attributes as SvgA
-import VirtualDom
 
 
 
