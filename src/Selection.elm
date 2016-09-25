@@ -2,11 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-module Selection exposing
-    ( Style, defaultStyle
-    , changeStyle
-    , styleAttributes
-    )
+module Selection exposing (..)
 
 
 {-| The Selection module aims at regrouping functions useful to all kind of selections
@@ -22,6 +18,18 @@ import Svg.Attributes as SvgA
 -- MODEL #############################################################
 
 
+
+
+type alias Pos =
+    { x : Int
+    , y : Int
+    }
+
+
+type alias Size =
+    { width : Int
+    , height : Int
+    }
 
 
 type alias Style =
