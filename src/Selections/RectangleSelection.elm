@@ -2,7 +2,7 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-module RectangleSelection exposing
+module Selections.RectangleSelection exposing
     (..)
 
 
@@ -14,7 +14,7 @@ import Svg
 import Svg.Attributes as SvgA
 
 
-import Selection as Sel
+import Selections.Selection as Sel
 
 
 
