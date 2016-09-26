@@ -45,7 +45,7 @@ init = (AnnSet <| Model_ Dict.empty Nothing 0, Cmd.none)
 
 
 type Msg
-    = CreateSelection
+    = CreateAnnotation
     | Delete
     | Select (Maybe Int)
     | Annotation Int Ann.Msg
@@ -55,7 +55,7 @@ type Msg
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg (AnnSet model) =
     case msg of
-        CreateSelection ->
+        CreateAnnotation ->
             let
                 (annotation, _) =
                     Ann.init Nothing <| Just <| toString model.uid
