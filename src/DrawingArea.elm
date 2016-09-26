@@ -77,6 +77,7 @@ type Msg
     -- Annotations Management
     | CreateAnnotation
     | DeleteAnnotation
+    | SelectAnnotation (Maybe Int)
     | SelectTool Tool
     -- Other messages
     | Annotations AnnSet.Msg
@@ -137,6 +138,10 @@ update msg (DrawingArea model) =
         DeleteAnnotation ->
             ( DrawingArea model
             , Cmd.map Annotations <| HP.msgToCmd AnnSet.Delete
+            )
+        SelectAnnotation maybeId ->
+            ( DrawingArea model
+            , Cmd.map Annotations <| HP.msgToCmd <| AnnSet.Select maybeId
             )
         SelectTool tool ->
             ( DrawingArea {model | tool = tool}
