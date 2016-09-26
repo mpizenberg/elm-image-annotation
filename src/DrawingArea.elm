@@ -78,17 +78,34 @@ update msg (DrawingArea model) =
             else updateZoom 2 (DrawingArea model)
         -- Mouse Management ->
         Down (x, y) ->
-            ( DrawingArea {model | downPos = Just (x,y)}
+            ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
             , case model.tool of
                 RectangleTool ->
                     rsCmd <| RS.Geom (Just (x,y)) Nothing
                 OutlineTool ->
                     osCmd <| OS.ResetWithPoint (x,y)
             )
-        Move (x, y) ->
-            (DrawingArea model, Cmd.none)
+        Move (x', y') ->
+            ( DrawingArea model
+            , case model.tool of
+                RectangleTool ->
+                    let
+                        (x,y) = Maybe.withDefault (0,0) model.downPos
+                        left = min x x'
+                        top = min y y'
+                        width = abs (x-x')
+                        height = abs (y-y')
+                    in
+                        rsCmd <| RS.Geom
+                            (Just (left, top))
+                            (Just (width, height))
+                OutlineTool ->
+                    osCmd <| OS.AddPoint (x',y')
+            )
         Up ->
-            (DrawingArea model, Cmd.none)
+            ( DrawingArea {model | mouseDown = False, downPos = Nothing}
+            , Cmd.none
+            )
         -- Background Image Management ->
         ChangeImage imModel ->
             (DrawingArea model, Cmd.none)
