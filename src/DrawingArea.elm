@@ -108,15 +108,27 @@ update msg (DrawingArea model) =
             )
         -- Background Image Management ->
         ChangeImage imModel ->
-            (DrawingArea model, Cmd.none)
+            ( DrawingArea {model | bgImage = imModel}
+            , Cmd.none
+            )
         -- Annotations Management ->
         CreateAnnotation ->
-            (DrawingArea model, Cmd.none)
+            ( DrawingArea model
+            , Cmd.map Annotations <| HP.msgToCmd AnnSet.CreateAnnotation
+            )
         SelectTool tool ->
-            (DrawingArea model, Cmd.none)
+            ( DrawingArea {model | tool = tool}
+            , Cmd.none
+            )
         -- Other messages ->
         Annotations annSetMsg ->
-            (DrawingArea model, Cmd.none)
+            let
+                ( annSetModel, cmd ) =
+                    AnnSet.update annSetMsg model.annotations
+            in
+                ( DrawingArea {model | annotations = annSetModel}
+                , Cmd.map Annotations cmd
+                )
 
 
 updateZoom : Float -> Model -> (Model, Cmd Msg)
