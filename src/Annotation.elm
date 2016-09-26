@@ -34,12 +34,19 @@ type SelectionMsg
 
 
 type alias Model_ =
-    { selection : SelectionModel
-    , label : String
+    { selection : Maybe SelectionModel
+    , label : Maybe String
     }
 
 
 type Model = Annotation Model_
+
+
+init : Maybe SelectionModel -> Maybe String -> (Model, Cmd msg)
+init selModel label =
+    ( Annotation <| Model_ selModel label
+    , Cmd.none
+    )
 
 
 
@@ -50,8 +57,25 @@ type Model = Annotation Model_
 
 
 type Msg
-    = Selection SelectionMsg
-    | Label String
+    = Selection (Maybe SelectionMsg)
+    | Label (Maybe String)
+
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg (Annotation model) =
+    case msg of
+        Label label ->
+            (Annotation {model | label = label}, Cmd.none)
+        Selection selMsg ->
+            case selMsg of
+                Nothing ->
+                    ( Annotation <| Model_ Nothing model.label
+                    , Cmd.none
+                    )
+                Just (RSMsg rsMsg) ->
+                    (Annotation model, Cmd.none)
+                Just (OSMsg osMsg) ->
+                    (Annotation model, Cmd.none)
 
 
 
