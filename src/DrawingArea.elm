@@ -7,6 +7,7 @@ import Svg.Attributes as SvgA
 import Html as H
 import Html.App as App
 import Html.Attributes as HA
+import Html.Events as HE
 import Json.Decode as Json
 
 
@@ -102,7 +103,7 @@ update msg (DrawingArea model) =
             ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
             , case model.tool of
                 RectangleTool ->
-                    rsCmd <| RS.Geom (Just (x,y)) Nothing
+                    rsCmd <| RS.Geom (Just (x,y)) (Just (0,0))
                 OutlineTool ->
                     osCmd <| OS.ResetWithPoint (x,y)
             )
@@ -194,7 +195,9 @@ osCmd = selCmd << Ann.OSMsg
 view : Model -> Svg.Svg Msg
 view (DrawingArea model) =
     Svg.svg
-        ([ svgTransform model.zoomLevel model.origin
+        ([ HE.onMouseUp Up
+        , onWheel Wheel
+        , svgTransform model.zoomLevel model.origin
         , drawingAreaStyle ]
         ++ offsetsEvents model.mouseDown
         )
@@ -249,3 +252,13 @@ offsetsEvents down =
 selectHtml : Model -> H.Html Msg
 selectHtml (DrawingArea model) =
     App.map Annotations <| AnnSet.selectHtml model.annotations
+
+
+{-| Get the wheel deltaY attribute of a mouse event -}
+onWheel : ((Float -> msg) -> H.Attribute msg)
+onWheel =
+    HP.specialOn "wheel" deltaYDecoder identity
+
+
+deltaYDecoder : Json.Decoder Float
+deltaYDecoder = Json.at ["deltaY"] Json.float

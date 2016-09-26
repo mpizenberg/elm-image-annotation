@@ -70,6 +70,7 @@ update msg (AnnSet model) =
                         model.uid
                         annotation
                         model.annotations
+                    , selected = Just model.uid
                     , uid = model.uid + 1
                     }
                 , Cmd.none
