@@ -29,7 +29,7 @@ type Tool
 
 
 type alias Model_ =
-    { bgImage : Image.Model
+    { bgImage : Maybe Image.Model
     , annotations : AnnSet.Model
     , tool : Tool
     , zoomLevel : Float
@@ -40,6 +40,20 @@ type alias Model_ =
 
 
 type Model = DrawingArea Model_
+
+
+init : (Model, Cmd Msg)
+init =
+    ( DrawingArea <| Model_
+        Nothing -- bgImage
+        (fst AnnSet.init)
+        RectangleTool
+        1.0 -- zoomLevel
+        (0,0) -- origin
+        False -- mouseDown
+        Nothing -- downPos
+    , Cmd.none
+    )
 
 
 
@@ -59,7 +73,7 @@ type Msg
     | Move (Int, Int)
     | Up
     -- Background Image Management
-    | ChangeImage Image.Model
+    | ChangeImage (Maybe Image.Model)
     -- Annotations Management
     | CreateAnnotation
     | SelectTool Tool
@@ -172,12 +186,17 @@ view (DrawingArea model) =
         , drawingAreaStyle ]
         ++ offsetsEvents model.mouseDown
         )
-        ( Image.view
-            Image.SvgTag
-            (Just "bgImage")
-            Nothing
-            model.bgImage
-        :: AnnSet.selectionsView model.annotations
+        ( ( case model.bgImage of
+            Nothing -> []
+            Just image ->
+                [ Image.view
+                    Image.SvgTag
+                    (Just "bgImage")
+                    Nothing
+                    image
+                ]
+          )
+        ++ AnnSet.selectionsView model.annotations
         )
 
 
