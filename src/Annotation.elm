@@ -125,4 +125,10 @@ updateOS osMsg model =
 
 selectionView : Model -> Svg.Svg msg
 selectionView (Annotation model) =
-    Svg.text "Hello World!"
+    case model.selection of
+        Nothing ->
+            Svg.text "No Selection"
+        Just (RSModel rsModel) ->
+            RS.view rsModel
+        Just (OSModel osModel) ->
+            OS.view osModel
