@@ -76,6 +76,7 @@ type Msg
     | ChangeImage (Maybe Image.Model)
     -- Annotations Management
     | CreateAnnotation
+    | DeleteAnnotation
     | SelectTool Tool
     -- Other messages
     | Annotations AnnSet.Msg
@@ -132,6 +133,10 @@ update msg (DrawingArea model) =
         CreateAnnotation ->
             ( DrawingArea model
             , Cmd.map Annotations <| HP.msgToCmd AnnSet.CreateAnnotation
+            )
+        DeleteAnnotation ->
+            ( DrawingArea model
+            , Cmd.map Annotations <| HP.msgToCmd AnnSet.Delete
             )
         SelectTool tool ->
             ( DrawingArea {model | tool = tool}
