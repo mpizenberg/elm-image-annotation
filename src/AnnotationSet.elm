@@ -10,6 +10,7 @@ module AnnotationSet exposing (..)
 
 
 import Dict
+import Svg
 
 
 import Annotation as Ann
@@ -107,3 +108,6 @@ update msg (AnnSet model) =
 
 
 
+selectionsView : Model -> List (Svg.Svg msg)
+selectionsView (AnnSet model) =
+    List.map Ann.selectionView <| Dict.values model.annotations
