@@ -49,6 +49,7 @@ type Msg
     | Delete
     | Select (Maybe Int)
     | Annotation Int Ann.Msg
+    | Annotate Ann.Msg
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -99,6 +100,12 @@ update msg (AnnSet model) =
                             ( AnnSet {model | annotations = annotations}
                             , Cmd.map (Annotation id) cmdMsg
                             )
+        Annotate annMsg ->
+            case model.selected of
+                Nothing ->
+                    (AnnSet model, Cmd.none)
+                Just id ->
+                    update (Annotation id annMsg) (AnnSet model)
 
 
 
