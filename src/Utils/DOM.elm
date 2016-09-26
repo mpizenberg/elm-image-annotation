@@ -1,4 +1,4 @@
-module DOM exposing
+module Utils.DOM exposing
     ( target, currentTarget, offsetParent
     , offsetWidth, offsetHeight, offsetLeft, offsetTop
     , scrollLeft, scrollTop

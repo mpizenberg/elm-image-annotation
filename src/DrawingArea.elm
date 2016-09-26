@@ -8,7 +8,7 @@ import Html.Attributes as HA
 import Json.Decode as Json
 
 
-import Helpers as HP
+import Utils.Helpers as HP
 import Image
 import Annotation as Ann
 import AnnotationSet as AnnSet

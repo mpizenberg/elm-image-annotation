@@ -1,4 +1,4 @@
-module Helpers exposing
+module Utils.Helpers exposing
     (..)
 
 
@@ -8,7 +8,7 @@ import Json.Decode as J
 import Task
 
 
-import DOM
+import Utils.DOM as DOM
 
 
 
