@@ -2,6 +2,9 @@ module DrawingArea exposing
     (..)
 
 
+import Svg
+import Svg.Attributes as SvgA
+import Html.Attributes as HA
 import Json.Decode as Json
 
 
@@ -161,3 +164,52 @@ osCmd = selCmd << Ann.OSMsg
 
 
 
+
+view : Model -> Svg.Svg Msg
+view (DrawingArea model) =
+    Svg.svg
+        ([ svgTransform model.zoomLevel model.origin
+        , drawingAreaStyle ]
+        ++ offsetsEvents model.mouseDown
+        )
+        ( Image.view
+            Image.SvgTag
+            (Just "bgImage")
+            Nothing
+            model.bgImage
+        :: AnnSet.selectionsView model.annotations
+        )
+
+
+
+
+-- VIEW HELPERS ######################################################
+
+
+
+
+svgTransform : Float -> (Float, Float) -> Svg.Attribute msg
+svgTransform zoomLevel (x,y) =
+    SvgA.transform <|
+        "scale(" ++ toString zoomLevel ++ ") " ++
+        "translate" ++ toString (-x,-y)
+
+
+drawingAreaStyle : Svg.Attribute msg
+drawingAreaStyle =
+    HA.style
+        [ ("display", "inline-block")
+        , ("border", "1px solid")
+        , ("width", "800px")
+        , ("height", "400px")
+        ]
+
+
+offsetsEvents : Bool -> List (Svg.Attribute Msg)
+offsetsEvents down =
+    let
+        baseOffsets = [(HP.offsetOn "mousedown") Down]
+    in
+        if down
+        then (HP.offsetOn "mousemove") Move :: baseOffsets
+        else baseOffsets
