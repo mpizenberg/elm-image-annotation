@@ -9,6 +9,8 @@ module Annotation exposing (..)
 -}
 
 
+import Html as H
+import Html.Attributes as HA
 import Svg
 
 
@@ -132,3 +134,15 @@ selectionView (Annotation model) =
             RS.view rsModel
         Just (OSModel osModel) ->
             OS.view osModel
+
+
+optionTag : Maybe Int -> (Int, Model) -> H.Html msg
+optionTag currentId (id, (Annotation model)) =
+    H.option
+        [ HA.value (toString id), HA.selected (currentId == Just id)]
+        [ H.text <| toString id ++
+            case model.selection of
+                Nothing -> ": No Selection"
+                Just (RSModel _) -> ": Rectangle"
+                Just (OSModel _) -> ": Outline"
+        ]

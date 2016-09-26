@@ -11,6 +11,11 @@ module AnnotationSet exposing (..)
 
 import Dict
 import Svg
+import Html as H
+import Html.Attributes as HA
+import Html.Events as HE
+import String
+import Json.Decode as Json
 
 
 import Annotation as Ann
@@ -118,3 +123,22 @@ update msg (AnnSet model) =
 selectionsView : Model -> List (Svg.Svg msg)
 selectionsView (AnnSet model) =
     List.map Ann.selectionView <| Dict.values model.annotations
+
+
+selectHtml : Model -> H.Html Msg
+selectHtml (AnnSet model) =
+    H.select
+        [onChange <| Select << Result.toMaybe << String.toInt]
+        ((H.option
+            [HA.value "none", HA.selected (model.selected == Nothing)]
+            [H.text "None"])
+        ::
+        (List.map
+            (Ann.optionTag model.selected) <|
+            Dict.toList model.annotations
+        ))
+
+
+onChange : (String -> msg) -> H.Attribute msg
+onChange tagger =
+    HE.on "change" (Json.map tagger HE.targetValue)

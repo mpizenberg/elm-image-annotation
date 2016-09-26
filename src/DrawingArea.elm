@@ -4,6 +4,8 @@ module DrawingArea exposing
 
 import Svg
 import Svg.Attributes as SvgA
+import Html as H
+import Html.App as App
 import Html.Attributes as HA
 import Json.Decode as Json
 
@@ -242,3 +244,8 @@ offsetsEvents down =
         if down
         then (HP.offsetOn "mousemove") Move :: baseOffsets
         else baseOffsets
+
+
+selectHtml : Model -> H.Html Msg
+selectHtml (DrawingArea model) =
+    App.map Annotations <| AnnSet.selectHtml model.annotations
