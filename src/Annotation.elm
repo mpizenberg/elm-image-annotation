@@ -73,9 +73,28 @@ update msg (Annotation model) =
                     , Cmd.none
                     )
                 Just (RSMsg rsMsg) ->
-                    (Annotation model, Cmd.none)
+                    updateRS rsMsg model
                 Just (OSMsg osMsg) ->
                     (Annotation model, Cmd.none)
+
+
+updateRS : RS.Msg -> Model_ -> (Model, Cmd Msg)
+updateRS rsMsg model =
+    case model.selection of
+        Nothing ->
+            updateRS
+                rsMsg
+                {model | selection = Just (RSModel RS.defaultModel)}
+        Just (OSModel _) ->
+            updateRS rsMsg {model | selection = Nothing}
+        Just (RSModel rsModel) ->
+            let
+                (rsModel', cmdRsMsg) = RS.update rsMsg rsModel
+            in
+                ( Annotation
+                    {model | selection = Just (RSModel rsModel')}
+                , Cmd.map (Selection << Just << RSMsg) cmdRsMsg
+                )
 
 
 
