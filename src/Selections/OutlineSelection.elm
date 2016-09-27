@@ -123,3 +123,8 @@ object (OutSel model) =
         , ("style", Sel.styleObject model.style)
         , ("pointerEvents", JE.bool model.pointerEvents)
         ]
+
+
+pathObject : Model -> JE.Value
+pathObject (OutSel model) =
+    JE.list <| List.map Sel.posPathObject model.path

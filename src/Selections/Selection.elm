@@ -96,6 +96,11 @@ posObject pos =
         ]
 
 
+posPathObject : Pos -> JE.Value
+posPathObject pos =
+    JE.list [JE.int pos.x, JE.int pos.y]
+
+
 sizeObject : Size -> JE.Value
 sizeObject size =
     JE.object

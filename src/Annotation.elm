@@ -156,7 +156,6 @@ optionTag currentId (id, (Annotation model)) =
 
 
 
-
 object : Model -> JE.Value
 object (Annotation model) =
     JE.object
@@ -172,3 +171,13 @@ object (Annotation model) =
             Just label -> JE.string label
           )
         ]
+
+
+selectionPathObject : Model -> JE.Value
+selectionPathObject (Annotation model) =
+    case model.selection of
+        Nothing -> JE.null
+        Just (RSModel rsModel) ->
+            RS.pathObject rsModel
+        Just (OSModel osModel) ->
+            OS.pathObject osModel

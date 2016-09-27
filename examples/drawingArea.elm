@@ -72,8 +72,8 @@ update msg model =
             , Cmd.map Draw <| HP.msgToCmd <| DrawingArea.SelectAnnotation maybeId
             )
         ExportAnnotations ->
-            ( { model | jsonExport = JE.encode 4 <|
-                    DrawingArea.exportAnnotations model.drawingArea }
+            ( { model | jsonExport = JE.encode 0 <|
+                    DrawingArea.exportSelectionsPaths model.drawingArea }
             , Cmd.none
             )
         Draw drawMsg ->

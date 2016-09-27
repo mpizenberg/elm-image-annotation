@@ -162,3 +162,10 @@ object (AnnSet model) =
           )
         , ("uid", JE.int model.uid)
         ]
+
+
+selectionsPathsObject : Model -> JE.Value
+selectionsPathsObject (AnnSet model) =
+    JE.list
+        <| List.map Ann.selectionPathObject
+        <| Dict.values model.annotations

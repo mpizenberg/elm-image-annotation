@@ -137,3 +137,21 @@ geomObject geom =
         [ ("pos", Sel.posObject geom.pos)
         , ("size", Sel.sizeObject geom.size)
         ]
+
+
+pathObject : Model -> JE.Value
+pathObject (RectSel model) =
+    let
+        -- sides
+        left = model.geometry.pos.x
+        top = model.geometry.pos.y
+        right = left + model.geometry.size.width
+        bottom = top + model.geometry.size.height
+        -- corners
+        top_left = Sel.posPathObject <| Sel.Pos left top
+        bottom_left = JE.list [JE.int left, JE.int bottom]
+        bottom_right = JE.list [JE.int right, JE.int bottom]
+        top_right = JE.list [JE.int right, JE.int top]
+    in
+        JE.list
+            [ top_left, bottom_left, bottom_right, top_right ]

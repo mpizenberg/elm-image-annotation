@@ -358,3 +358,8 @@ toolOptionTag currentTool (tool, message) =
 exportAnnotations : Model -> JE.Value
 exportAnnotations (DrawingArea model) =
     AnnSet.object model.annotations
+
+
+exportSelectionsPaths : Model -> JE.Value
+exportSelectionsPaths (DrawingArea model) =
+    AnnSet.selectionsPathsObject model.annotations
