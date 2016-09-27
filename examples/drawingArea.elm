@@ -2,6 +2,7 @@ import Html as H
 import Html.App as App
 import Html.Events as HE
 import Html.Attributes as HA
+import Json.Encode as JE
 
 
 import DrawingArea
@@ -26,6 +27,7 @@ main =
 
 type alias Model =
     { drawingArea : DrawingArea.Model
+    , jsonExport : String
     }
 
 
@@ -34,7 +36,7 @@ init =
     let
         (drawModel, drawCmd) = DrawingArea.init
     in
-        ( Model drawModel
+        ( Model drawModel ""
         , Cmd.map Draw drawCmd
         )
 
@@ -70,8 +72,9 @@ update msg model =
             , Cmd.map Draw <| HP.msgToCmd <| DrawingArea.SelectAnnotation maybeId
             )
         ExportAnnotations ->
-            ( model
-            , Cmd.map Draw <| HP.msgToCmd DrawingArea.ExportAnnotations
+            ( { model | jsonExport = JE.encode 4 <|
+                    DrawingArea.exportAnnotations model.drawingArea }
+            , Cmd.none
             )
         Draw drawMsg ->
             let
@@ -100,6 +103,7 @@ view model =
         , H.button [HE.onClick ExportAnnotations] [H.text "Export"]
         , H.br [] []
         , App.map Draw <| DrawingArea.view model.drawingArea
+        , H.textarea [] [H.text model.jsonExport]
         , H.br [] []
         , H.text (toString model)
         ]

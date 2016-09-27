@@ -45,8 +45,6 @@ type alias Model_ =
     -- Mouse Management
     , mouseDown : Bool
     , downPos : Maybe (Int, Int)
-    -- Last exported JS object
-    , exported : JE.Value
     }
 
 
@@ -64,7 +62,6 @@ init =
         (0,0) -- origin
         False -- mouseDown
         Nothing -- downPos
-        JE.null
     , Cmd.none
     )
 
@@ -94,7 +91,6 @@ type Msg
     | DeleteAnnotation
     | SelectAnnotation (Maybe Int)
     | SelectTool Tool
-    | ExportAnnotations
     -- Other messages
     | Annotations AnnSet.Msg
 
@@ -188,10 +184,6 @@ update msg (DrawingArea model) =
             , Cmd.none
             )
         -- Other messages ->
-        ExportAnnotations ->
-            ( DrawingArea {model | exported = AnnSet.object model.annotations}
-            , Cmd.none
-            )
         Annotations annSetMsg ->
             let
                 ( annSetModel, cmd ) =
@@ -354,3 +346,15 @@ toolOptionTag currentTool (tool, message) =
         ]
         [ H.text message
         ]
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+exportAnnotations : Model -> JE.Value
+exportAnnotations (DrawingArea model) =
+    AnnSet.object model.annotations
