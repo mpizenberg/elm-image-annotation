@@ -78,6 +78,7 @@ type Msg
     | ZoomOut
     | Wheel Float
     | ChangeOrigin (Float, Float)
+    | Center (Float, Float)
     -- Mouse Management
     | Down (Int, Int)
     | Move (Int, Int)
@@ -109,6 +110,16 @@ update msg (DrawingArea model) =
             ( DrawingArea {model | origin = (left, top)}
             , Cmd.none
             )
+        Center (cx, cy) ->
+            let
+                (width, height) = model.size
+            in
+                ( DrawingArea {model | origin =
+                    ( cx - width / (2 * model.zoomLevel)
+                    , cy - height / (2 * model.zoomLevel)
+                    )}
+                , Cmd.none
+                )
         -- Mouse Management ->
         Down (x, y) ->
             ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
@@ -184,9 +195,15 @@ update msg (DrawingArea model) =
 
 updateZoom : Float -> Model -> (Model, Cmd Msg)
 updateZoom zoomModifier (DrawingArea model) =
-    ( DrawingArea {model | zoomLevel = zoomModifier * model.zoomLevel}
-    , Cmd.none
-    )
+    let
+        (left, top) = model.origin
+        (width, height) = model.size
+        centerX = left + 0.5 * width / model.zoomLevel
+        centerY = top + 0.5 * height / model.zoomLevel
+    in
+        ( DrawingArea {model | zoomLevel = zoomModifier * model.zoomLevel}
+        , HP.msgToCmd <| Center (centerX, centerY)
+        )
 
 
 selCmd : Ann.SelectionMsg -> Cmd Msg
