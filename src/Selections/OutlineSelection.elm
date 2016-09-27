@@ -14,6 +14,7 @@ import Svg
 import Svg.Attributes as SvgA
 import Html.App as App
 import String
+import Json.Encode as JE
 
 
 import Selections.Selection as Sel
@@ -106,3 +107,19 @@ pathToString positions =
 
 posToString : Sel.Pos -> String
 posToString {x, y} = toString x ++ "," ++ toString y
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+object : Model -> JE.Value
+object (OutSel model) =
+    JE.object
+        [ ("path", JE.list <| List.map Sel.posObject model.path)
+        , ("style", Sel.styleObject model.style)
+        , ("pointerEvents", JE.bool model.pointerEvents)
+        ]

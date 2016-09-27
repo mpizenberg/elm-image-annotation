@@ -16,6 +16,7 @@ import Html.Attributes as HA
 import Html.Events as HE
 import String
 import Json.Decode as Json
+import Json.Encode as JE
 
 
 import Annotation as Ann
@@ -139,3 +140,25 @@ selectHtml (AnnSet model) =
             (Ann.optionTag model.selected) <|
             Dict.toList model.annotations
         ))
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+
+object : Model -> JE.Value
+object (AnnSet model) =
+    JE.object
+        [ ("annotations"
+          , JE.list <| List.map Ann.object <| Dict.values model.annotations
+          )
+        , ("selected", case model.selected of
+            Nothing -> JE.null
+            Just selected -> JE.int selected
+          )
+        , ("uid", JE.int model.uid)
+        ]

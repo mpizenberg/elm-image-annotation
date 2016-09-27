@@ -11,6 +11,7 @@ module Selections.Selection exposing (..)
 
 import Svg
 import Svg.Attributes as SvgA
+import Json.Encode as JE
 
 
 
@@ -77,4 +78,36 @@ styleAttributes style =
         , SvgA.fill style.color
         , SvgA.strokeWidth (toString style.strokeWidth)
         , SvgA.fillOpacity opacityAttr
+        ]
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+posObject : Pos -> JE.Value
+posObject pos =
+    JE.object
+        [ ("x", JE.int pos.x)
+        , ("y", JE.int pos.y)
+        ]
+
+
+sizeObject : Size -> JE.Value
+sizeObject size =
+    JE.object
+        [ ("width", JE.int size.width)
+        , ("height", JE.int size.height)
+        ]
+
+
+styleObject : Style -> JE.Value
+styleObject style =
+    JE.object
+        [ ("color", JE.string style.color)
+        , ("strokeWidth", JE.int style.strokeWidth)
+        , ("highlighted", JE.bool style.highlighted)
         ]

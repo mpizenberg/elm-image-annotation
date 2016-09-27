@@ -12,6 +12,7 @@ module Annotation exposing (..)
 import Html as H
 import Html.Attributes as HA
 import Svg
+import Json.Encode as JE
 
 
 import Selections.RectangleSelection as RS
@@ -145,4 +146,29 @@ optionTag currentId (id, (Annotation model)) =
                 Nothing -> ": No Selection"
                 Just (RSModel _) -> ": Rectangle"
                 Just (OSModel _) -> ": Outline"
+        ]
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+
+object : Model -> JE.Value
+object (Annotation model) =
+    JE.object
+        [ ("selection", case model.selection of
+            Nothing -> JE.null
+            Just (RSModel rsModel) ->
+                JE.object [("Rectangle", RS.object rsModel)]
+            Just (OSModel osModel) ->
+                JE.object [("Outline", OS.object osModel)]
+          )
+        , ("label", case model.label of
+            Nothing -> JE.null
+            Just label -> JE.string label
+          )
         ]

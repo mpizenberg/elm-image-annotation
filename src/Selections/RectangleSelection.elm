@@ -12,6 +12,7 @@ module Selections.RectangleSelection exposing
 
 import Svg
 import Svg.Attributes as SvgA
+import Json.Encode as JE
 
 
 import Selections.Selection as Sel
@@ -112,3 +113,27 @@ view (RectSel model) =
         , SvgA.height (toString model.geometry.size.height)
         , SvgA.pointerEvents (if model.pointerEvents then "auto" else "none")
         ]) []
+
+
+
+
+-- OUTPUTS ##############################################################
+
+
+
+
+object : Model -> JE.Value
+object (RectSel model) =
+    JE.object
+        [ ("geometry", geomObject model.geometry)
+        , ("style", Sel.styleObject model.style)
+        , ("pointerEvents", JE.bool model.pointerEvents)
+        ]
+
+
+geomObject : Geometry -> JE.Value
+geomObject geom =
+    JE.object
+        [ ("pos", Sel.posObject geom.pos)
+        , ("size", Sel.sizeObject geom.size)
+        ]

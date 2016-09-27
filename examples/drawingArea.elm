@@ -50,6 +50,7 @@ type Msg
     = NewAnnotation
     | Delete
     | Select (Maybe Int)
+    | ExportAnnotations
     | Draw DrawingArea.Msg
 
 
@@ -67,6 +68,10 @@ update msg model =
         Select maybeId ->
             ( model
             , Cmd.map Draw <| HP.msgToCmd <| DrawingArea.SelectAnnotation maybeId
+            )
+        ExportAnnotations ->
+            ( model
+            , Cmd.map Draw <| HP.msgToCmd DrawingArea.ExportAnnotations
             )
         Draw drawMsg ->
             let
@@ -92,6 +97,7 @@ view model =
         , App.map Draw <| DrawingArea.selectHtml model.drawingArea
         , H.text " Tool: "
         , App.map Draw <| DrawingArea.selectToolView model.drawingArea
+        , H.button [HE.onClick ExportAnnotations] [H.text "Export"]
         , H.br [] []
         , App.map Draw <| DrawingArea.view model.drawingArea
         , H.br [] []
