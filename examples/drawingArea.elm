@@ -90,6 +90,8 @@ view model =
         [ H.button [HE.onClick NewAnnotation] [H.text "New Annotation"]
         , H.button [HE.onClick Delete] [H.text "Delete"]
         , App.map Draw <| DrawingArea.selectHtml model.drawingArea
+        , H.text " Tool: "
+        , App.map Draw <| DrawingArea.selectToolView model.drawingArea
         , H.br [] []
         , App.map Draw <| DrawingArea.view model.drawingArea
         , H.br [] []

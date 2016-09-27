@@ -9,6 +9,7 @@ import Html.App as App
 import Html.Attributes as HA
 import Html.Events as HE
 import Json.Decode as Json
+import String
 
 
 import Utils.Helpers as HP
@@ -27,7 +28,8 @@ import Selections.OutlineSelection as OS
 
 
 type Tool
-    = RectangleTool
+    = NoTool
+    | RectangleTool
     | OutlineTool
 
 
@@ -50,7 +52,7 @@ init =
     ( DrawingArea <| Model_
         Nothing -- bgImage
         (fst AnnSet.init)
-        RectangleTool
+        NoTool
         1.0 -- zoomLevel
         (0,0) -- origin
         False -- mouseDown
@@ -102,6 +104,8 @@ update msg (DrawingArea model) =
         Down (x, y) ->
             ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
             , case model.tool of
+                NoTool ->
+                    Cmd.none
                 RectangleTool ->
                     rsCmd <| RS.Geom (Just (x,y)) (Just (0,0))
                 OutlineTool ->
@@ -110,6 +114,8 @@ update msg (DrawingArea model) =
         Move (x', y') ->
             ( DrawingArea model
             , case model.tool of
+                NoTool ->
+                    Cmd.none
                 RectangleTool ->
                     let
                         (x,y) = Maybe.withDefault (0,0) model.downPos
@@ -262,3 +268,43 @@ onWheel =
 
 deltaYDecoder : Json.Decoder Float
 deltaYDecoder = Json.at ["deltaY"] Json.float
+
+
+selectToolView : Model -> H.Html Msg
+selectToolView (DrawingArea model) =
+    H.select
+        [HP.onChange <| SelectTool << optionToTool]
+        (List.map
+            (toolOptionTag model.tool)
+            [ (NoTool, "None")
+            , (RectangleTool, "Rectangle")
+            , (OutlineTool, "Outline")
+            ]
+        )
+
+
+optionToTool: String -> Tool
+optionToTool id =
+    let
+        id' = String.toInt id
+    in
+        case id' of
+            Err _ -> NoTool
+            Ok toolId ->
+                case toolId of
+                    1 -> RectangleTool
+                    2 -> OutlineTool
+                    _ -> NoTool
+
+
+toolOptionTag : Tool -> (Tool, String) -> H.Html Msg
+toolOptionTag currentTool (tool, message) =
+    H.option
+        [ HA.value <| case tool of
+            NoTool -> toString 0
+            RectangleTool -> toString 1
+            OutlineTool -> toString 2
+        , HA.selected (currentTool == tool)
+        ]
+        [ H.text message
+        ]

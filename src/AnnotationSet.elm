@@ -19,6 +19,7 @@ import Json.Decode as Json
 
 
 import Annotation as Ann
+import Utils.Helpers as HP
 
 
 
@@ -129,7 +130,7 @@ selectionsView (AnnSet model) =
 selectHtml : Model -> H.Html Msg
 selectHtml (AnnSet model) =
     H.select
-        [onChange <| Select << Result.toMaybe << String.toInt]
+        [HP.onChange <| Select << Result.toMaybe << String.toInt]
         ((H.option
             [HA.value "none", HA.selected (model.selected == Nothing)]
             [H.text "None"])
@@ -138,8 +139,3 @@ selectHtml (AnnSet model) =
             (Ann.optionTag model.selected) <|
             Dict.toList model.annotations
         ))
-
-
-onChange : (String -> msg) -> H.Attribute msg
-onChange tagger =
-    HE.on "change" (Json.map tagger HE.targetValue)

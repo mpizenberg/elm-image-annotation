@@ -47,3 +47,7 @@ specialOn mouseEvent decoder transform =
             {stopPropagation=True, preventDefault=True}
             (J.map (tagger << transform) decoder)
 
+
+onChange : (String -> msg) -> H.Attribute msg
+onChange tagger =
+    HE.on "change" (J.map tagger HE.targetValue)
