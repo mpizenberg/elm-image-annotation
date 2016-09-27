@@ -100,6 +100,7 @@ type Msg
     = ZoomIn
     | ZoomOut
     | Wheel Float
+    | ChangeZoomLevel Float
     | ChangeOrigin (Float, Float)
     | Center (Float, Float)
     -- Mouse Management
@@ -111,6 +112,7 @@ type Msg
     -- Annotations Management
     | CreateAnnotation
     | DeleteAnnotation
+    | ResetAnnotation
     | SelectAnnotation (Maybe Int)
     | SelectTool Tool
     -- Other messages
@@ -130,6 +132,10 @@ update msg (DrawingArea model) =
             if deltaY > 0
             then updateZoom 0.5 (DrawingArea model)
             else updateZoom 2 (DrawingArea model)
+        ChangeZoomLevel zoom ->
+            ( DrawingArea {model | zoomLevel = zoom}
+            , Cmd.none
+            )
         ChangeOrigin (left, top) ->
             ( DrawingArea {model | origin = (left, top)}
             , Cmd.none
@@ -197,6 +203,10 @@ update msg (DrawingArea model) =
         DeleteAnnotation ->
             ( DrawingArea model
             , Cmd.map Annotations <| HP.msgToCmd AnnSet.Delete
+            )
+        ResetAnnotation ->
+            ( DrawingArea model
+            , Cmd.map Annotations <| HP.msgToCmd AnnSet.ResetAnnotation
             )
         SelectAnnotation maybeId ->
             ( DrawingArea model

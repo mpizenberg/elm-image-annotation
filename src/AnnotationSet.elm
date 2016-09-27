@@ -53,6 +53,7 @@ init = (AnnSet <| Model_ Dict.empty Nothing 0, Cmd.none)
 
 type Msg
     = CreateAnnotation
+    | ResetAnnotation
     | Delete
     | Select (Maybe Int)
     | Annotation Int Ann.Msg
@@ -88,6 +89,12 @@ update msg (AnnSet model) =
                 ( AnnSet {model | annotations = annotations }
                 , Cmd.none
                 )
+        ResetAnnotation ->
+            update
+                (Annotation
+                    (Maybe.withDefault -1 model.selected)
+                    (Ann.Selection Nothing))
+                (AnnSet model)
         Select id ->
             ( AnnSet { model | selected = id }
             , Cmd.none
