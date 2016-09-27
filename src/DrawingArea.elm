@@ -1,6 +1,24 @@
 module DrawingArea exposing
-    (..)
+    ( Tool(..), Model, init
+    , Msg(..), update
+    , view, selectHtml, selectToolView
+    , exportAnnotations, exportSelectionsPaths)
 
+{-| The DrawingArea module aims at collecting annotations.
+
+# Model
+@docs Tool, Model, init
+
+# Update
+@docs Msg, update
+
+# View
+@docs view, selectHtml, selectToolView
+
+# Exporters
+@docs exportAnnotations, exportSelectionsPaths
+
+-}
 
 import Svg
 import Svg.Attributes as SvgA
@@ -28,6 +46,7 @@ import Selections.OutlineSelection as OS
 
 
 
+{-| The type of tool that can be used to draw selections -}
 type Tool
     = NoTool
     | RectangleTool
@@ -48,9 +67,11 @@ type alias Model_ =
     }
 
 
+{-| The model to manipulate drawing areas -}
 type Model = DrawingArea Model_
 
 
+{-| Initialize a DrawingArea.Model -}
 init : (Model, Cmd Msg)
 init =
     ( DrawingArea <| Model_
@@ -73,6 +94,7 @@ init =
 
 
 
+{-| The messages used to Manipulate a DrawingArea -}
 type Msg
     -- Area Management
     = ZoomIn
@@ -95,6 +117,7 @@ type Msg
     | Annotations AnnSet.Msg
 
 
+{-| Update a DrawingArea model -}
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg (DrawingArea model) =
     case msg of
@@ -231,6 +254,7 @@ osCmd = selCmd << Ann.OSMsg
 
 
 
+{-| View the svg tag representing the DrawingArea model -}
 view : Model -> Svg.Svg Msg
 view (DrawingArea model) =
     Svg.svg
@@ -293,12 +317,13 @@ offsetsEvents down tool =
         )
 
 
+{-| Create a select form tag to change dynamically the current annotation -}
 selectHtml : Model -> H.Html Msg
 selectHtml (DrawingArea model) =
     App.map Annotations <| AnnSet.selectHtml model.annotations
 
 
-{-| Get the wheel deltaY attribute of a mouse event -}
+{- Get the wheel deltaY attribute of a mouse event -}
 onWheel : ((Float -> msg) -> H.Attribute msg)
 onWheel =
     HP.specialOn "wheel" deltaYDecoder identity
@@ -308,6 +333,7 @@ deltaYDecoder : Json.Decoder Float
 deltaYDecoder = Json.at ["deltaY"] Json.float
 
 
+{-| A select form tag to change dynamically the current Tool -}
 selectToolView : Model -> H.Html Msg
 selectToolView (DrawingArea model) =
     H.select
@@ -355,11 +381,13 @@ toolOptionTag currentTool (tool, message) =
 
 
 
+{-| Export the complete model of the annotation set to a JS object -}
 exportAnnotations : Model -> JE.Value
 exportAnnotations (DrawingArea model) =
     AnnSet.object model.annotations
 
 
+{-| Export only the seletions paths to a JS object -}
 exportSelectionsPaths : Model -> JE.Value
 exportSelectionsPaths (DrawingArea model) =
     AnnSet.selectionsPathsObject model.annotations
