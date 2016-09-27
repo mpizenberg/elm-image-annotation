@@ -69,10 +69,11 @@ init =
 
 
 type Msg
-    -- Zoom Management
+    -- Area Management
     = ZoomIn
     | ZoomOut
     | Wheel Float
+    | ChangeOrigin (Float, Float)
     -- Mouse Management
     | Down (Int, Int)
     | Move (Int, Int)
@@ -91,7 +92,7 @@ type Msg
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg (DrawingArea model) =
     case msg of
-        -- Zoom Management
+        -- Area Management
         ZoomIn ->
             updateZoom 2 (DrawingArea model)
         ZoomOut ->
@@ -100,6 +101,10 @@ update msg (DrawingArea model) =
             if deltaY > 0
             then updateZoom 0.5 (DrawingArea model)
             else updateZoom 2 (DrawingArea model)
+        ChangeOrigin (left, top) ->
+            ( DrawingArea {model | origin = (left, top)}
+            , Cmd.none
+            )
         -- Mouse Management ->
         Down (x, y) ->
             ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
@@ -115,7 +120,13 @@ update msg (DrawingArea model) =
             ( DrawingArea model
             , case model.tool of
                 NoTool ->
-                    Cmd.none
+                    let
+                        (x,y) = model.origin
+                    in
+                        HP.msgToCmd <| ChangeOrigin
+                            ( x - toFloat x' / model.zoomLevel
+                            , y - toFloat y' / model.zoomLevel
+                            )
                 RectangleTool ->
                     let
                         (x,y) = Maybe.withDefault (0,0) model.downPos
@@ -205,7 +216,7 @@ view (DrawingArea model) =
         , onWheel Wheel
         , svgTransform model.zoomLevel model.origin
         , drawingAreaStyle ]
-        ++ offsetsEvents model.mouseDown
+        ++ offsetsEvents model.mouseDown model.tool
         )
         ( ( case model.bgImage of
             Nothing -> []
@@ -245,14 +256,19 @@ drawingAreaStyle =
         ]
 
 
-offsetsEvents : Bool -> List (Svg.Attribute Msg)
-offsetsEvents down =
+offsetsEvents : Bool -> Tool -> List (Svg.Attribute Msg)
+offsetsEvents down tool =
     let
         baseOffsets = [(HP.offsetOn "mousedown") Down]
     in
-        if down
-        then (HP.offsetOn "mousemove") Move :: baseOffsets
-        else baseOffsets
+        baseOffsets
+        ++ ( case (down, tool) of
+            (True, NoTool) ->
+                [(HP.movementOn "mousemove") Move]
+            (True, _) ->
+                [(HP.offsetOn "mousemove") Move]
+            (False, _) -> []
+        )
 
 
 selectHtml : Model -> H.Html Msg

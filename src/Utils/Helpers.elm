@@ -36,6 +36,12 @@ offsetOn mouseEvent =
     specialOn mouseEvent DOM.offset floatToInt
 
 
+{-| Get the movementX and movementY properties of a mouse event -}
+movementOn : String -> (((Int,Int) -> msg) -> H.Attribute msg)
+movementOn mouseEvent =
+    specialOn mouseEvent DOM.movement floatToInt
+
+
 {-| Generic function to get results from transformed properties at a mouse event.
 It uses a decoder and a function transforming the decoder results.
 -}

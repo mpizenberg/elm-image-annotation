@@ -3,7 +3,7 @@ module Utils.DOM exposing
     , offsetWidth, offsetHeight, offsetLeft, offsetTop
     , scrollLeft, scrollTop
     , Rectangle, boundingClientRect
-    , offset, client, page
+    , offset, client, page, movement
     , computedOffset, test
     )
 
@@ -138,6 +138,9 @@ computedOffset =
         page
         (currentTarget boundingClientRect)
 
+{-| Decode the "movementX" and "movementY" values from a JSON -}
+movement : J.Decoder (Float, Float)
+movement = J.object2 (,) ("movementX" := J.float) ("movementY" := J.float)
 
 test : J.Decoder (Float, Float)
 test = J.object1 (\rect -> (rect.left, rect.top)) boundingClientRect
