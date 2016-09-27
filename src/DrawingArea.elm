@@ -37,8 +37,11 @@ type alias Model_ =
     { bgImage : Maybe Image.Model
     , annotations : AnnSet.Model
     , tool : Tool
+    -- Area Management
+    , size : (Float, Float)
     , zoomLevel : Float
     , origin : (Float, Float)
+    -- Mouse Management
     , mouseDown : Bool
     , downPos : Maybe (Int, Int)
     }
@@ -53,6 +56,7 @@ init =
         Nothing -- bgImage
         (fst AnnSet.init)
         NoTool
+        (800,400) -- (width, height)
         1.0 -- zoomLevel
         (0,0) -- origin
         False -- mouseDown
@@ -215,7 +219,7 @@ view (DrawingArea model) =
         ([ HE.onMouseUp Up
         , onWheel Wheel
         , svgTransform model.zoomLevel model.origin
-        , drawingAreaStyle ]
+        , drawingAreaStyle model.size ]
         ++ offsetsEvents model.mouseDown model.tool
         )
         ( ( case model.bgImage of
@@ -246,13 +250,13 @@ svgTransform zoomLevel (x,y) =
         "translate" ++ toString (-x,-y)
 
 
-drawingAreaStyle : Svg.Attribute msg
-drawingAreaStyle =
+drawingAreaStyle : (Float, Float) -> Svg.Attribute msg
+drawingAreaStyle (width, height) =
     HA.style
         [ ("display", "inline-block")
         , ("border", "1px solid")
-        , ("width", "800px")
-        , ("height", "400px")
+        , ("width", toString width ++ "px")
+        , ("height", toString height ++ "px")
         ]
 
 
