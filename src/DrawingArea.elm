@@ -145,22 +145,28 @@ update msg (DrawingArea model) =
                 (width, height) = model.size
             in
                 ( DrawingArea {model | origin =
-                    ( cx - width / (2 * model.zoomLevel)
-                    , cy - height / (2 * model.zoomLevel)
+                    ( cx - 0.5 * width / model.zoomLevel
+                    , cy - 0.5 * height / model.zoomLevel
                     )}
                 , Cmd.none
                 )
         -- Mouse Management ->
         Down (x, y) ->
-            ( DrawingArea {model | downPos = Just (x,y), mouseDown = True}
-            , case model.tool of
-                NoTool ->
-                    Cmd.none
-                RectangleTool ->
-                    rsCmd <| RS.Geom (Just (x,y)) (Just (0,0))
-                OutlineTool ->
-                    osCmd <| OS.ResetWithPoint (x,y)
-            )
+            let
+                (ox, oy) = model.origin
+                x'' = round <| ox + (toFloat x) / model.zoomLevel
+                y'' = round <| oy + (toFloat y) / model.zoomLevel
+            in
+                ( DrawingArea
+                    {model | downPos = Just (x'', y''), mouseDown = True}
+                , case model.tool of
+                    NoTool ->
+                        Cmd.none
+                    RectangleTool ->
+                        rsCmd <| RS.Geom (Just (x'', y'')) (Just (0,0))
+                    OutlineTool ->
+                        osCmd <| OS.ResetWithPoint (x'', y'')
+                )
         Move (x', y') ->
             ( DrawingArea model
             , case model.tool of
@@ -175,16 +181,24 @@ update msg (DrawingArea model) =
                 RectangleTool ->
                     let
                         (x,y) = Maybe.withDefault (0,0) model.downPos
-                        left = min x x'
-                        top = min y y'
-                        width = abs (x-x')
-                        height = abs (y-y')
+                        (ox, oy) = model.origin
+                        x'' = round <| ox + (toFloat x') / model.zoomLevel
+                        y'' = round <| oy + (toFloat y') / model.zoomLevel
+                        left = min x x''
+                        top = min y y''
+                        width = abs (x-x'')
+                        height = abs (y-y'')
                     in
                         rsCmd <| RS.Geom
                             (Just (left, top))
                             (Just (width, height))
                 OutlineTool ->
-                    osCmd <| OS.AddPoint (x',y')
+                    let
+                        (ox, oy) = model.origin
+                        x'' = round <| ox + (toFloat x') / model.zoomLevel
+                        y'' = round <| oy + (toFloat y') / model.zoomLevel
+                    in
+                        osCmd <| OS.AddPoint (x'',y'')
             )
         Up ->
             ( DrawingArea {model | mouseDown = False, downPos = Nothing}
