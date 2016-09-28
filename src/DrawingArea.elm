@@ -109,6 +109,7 @@ type Msg
     | Up
     -- Background Image Management
     | ChangeImage (Maybe Image.Model)
+    | CenterImage (Int, Int)
     -- Annotations Management
     | CreateAnnotation
     | DeleteAnnotation
@@ -207,8 +208,23 @@ update msg (DrawingArea model) =
         -- Background Image Management ->
         ChangeImage imModel ->
             ( DrawingArea {model | bgImage = imModel}
-            , Cmd.none
+            , case imModel of
+                Nothing -> Cmd.none
+                Just im ->
+                    HP.msgToCmd <| CenterImage <| Image.size im
             )
+        CenterImage (imageWidth, imageHeight) ->
+            let
+                (w, h) = model.size
+                iw = toFloat imageWidth
+                ih = toFloat imageHeight
+                zoom = 0.8 * min (w/iw) (h/ih)
+                ox = 0.5 * (iw - w / zoom)
+                oy = 0.5 * (ih - h / zoom)
+            in
+                ( DrawingArea {model | origin = (ox,oy), zoomLevel = zoom}
+                , Cmd.none
+                )
         -- Annotations Management ->
         CreateAnnotation ->
             ( DrawingArea model
