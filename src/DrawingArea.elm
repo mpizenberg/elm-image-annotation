@@ -1,7 +1,7 @@
 module DrawingArea exposing
     ( Tool(..), Model, init
     , Msg(..), update
-    , view, selectHtml, selectToolView
+    , view, viewWithImage, selectHtml, selectToolView
     , exportAnnotations, exportSelectionsPaths)
 
 {-| The DrawingArea module aims at collecting annotations.
@@ -13,7 +13,7 @@ module DrawingArea exposing
 @docs Msg, update
 
 # View
-@docs view, selectHtml, selectToolView
+@docs view, viewWithImage, selectHtml, selectToolView
 
 # Exporters
 @docs exportAnnotations, exportSelectionsPaths
@@ -300,6 +300,12 @@ view (DrawingArea model) =
           )
         ++ AnnSet.selectionsView model.annotations
         )
+
+
+{-| Same as view but with a background image given as argument -}
+viewWithImage : Maybe Image.Model -> Model -> Svg.Svg Msg
+viewWithImage maybeImage model =
+    view <| fst <| update (ChangeImage maybeImage) model
 
 
 
