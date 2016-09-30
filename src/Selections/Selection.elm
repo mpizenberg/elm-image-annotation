@@ -42,7 +42,7 @@ type alias Style =
 
 defaultStyle : Style
 defaultStyle =
-    Style "red" 1 False
+    Style "red" 3 False
 
 
 
