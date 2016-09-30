@@ -17,6 +17,7 @@ import Html.Events as HE
 import String
 import Json.Decode as Json
 import Json.Encode as JE
+import List
 
 
 import Annotation as Ann
@@ -176,3 +177,15 @@ selectionsPathsObject (AnnSet model) =
     JE.list
         <| List.map Ann.selectionPathObject
         <| Dict.values model.annotations
+
+
+
+
+-- OTHER #############################################################
+
+
+
+{-| Indicates if the annotation set has at least one selection -}
+hasSelection : Model -> Bool
+hasSelection (AnnSet model) =
+    List.any Ann.hasSelection (Dict.values model.annotations)

@@ -181,3 +181,15 @@ selectionPathObject (Annotation model) =
             RS.pathObject rsModel
         Just (OSModel osModel) ->
             OS.pathObject osModel
+
+
+
+
+-- OTHER #############################################################
+
+
+
+{-| Indicates if the annotation has a selection -}
+hasSelection : Model -> Bool
+hasSelection (Annotation model) =
+    model.selection /= Nothing

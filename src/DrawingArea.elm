@@ -2,7 +2,9 @@ module DrawingArea exposing
     ( Tool(..), Model, init
     , Msg(..), update
     , view, viewWithImage, selectHtml, selectToolView
-    , exportAnnotations, exportSelectionsPaths)
+    , exportAnnotations, exportSelectionsPaths
+    , hasSelection
+    )
 
 {-| The DrawingArea module aims at collecting annotations.
 
@@ -15,8 +17,11 @@ module DrawingArea exposing
 # View
 @docs view, viewWithImage, selectHtml, selectToolView
 
-# Exporters
+# Outputs
 @docs exportAnnotations, exportSelectionsPaths
+
+# Other
+@docs hasSelection
 
 -}
 
@@ -437,3 +442,15 @@ exportAnnotations (DrawingArea model) =
 exportSelectionsPaths : Model -> JE.Value
 exportSelectionsPaths (DrawingArea model) =
     AnnSet.selectionsPathsObject model.annotations
+
+
+
+
+-- OTHER #############################################################
+
+
+
+{-| Indicates if the drawing area has at least one selection -}
+hasSelection : Model -> Bool
+hasSelection (DrawingArea model) =
+    AnnSet.hasSelection model.annotations
