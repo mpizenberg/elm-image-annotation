@@ -68,16 +68,17 @@ update msg (AnnSet model) =
             let
                 (annotation, _) =
                     Ann.init Nothing <| Just <| toString model.uid
+                uid = model.uid
             in
                 ( AnnSet { model
                     | annotations = Dict.insert
-                        model.uid
+                        uid
                         annotation
                         model.annotations
-                    , selected = Just model.uid
-                    , uid = model.uid + 1
+                    , selected = Just uid
+                    , uid = uid + 1
                     }
-                , Cmd.none
+                , HP.msgToCmd <| Select <| Just uid
                 )
         Delete ->
             let
