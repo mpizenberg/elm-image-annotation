@@ -305,22 +305,24 @@ view (DrawingArea model) =
     Svg.svg
         ([ HE.onMouseUp Up
         , onWheel Wheel
-        , svgTransform model.zoomLevel model.origin
         , drawingAreaStyle model.size ]
         ++ offsetsEvents model.mouseDown model.tool
         )
-        ( ( case model.bgImage of
-            Nothing -> []
-            Just image ->
-                [ Image.view
-                    Image.SvgTag
-                    (Just "bgImage")
-                    Nothing
-                    image
-                ]
-          )
-        ++ AnnSet.selectionsView model.annotations
-        )
+        [ Svg.g
+            [ svgTransform model.zoomLevel model.origin ]
+            ( ( case model.bgImage of
+                Nothing -> []
+                Just image ->
+                    [ Image.view
+                        Image.SvgTag
+                        (Just "bgImage")
+                        Nothing
+                        image
+                    ]
+              )
+            ++ AnnSet.selectionsView model.annotations
+            )
+        ]
 
 
 {-| Same as view but with a background image given as argument -}
