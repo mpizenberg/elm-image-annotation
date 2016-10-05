@@ -348,9 +348,7 @@ svgTransform zoomLevel (x,y) =
 drawingAreaStyle : (Float, Float) -> Svg.Attribute msg
 drawingAreaStyle (width, height) =
     HA.style
-        [ ("display", "inline-block")
-        , ("border", "1px solid")
-        , ("width", toString width ++ "px")
+        [ ("width", toString width ++ "px")
         , ("height", toString height ++ "px")
         ]
 
