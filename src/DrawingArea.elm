@@ -58,10 +58,22 @@ type Tool
     | OutlineTool
 
 
+-- Options of the drawing area
+type Option
+    = Option_WheelZoom Bool
+
+
+defaultOptions : List Option
+defaultOptions =
+    [ Option_WheelZoom False
+    ]
+
+
 type alias Model_ =
     { bgImage : Maybe Image.Model
     , annotations : AnnSet.Model
     , tool : Tool
+    , options : List Option
     -- Area Management
     , size : (Float, Float)
     , zoomLevel : Float
@@ -83,6 +95,7 @@ init =
         Nothing -- bgImage
         (fst AnnSet.init)
         NoTool
+        defaultOptions
         (800,400) -- (width, height)
         1.0 -- zoomLevel
         (0,0) -- origin
@@ -304,9 +317,9 @@ view : Model -> Svg.Svg Msg
 view (DrawingArea model) =
     Svg.svg
         ([ HE.onMouseUp Up
-        , onWheel Wheel
         , drawingAreaStyle model.size ]
         ++ offsetsEvents model.mouseDown model.tool
+        ++ optionsAttributes (DrawingArea model)
         )
         [ Svg.g
             [ svgTransform model.zoomLevel model.origin ]
@@ -351,6 +364,17 @@ drawingAreaStyle (width, height) =
         [ ("width", toString width ++ "px")
         , ("height", toString height ++ "px")
         ]
+
+
+optionsAttributes : Model -> List (Svg.Attribute Msg)
+optionsAttributes (DrawingArea model) =
+    let
+        optionToAttributes : Option -> List (Svg.Attribute Msg)
+        optionToAttributes option = case option of
+            Option_WheelZoom bool ->
+                if bool then [ onWheel Wheel ] else []
+    in
+        List.concat <| List.map optionToAttributes model.options
 
 
 offsetsEvents : Bool -> Tool -> List (Svg.Attribute Msg)

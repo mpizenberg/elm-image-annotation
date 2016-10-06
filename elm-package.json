@@ -1,5 +1,5 @@
 {
-    "version": "2.1.3",
+    "version": "2.1.4",
     "summary": "Annotating collections of images",
     "repository": "https://github.com/mpizenberg/elm-image-annotation.git",
     "license": "MPLv2",
