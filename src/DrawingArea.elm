@@ -1,7 +1,7 @@
 module DrawingArea exposing
     ( Tool(..), Model, init
     , Msg(..), update
-    , view, viewWithImage, selectHtml, selectToolView
+    , view, viewLastOnly, viewWithImage, selectHtml, selectToolView
     , exportAnnotations, exportSelectionsPaths
     , hasSelection
     )
@@ -15,7 +15,7 @@ module DrawingArea exposing
 @docs Msg, update
 
 # View
-@docs view, viewWithImage, selectHtml, selectToolView
+@docs view, viewLastOnly, viewWithImage, selectHtml, selectToolView
 
 # Outputs
 @docs exportAnnotations, exportSelectionsPaths
@@ -122,7 +122,7 @@ type Msg
     | ChangeOrigin (Float, Float)
     | Center (Float, Float)
     -- Mouse Management
-    | Down (Int, Int)
+    | Down Bool (Int, Int)
     | Move (Int, Int)
     | Up
     -- Background Image Management
@@ -170,33 +170,43 @@ update msg (DrawingArea model) =
                 , Cmd.none
                 )
         -- Mouse Management ->
-        Down (x, y) ->
-            let
-                (ox, oy) = model.origin
-                x'' = round <| ox + (toFloat x) / model.zoomLevel
-                y'' = round <| oy + (toFloat y) / model.zoomLevel
-            in
-                ( DrawingArea
-                    {model | downPos = Just (x'', y''), mouseDown = True}
-                , case model.tool of
-                    NoTool ->
-                        Cmd.none
-                    RectangleTool ->
-                        rsCmd <| RS.Geom (Just (x'', y'')) (Just (0,0))
-                    OutlineTool ->
-                        osCmd <| OS.ResetWithPoint (x'', y'')
-                )
+        Down createNewAnnotation (x, y) ->
+            if createNewAnnotation
+            then
+                HP.updateFull
+                    update
+                    (DrawingArea model)
+                    [CreateAnnotation, Down False (x,y)]
+            else
+                let
+                    (ox, oy) = model.origin
+                    x'' = round <| ox + (toFloat x) / model.zoomLevel
+                    y'' = round <| oy + (toFloat y) / model.zoomLevel
+                    model' = {model | downPos = Just (x'', y''), mouseDown = True}
+                in
+                    case model.tool of
+                        NoTool -> ( DrawingArea model', Cmd.none )
+                        RectangleTool ->
+                            update
+                                ( rsMsg <| RS.Geom (Just (x'', y'')) (Just (0,0)) )
+                                ( DrawingArea model' )
+                        OutlineTool ->
+                            update
+                                ( osMsg <| OS.ResetWithPoint (x'', y'') )
+                                ( DrawingArea model' )
         Move (x', y') ->
-            ( DrawingArea model
-            , case model.tool of
+            case model.tool of
                 NoTool ->
                     let
                         (x,y) = model.origin
                     in
-                        HP.msgToCmd <| ChangeOrigin
-                            ( x - toFloat x' / model.zoomLevel
-                            , y - toFloat y' / model.zoomLevel
+                        update
+                            ( ChangeOrigin
+                                ( x - toFloat x' / model.zoomLevel
+                                , y - toFloat y' / model.zoomLevel
+                                )
                             )
+                            ( DrawingArea model )
                 RectangleTool ->
                     let
                         (x,y) = Maybe.withDefault (0,0) model.downPos
@@ -208,29 +218,34 @@ update msg (DrawingArea model) =
                         width = abs (x-x'')
                         height = abs (y-y'')
                     in
-                        rsCmd <| RS.Geom
-                            (Just (left, top))
-                            (Just (width, height))
+                        update
+                            ( rsMsg <| RS.Geom
+                                (Just (left, top))
+                                (Just (width, height))
+                            )
+                            ( DrawingArea model )
                 OutlineTool ->
                     let
                         (ox, oy) = model.origin
                         x'' = round <| ox + (toFloat x') / model.zoomLevel
                         y'' = round <| oy + (toFloat y') / model.zoomLevel
                     in
-                        osCmd <| OS.AddPoint (x'',y'')
-            )
+                        update
+                            ( osMsg <| OS.AddPoint (x'',y'') )
+                            ( DrawingArea model )
         Up ->
             ( DrawingArea {model | mouseDown = False, downPos = Nothing}
             , Cmd.none
             )
         -- Background Image Management ->
         ChangeImage imModel ->
-            ( DrawingArea {model | bgImage = imModel}
-            , case imModel of
-                Nothing -> Cmd.none
-                Just im ->
-                    HP.msgToCmd <| CenterImage <| Image.size im
-            )
+            let
+                model' = {model | bgImage = imModel}
+            in
+                case imModel of
+                    Nothing -> (DrawingArea model', Cmd.none)
+                    Just im ->
+                        update (CenterImage <| Image.size im) (DrawingArea model')
         CenterImage (imageWidth, imageHeight) ->
             let
                 (w, h) = model.size
@@ -245,21 +260,21 @@ update msg (DrawingArea model) =
                 )
         -- Annotations Management ->
         CreateAnnotation ->
-            ( DrawingArea model
-            , Cmd.map Annotations <| HP.msgToCmd AnnSet.CreateAnnotation
-            )
+            update
+                ( Annotations AnnSet.CreateAnnotation )
+                ( DrawingArea model )
         DeleteAnnotation ->
-            ( DrawingArea model
-            , Cmd.map Annotations <| HP.msgToCmd AnnSet.Delete
-            )
+            update
+                ( Annotations AnnSet.Delete )
+                ( DrawingArea model )
         ResetAnnotation ->
-            ( DrawingArea model
-            , Cmd.map Annotations <| HP.msgToCmd AnnSet.ResetAnnotation
-            )
+            update
+                ( Annotations AnnSet.ResetAnnotation )
+                ( DrawingArea model )
         SelectAnnotation maybeId ->
-            ( DrawingArea model
-            , Cmd.map Annotations <| HP.msgToCmd <| AnnSet.Select maybeId
-            )
+            update
+                ( Annotations <| AnnSet.Select maybeId )
+                ( DrawingArea model )
         SelectTool tool ->
             ( DrawingArea {model | tool = tool}
             , Cmd.none
@@ -283,26 +298,22 @@ updateZoom zoomModifier (DrawingArea model) =
         centerX = left + 0.5 * width / model.zoomLevel
         centerY = top + 0.5 * height / model.zoomLevel
     in
-        ( DrawingArea {model | zoomLevel = zoomModifier * model.zoomLevel}
-        , HP.msgToCmd <| Center (centerX, centerY)
-        )
+        update
+            ( Center (centerX, centerY) )
+            ( DrawingArea {model | zoomLevel = zoomModifier * model.zoomLevel} )
 
 
-selCmd : Ann.SelectionMsg -> Cmd Msg
-selCmd =
-    HP.msgToCmd
-        << Annotations
-        << AnnSet.Annotate
-        << Ann.Selection
-        << Just
+selMsg : Ann.SelectionMsg -> Msg
+selMsg =
+    Annotations << AnnSet.Annotate << Ann.Selection << Just
 
 
-rsCmd : RS.Msg -> Cmd Msg
-rsCmd = selCmd << Ann.RSMsg
+rsMsg : RS.Msg -> Msg
+rsMsg = selMsg << Ann.RSMsg
 
 
-osCmd : OS.Msg -> Cmd Msg
-osCmd = selCmd << Ann.OSMsg
+osMsg : OS.Msg -> Msg
+osMsg = selMsg << Ann.OSMsg
 
 
 
@@ -318,7 +329,7 @@ view (DrawingArea model) =
     Svg.svg
         ([ HE.onMouseUp Up
         , drawingAreaStyle model.size ]
-        ++ offsetsEvents model.mouseDown model.tool
+        ++ offsetsEvents model.mouseDown False model.tool
         ++ optionsAttributes (DrawingArea model)
         )
         [ Svg.g
@@ -334,6 +345,33 @@ view (DrawingArea model) =
                     ]
               )
             ++ AnnSet.selectionsView model.annotations
+            )
+        ]
+
+
+
+{-| View with only the last annotation -}
+viewLastOnly : Model -> Svg.Svg Msg
+viewLastOnly (DrawingArea model) =
+    Svg.svg
+        ([ HE.onMouseUp Up
+        , drawingAreaStyle model.size ]
+        ++ offsetsEvents model.mouseDown True model.tool
+        ++ optionsAttributes (DrawingArea model)
+        )
+        [ Svg.g
+            [ svgTransform model.zoomLevel model.origin ]
+            ( ( case model.bgImage of
+                Nothing -> []
+                Just image ->
+                    [ Image.view
+                        Image.SvgTag
+                        (Just "bgImage")
+                        Nothing
+                        image
+                    ]
+              )
+            ++ AnnSet.selectionsViewLastOnly model.annotations
             )
         ]
 
@@ -377,10 +415,10 @@ optionsAttributes (DrawingArea model) =
         List.concat <| List.map optionToAttributes model.options
 
 
-offsetsEvents : Bool -> Tool -> List (Svg.Attribute Msg)
-offsetsEvents down tool =
+offsetsEvents : Bool -> Bool -> Tool -> List (Svg.Attribute Msg)
+offsetsEvents down createNewAnnotation tool =
     let
-        baseOffsets = [(HP.offsetOn "mousedown") Down]
+        baseOffsets = [(HP.offsetOn "mousedown") <| Down createNewAnnotation]
     in
         baseOffsets
         ++ ( case (down, tool) of

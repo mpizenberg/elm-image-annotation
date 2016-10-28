@@ -60,17 +60,11 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         NewAnnotation ->
-            ( model
-            , Cmd.map Draw <| HP.msgToCmd DrawingArea.CreateAnnotation
-            )
+            update (Draw DrawingArea.CreateAnnotation) model
         Delete ->
-            ( model
-            , Cmd.map Draw <| HP.msgToCmd DrawingArea.DeleteAnnotation
-            )
+            update (Draw DrawingArea.DeleteAnnotation) model
         Select maybeId ->
-            ( model
-            , Cmd.map Draw <| HP.msgToCmd <| DrawingArea.SelectAnnotation maybeId
-            )
+            update (Draw <| DrawingArea.SelectAnnotation maybeId) model
         ExportAnnotations ->
             ( { model | jsonExport = JE.encode 0 <|
                     DrawingArea.exportSelectionsPaths model.drawingArea }

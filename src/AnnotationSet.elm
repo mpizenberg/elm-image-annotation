@@ -18,6 +18,7 @@ import String
 import Json.Decode as Json
 import Json.Encode as JE
 import List
+import List.Extra as LE
 
 
 import Annotation as Ann
@@ -70,16 +71,17 @@ update msg (AnnSet model) =
                     Ann.init Nothing <| Just <| toString model.uid
                 uid = model.uid
             in
-                ( AnnSet { model
-                    | annotations = Dict.insert
-                        uid
-                        annotation
-                        model.annotations
-                    , selected = Just uid
-                    , uid = uid + 1
-                    }
-                , HP.msgToCmd <| Select <| Just uid
-                )
+                update
+                    ( Select <| Just uid )
+                    ( AnnSet { model
+                        | annotations = Dict.insert
+                            uid
+                            annotation
+                            model.annotations
+                        , selected = Just uid
+                        , uid = uid + 1
+                        }
+                    )
         Delete ->
             let
                 annotations = case model.selected of
@@ -135,6 +137,13 @@ update msg (AnnSet model) =
 selectionsView : Model -> List (Svg.Svg msg)
 selectionsView (AnnSet model) =
     List.map Ann.selectionView <| Dict.values model.annotations
+
+
+selectionsViewLastOnly : Model -> List (Svg.Svg msg)
+selectionsViewLastOnly (AnnSet model) =
+        case LE.last (Dict.values model.annotations) of
+            Nothing -> []
+            Just selection -> [Ann.selectionView selection]
 
 
 selectHtml : Model -> H.Html Msg
