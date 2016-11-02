@@ -34,12 +34,12 @@ type alias Model_ =
     }
 
 
-type Model = OutSel Model_
+type Model = Model Model_
 
 
 init : (Model, Cmd Msg)
 init =
-    ( OutSel <| Model_ [] Sel.defaultStyle False
+    ( Model <| Model_ [] Sel.defaultStyle False
     , Cmd.none
     )
 
@@ -65,22 +65,22 @@ type Msg
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg (OutSel model) =
+update msg (Model model) =
     case msg of
         Style color strokeWidth highlighted ->
-            ( OutSel { model
+            ( Model { model
                 | style = Sel.changeStyle color strokeWidth highlighted model.style
                 }
             , Cmd.none
             )
         AddPoint (x, y) ->
-            ( OutSel { model | path = (Sel.Pos x y) :: model.path }, Cmd.none )
+            ( Model { model | path = (Sel.Pos x y) :: model.path }, Cmd.none )
         Reset ->
-            ( OutSel { model | path = [] }, Cmd.none )
+            ( Model { model | path = [] }, Cmd.none )
         ResetWithPoint (x, y) ->
-            ( OutSel { model | path = [Sel.Pos x y] }, Cmd.none )
+            ( Model { model | path = [Sel.Pos x y] }, Cmd.none )
         TriggerPointerEvents bool ->
-            ( OutSel { model | pointerEvents = bool }, Cmd.none )
+            ( Model { model | pointerEvents = bool }, Cmd.none )
 
 
 
@@ -91,7 +91,7 @@ update msg (OutSel model) =
 
 
 view : Model -> Svg.Svg msg
-view (OutSel model) =
+view (Model model) =
     Svg.polygon
         ( Sel.styleAttributes model.style
         ++
@@ -117,7 +117,7 @@ posToString {x, y} = toString x ++ "," ++ toString y
 
 
 object : Model -> JE.Value
-object (OutSel model) =
+object (Model model) =
     JE.object
         [ ("path", JE.list <| List.map Sel.posObject model.path)
         , ("style", Sel.styleObject model.style)
@@ -126,5 +126,5 @@ object (OutSel model) =
 
 
 pathObject : Model -> JE.Value
-pathObject (OutSel model) =
+pathObject (Model model) =
     JE.list <| List.map Sel.posPathObject model.path
