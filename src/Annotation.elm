@@ -42,12 +42,12 @@ type alias Model_ =
     }
 
 
-type Model = Annotation Model_
+type Model = Model Model_
 
 
 init : Maybe SelectionModel -> Maybe String -> (Model, Cmd msg)
 init selModel label =
-    ( Annotation <| Model_ selModel label
+    ( Model <| Model_ selModel label
     , Cmd.none
     )
 
@@ -65,14 +65,14 @@ type Msg
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg (Annotation model) =
+update msg (Model model) =
     case msg of
         Label label ->
-            (Annotation {model | label = label}, Cmd.none)
+            (Model {model | label = label}, Cmd.none)
         Selection selMsg ->
             case selMsg of
                 Nothing ->
-                    ( Annotation <| Model_ Nothing model.label
+                    ( Model <| Model_ Nothing model.label
                     , Cmd.none
                     )
                 Just (RSMsg rsMsg) ->
@@ -94,7 +94,7 @@ updateRS rsMsg model =
             let
                 (rsModel', cmdRsMsg) = RS.update rsMsg rsModel
             in
-                ( Annotation
+                ( Model
                     {model | selection = Just (RSModel rsModel')}
                 , Cmd.map (Selection << Just << RSMsg) cmdRsMsg
                 )
@@ -113,7 +113,7 @@ updateOS osMsg model =
             let
                 (osModel', cmdOsMsg) = OS.update osMsg osModel
             in
-                ( Annotation
+                ( Model
                     {model | selection = Just (OSModel osModel')}
                 , Cmd.map (Selection << Just << OSMsg) cmdOsMsg
                 )
@@ -127,7 +127,7 @@ updateOS osMsg model =
 
 
 selectionView : Model -> Svg.Svg msg
-selectionView (Annotation model) =
+selectionView (Model model) =
     case model.selection of
         Nothing ->
             Svg.text "No Selection"
@@ -138,7 +138,7 @@ selectionView (Annotation model) =
 
 
 optionTag : Maybe Int -> (Int, Model) -> H.Html msg
-optionTag currentId (id, (Annotation model)) =
+optionTag currentId (id, (Model model)) =
     H.option
         [ HA.value (toString id), HA.selected (currentId == Just id)]
         [ H.text <| toString id ++
@@ -157,7 +157,7 @@ optionTag currentId (id, (Annotation model)) =
 
 
 object : Model -> JE.Value
-object (Annotation model) =
+object (Model model) =
     JE.object
         [ ("selection", case model.selection of
             Nothing -> JE.null
@@ -174,7 +174,7 @@ object (Annotation model) =
 
 
 selectionPathObject : Model -> JE.Value
-selectionPathObject (Annotation model) =
+selectionPathObject (Model model) =
     case model.selection of
         Nothing -> JE.null
         Just (RSModel rsModel) ->
@@ -191,5 +191,5 @@ selectionPathObject (Annotation model) =
 
 {-| Indicates if the annotation has a selection -}
 hasSelection : Model -> Bool
-hasSelection (Annotation model) =
+hasSelection (Model model) =
     model.selection /= Nothing
