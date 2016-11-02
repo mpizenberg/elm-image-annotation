@@ -90,12 +90,19 @@ stopTime : Maybe Time -> Timings -> Timings
 stopTime t timings = ( fst timings, t )
 
 
-duration : Timings -> Maybe Time
-duration timings =
-    case timings of
-        (Nothing, _) -> Nothing
-        (_, Nothing) -> Nothing
-        (Just start, Just stop) -> Just (stop - start)
+startSelectionTime : Maybe Time -> Selection -> Selection
+startSelectionTime t selection =
+    { selection | timings = startTime t selection.timings }
+
+
+stopSelectionTime : Maybe Time -> Selection -> Selection
+stopSelectionTime t selection =
+    { selection | timings = stopTime t selection.timings }
+
+
+resetTimings : Selection -> Selection
+resetTimings selection =
+    { selection | timings = (Nothing, Nothing) }
 
 
 
@@ -130,6 +137,21 @@ styleAttributes style =
 
 
 
+maybeTimeObject : Maybe Time -> JE.Value
+maybeTimeObject maybeTime =
+    case maybeTime of
+        Nothing -> JE.null
+        Just time -> JE.float time
+
+
+duration : Timings -> Maybe Time
+duration timings =
+    case timings of
+        (Nothing, _) -> Nothing
+        (_, Nothing) -> Nothing
+        (Just start, Just stop) -> Just (stop - start)
+
+
 posObject : Pos -> JE.Value
 posObject pos =
     JE.object
@@ -162,14 +184,7 @@ selectionObject selection =
 
 timingsObject : Timings -> JE.Value
 timingsObject (start, stop) =
-    let
-        maybeTimeObject : Maybe Float -> JE.Value
-        maybeTimeObject maybeTime =
-            case maybeTime of
-                Nothing -> JE.null
-                Just time -> JE.float time
-    in
-        JE.list <| List.map maybeTimeObject [start, stop]
+    JE.list <| List.map maybeTimeObject [start, stop]
 
 
 styleObject : Style -> JE.Value

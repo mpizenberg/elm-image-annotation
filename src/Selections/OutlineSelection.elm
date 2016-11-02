@@ -15,6 +15,8 @@ import Svg.Attributes as SvgA
 import Html.App as App
 import String
 import Json.Encode as JE
+import Time exposing (Time)
+import Task
 
 
 import Selections.Selection as Sel
@@ -60,6 +62,8 @@ type Msg
     | AddPoint (Int, Int)
     | Reset
     | ResetWithPoint (Int, Int)
+    | StartTime (Maybe Time)
+    | StopTime (Maybe Time)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -76,11 +80,29 @@ update msg (Model model) =
             , Cmd.none
             )
         AddPoint (x, y) ->
-            ( Model { model | path = (Sel.Pos x y) :: model.path }, Cmd.none )
+            ( Model { model | path = (Sel.Pos x y) :: model.path }
+            -- Very bad performances but will do for now
+            , Task.perform (identity) (StopTime << Just) Time.now
+            )
         Reset ->
-            ( Model { model | path = [] }, Cmd.none )
+            ( Model { model | path = [], selection = Sel.resetTimings model.selection }
+            , Cmd.none
+            )
         ResetWithPoint (x, y) ->
-            ( Model { model | path = [Sel.Pos x y] }, Cmd.none )
+            ( Model { model
+                | path = [Sel.Pos x y]
+                , selection = Sel.resetTimings model.selection
+                }
+            , Task.perform (identity) (StartTime << Just) Time.now
+            )
+        StartTime time ->
+            ( Model { model | selection = Sel.startSelectionTime time model.selection }
+            , Cmd.none
+            )
+        StopTime time ->
+            ( Model { model | selection = Sel.stopSelectionTime time model.selection }
+            , Cmd.none
+            )
 
 
 
@@ -124,4 +146,7 @@ object (Model model) =
 
 pathObject : Model -> JE.Value
 pathObject (Model model) =
-    JE.list <| List.map Sel.posPathObject model.path
+    JE.object
+        [ ("duration", Sel.maybeTimeObject <| Sel.duration model.selection.timings)
+        , ("path", JE.list <| List.map Sel.posPathObject model.path)
+        ]
