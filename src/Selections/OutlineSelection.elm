@@ -28,9 +28,8 @@ import Selections.Selection as Sel
 
 
 type alias Model_ =
-    { path : List Sel.Pos
-    , style : Sel.Style
-    , pointerEvents : Bool
+    { selection : Sel.Selection
+    , path : List Sel.Pos
     }
 
 
@@ -39,7 +38,7 @@ type Model = Model Model_
 
 init : (Model, Cmd Msg)
 init =
-    ( Model <| Model_ [] Sel.defaultStyle False
+    ( Model <| Model_ Sel.defaultSelection []
     , Cmd.none
     )
 
@@ -61,7 +60,6 @@ type Msg
     | AddPoint (Int, Int)
     | Reset
     | ResetWithPoint (Int, Int)
-    | TriggerPointerEvents Bool
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -69,7 +67,11 @@ update msg (Model model) =
     case msg of
         Style color strokeWidth highlighted ->
             ( Model { model
-                | style = Sel.changeStyle color strokeWidth highlighted model.style
+                | selection = Sel.changeSelectionStyle
+                    color
+                    strokeWidth
+                    highlighted
+                    model.selection
                 }
             , Cmd.none
             )
@@ -79,8 +81,6 @@ update msg (Model model) =
             ( Model { model | path = [] }, Cmd.none )
         ResetWithPoint (x, y) ->
             ( Model { model | path = [Sel.Pos x y] }, Cmd.none )
-        TriggerPointerEvents bool ->
-            ( Model { model | pointerEvents = bool }, Cmd.none )
 
 
 
@@ -93,11 +93,9 @@ update msg (Model model) =
 view : Model -> Svg.Svg msg
 view (Model model) =
     Svg.polygon
-        ( Sel.styleAttributes model.style
-        ++
-        [ SvgA.pointerEvents <| if model.pointerEvents then "auto" else "none"
-        , SvgA.points <| pathToString model.path
-        ]) []
+        ( (SvgA.points <| pathToString model.path)
+        :: Sel.selectionAttributes model.selection
+        ) []
 
 
 pathToString : List Sel.Pos -> String
@@ -120,8 +118,7 @@ object : Model -> JE.Value
 object (Model model) =
     JE.object
         [ ("path", JE.list <| List.map Sel.posObject model.path)
-        , ("style", Sel.styleObject model.style)
-        , ("pointerEvents", JE.bool model.pointerEvents)
+        , ("selection", Sel.selectionObject model.selection)
         ]
 
 

@@ -12,6 +12,7 @@ module Selections.Selection exposing (..)
 import Svg
 import Svg.Attributes as SvgA
 import Json.Encode as JE
+import Time exposing (Time)
 
 
 
@@ -45,6 +46,20 @@ defaultStyle =
     Style "red" 3 False
 
 
+type alias Timings = ( Maybe Time, Maybe Time )
+
+
+type alias Selection =
+    { style : Style
+    , timings : Timings
+    , pointerEvents : Bool
+    }
+
+
+defaultSelection : Selection
+defaultSelection = Selection defaultStyle (Nothing, Nothing) False
+
+
 
 
 -- UPDATE ############################################################
@@ -62,11 +77,38 @@ changeStyle color strokeWidth highlighted oldStyle =
         Style color' strokeWidth' highlighted'
 
 
+changeSelectionStyle : Maybe String -> Maybe Int -> Maybe Bool -> Selection -> Selection
+changeSelectionStyle color strokeWidth highlighted selection =
+    { selection | style = changeStyle color strokeWidth highlighted selection.style }
+
+
+startTime : Maybe Time -> Timings -> Timings
+startTime t timings = ( t, snd timings )
+
+
+stopTime : Maybe Time -> Timings -> Timings
+stopTime t timings = ( fst timings, t )
+
+
+duration : Timings -> Maybe Time
+duration timings =
+    case timings of
+        (Nothing, _) -> Nothing
+        (_, Nothing) -> Nothing
+        (Just start, Just stop) -> Just (stop - start)
+
+
 
 
 -- VIEW ##############################################################
 
 
+
+
+selectionAttributes : Selection -> List (Svg.Attribute msg)
+selectionAttributes selection =
+    ( SvgA.pointerEvents <| if selection.pointerEvents then "auto" else "none" )
+    :: ( styleAttributes selection.style )
 
 
 styleAttributes : Style -> List (Svg.Attribute msg)
@@ -107,6 +149,27 @@ sizeObject size =
         [ ("width", JE.int size.width)
         , ("height", JE.int size.height)
         ]
+
+
+selectionObject : Selection -> JE.Value
+selectionObject selection =
+    JE.object
+        [ ("style", styleObject selection.style)
+        , ("timings", timingsObject selection.timings)
+        , ("pointerEvents", JE.bool selection.pointerEvents)
+        ]
+
+
+timingsObject : Timings -> JE.Value
+timingsObject (start, stop) =
+    let
+        maybeTimeObject : Maybe Float -> JE.Value
+        maybeTimeObject maybeTime =
+            case maybeTime of
+                Nothing -> JE.null
+                Just time -> JE.float time
+    in
+        JE.list <| List.map maybeTimeObject [start, stop]
 
 
 styleObject : Style -> JE.Value

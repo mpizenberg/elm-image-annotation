@@ -32,9 +32,8 @@ type alias Geometry =
 
 
 type alias Model_ =
-    { geometry : Geometry
-    , style : Sel.Style
-    , pointerEvents : Bool
+    { selection : Sel.Selection
+    , geometry : Geometry
     }
 
 
@@ -44,9 +43,8 @@ type Model = Model Model_
 init : (Int, Int) -> (Int, Int) -> (Model, Cmd Msg)
 init (left, top) (width, height) =
     ( Model <| Model_
+        Sel.defaultSelection
         (Geometry (Sel.Pos left top) (Sel.Size width height))
-        Sel.defaultStyle
-        False
     , Cmd.none
     )
 
@@ -66,7 +64,6 @@ defaultModel =
 type Msg
     = Style (Maybe String) (Maybe Int) (Maybe Bool)
     | Geom (Maybe (Int, Int)) (Maybe (Int, Int))
-    | TriggerPointerEvents Bool
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -74,7 +71,11 @@ update msg (Model model) =
     case msg of
         Style color strokeWidth highlighted ->
             ( Model { model
-                | style = Sel.changeStyle color strokeWidth highlighted model.style
+                | selection = Sel.changeSelectionStyle
+                    color
+                    strokeWidth
+                    highlighted
+                    model.selection
                 }
             , Cmd.none
             )
@@ -82,8 +83,6 @@ update msg (Model model) =
             ( Model {model | geometry = changeGeometry pos size model.geometry}
             , Cmd.none
             )
-        TriggerPointerEvents bool ->
-            ( Model { model | pointerEvents = bool }, Cmd.none )
 
 
 changeGeometry : Maybe (Int, Int) -> Maybe (Int, Int) -> Geometry -> Geometry
@@ -105,13 +104,12 @@ changeGeometry pos size geom =
 view : Model -> Svg.Svg msg
 view (Model model) =
     Svg.rect
-        ( Sel.styleAttributes model.style
+        ( Sel.selectionAttributes model.selection
         ++
         [ SvgA.x (toString model.geometry.pos.x)
         , SvgA.y (toString model.geometry.pos.y)
         , SvgA.width (toString model.geometry.size.width)
         , SvgA.height (toString model.geometry.size.height)
-        , SvgA.pointerEvents (if model.pointerEvents then "auto" else "none")
         ]) []
 
 
@@ -126,8 +124,7 @@ object : Model -> JE.Value
 object (Model model) =
     JE.object
         [ ("geometry", geomObject model.geometry)
-        , ("style", Sel.styleObject model.style)
-        , ("pointerEvents", JE.bool model.pointerEvents)
+        , ("selection", Sel.selectionObject model.selection)
         ]
 
 
