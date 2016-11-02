@@ -38,12 +38,12 @@ type alias Model_ =
     }
 
 
-type Model = RectSel Model_
+type Model = Model Model_
 
 
 init : (Int, Int) -> (Int, Int) -> (Model, Cmd Msg)
 init (left, top) (width, height) =
-    ( RectSel <| Model_
+    ( Model <| Model_
         (Geometry (Sel.Pos left top) (Sel.Size width height))
         Sel.defaultStyle
         False
@@ -70,20 +70,20 @@ type Msg
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg (RectSel model) =
+update msg (Model model) =
     case msg of
         Style color strokeWidth highlighted ->
-            ( RectSel { model
+            ( Model { model
                 | style = Sel.changeStyle color strokeWidth highlighted model.style
                 }
             , Cmd.none
             )
         Geom pos size ->
-            ( RectSel {model | geometry = changeGeometry pos size model.geometry}
+            ( Model {model | geometry = changeGeometry pos size model.geometry}
             , Cmd.none
             )
         TriggerPointerEvents bool ->
-            ( RectSel { model | pointerEvents = bool }, Cmd.none )
+            ( Model { model | pointerEvents = bool }, Cmd.none )
 
 
 changeGeometry : Maybe (Int, Int) -> Maybe (Int, Int) -> Geometry -> Geometry
@@ -103,7 +103,7 @@ changeGeometry pos size geom =
 
 
 view : Model -> Svg.Svg msg
-view (RectSel model) =
+view (Model model) =
     Svg.rect
         ( Sel.styleAttributes model.style
         ++
@@ -123,7 +123,7 @@ view (RectSel model) =
 
 
 object : Model -> JE.Value
-object (RectSel model) =
+object (Model model) =
     JE.object
         [ ("geometry", geomObject model.geometry)
         , ("style", Sel.styleObject model.style)
@@ -140,7 +140,7 @@ geomObject geom =
 
 
 pathObject : Model -> JE.Value
-pathObject (RectSel model) =
+pathObject (Model model) =
     let
         -- sides
         left = model.geometry.pos.x
