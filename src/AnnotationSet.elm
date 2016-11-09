@@ -2,200 +2,84 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-module AnnotationSet exposing (..)
 
+module AnnotationSet exposing (..)
 
 {-| AnnotationSet aims at managing a set of annotations.
 -}
 
-
-import Dict
-import Svg
-import Html as H
-import Html.Attributes as HA
-import Html.Events as HE
 import String
-import Json.Decode as Json
+import Html as H exposing (Html)
+import Html.Attributes as HA
+import Svg exposing (Svg)
 import Json.Encode as JE
-import List
-import List.Extra as LE
-
-
-import Annotation as Ann
-import Utils.Helpers as HP
-
-
+import Array exposing (Array)
+import Annotation as Ann exposing (Annotation)
+import Helpers.Events as HPE
 
 
 -- MODEL #############################################################
 
 
-
-
-type alias Model_ =
-    { annotations : Dict.Dict Int Ann.Model
-    , selected : Maybe Int
-    , uid : Int
-    }
-
-
-type Model = AnnSet Model_
-
-
-init : (Model, Cmd msg)
-init = (AnnSet <| Model_ Dict.empty Nothing 0, Cmd.none)
-
-
-
-
--- UPDATE ############################################################
-
-
-
-
-type Msg
-    = CreateAnnotation
-    | ResetAnnotation
-    | Delete
-    | Select (Maybe Int)
-    | Annotation Int Ann.Msg
-    | Annotate Ann.Msg
-
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg (AnnSet model) =
-    case msg of
-        CreateAnnotation ->
-            let
-                (annotation, _) =
-                    Ann.init Nothing <| Just <| toString model.uid
-                uid = model.uid
-            in
-                update
-                    ( Select <| Just uid )
-                    ( AnnSet { model
-                        | annotations = Dict.insert
-                            uid
-                            annotation
-                            model.annotations
-                        , selected = Just uid
-                        , uid = uid + 1
-                        }
-                    )
-        Delete ->
-            let
-                annotations = case model.selected of
-                    Nothing ->
-                        model.annotations
-                    Just id ->
-                        Dict.remove id model.annotations
-            in
-                ( AnnSet {model | annotations = annotations }
-                , Cmd.none
-                )
-        ResetAnnotation ->
-            update
-                (Annotation
-                    (Maybe.withDefault -1 model.selected)
-                    (Ann.Selection Nothing))
-                (AnnSet model)
-        Select id ->
-            ( AnnSet { model | selected = id }
-            , Cmd.none
-            )
-        Annotation id annMsg ->
-            let
-                maybeAnn = Dict.get id model.annotations
-            in
-                case maybeAnn of
-                    Nothing ->
-                        (AnnSet model, Cmd.none)
-                    Just ann ->
-                        let
-                            (ann', cmdMsg) = Ann.update annMsg ann
-                            annotations =
-                                Dict.insert id ann' model.annotations
-                        in
-                            ( AnnSet {model | annotations = annotations}
-                            , Cmd.map (Annotation id) cmdMsg
-                            )
-        Annotate annMsg ->
-            case model.selected of
-                Nothing ->
-                    (AnnSet model, Cmd.none)
-                Just id ->
-                    update (Annotation id annMsg) (AnnSet model)
-
+type alias AnnotationSet =
+    Array Annotation
 
 
 
 -- VIEW ##############################################################
 
 
+viewAllSelections : AnnotationSet -> List (Svg msg)
+viewAllSelections set =
+    Array.map Ann.selectionView set
+        |> Array.toList
 
 
-selectionsView : Model -> List (Svg.Svg msg)
-selectionsView (AnnSet model) =
-    List.map Ann.selectionView <| Dict.values model.annotations
+viewLastSelection : AnnotationSet -> List (Svg msg)
+viewLastSelection set =
+    let
+        length =
+            Array.length set
+    in
+        viewAllSelections <| Array.slice (length - 1) length set
 
 
-selectionsViewLastOnly : Model -> List (Svg.Svg msg)
-selectionsViewLastOnly (AnnSet model) =
-        case LE.last (Dict.values model.annotations) of
-            Nothing -> []
-            Just selection -> [Ann.selectionView selection]
-
-
-selectHtml : Model -> H.Html Msg
-selectHtml (AnnSet model) =
+{-| Create a <select> tag with an <option> tag for each annotation
+   currentId is the id of the currently selected option.
+-}
+selectTag : Maybe Int -> (Maybe Int -> msg) -> AnnotationSet -> Html msg
+selectTag currentId msgMaker set =
     H.select
-        [HP.onChange <| Select << Result.toMaybe << String.toInt]
-        ((H.option
-            [HA.value "none", HA.selected (model.selected == Nothing)]
-            [H.text "None"])
-        ::
-        (List.map
-            (Ann.optionTag model.selected) <|
-            Dict.toList model.annotations
-        ))
-
+        [ HPE.onChange <| msgMaker << Result.toMaybe << String.toInt ]
+        (H.option
+            [ HA.value "none", HA.selected (currentId == Nothing) ]
+            [ H.text "None" ]
+            :: List.map
+                (Ann.optionTag currentId)
+                (Array.toIndexedList set)
+        )
 
 
 
 -- OUTPUTS ##############################################################
 
 
+object : AnnotationSet -> JE.Value
+object set =
+    JE.array <| Array.map Ann.object set
 
 
-
-object : Model -> JE.Value
-object (AnnSet model) =
-    JE.object
-        [ ("annotations"
-          , JE.list <| List.map Ann.object <| Dict.values model.annotations
-          )
-        , ("selected", case model.selected of
-            Nothing -> JE.null
-            Just selected -> JE.int selected
-          )
-        , ("uid", JE.int model.uid)
-        ]
-
-
-selectionsPathsObject : Model -> JE.Value
-selectionsPathsObject (AnnSet model) =
-    JE.list
-        <| List.map Ann.selectionPathObject
-        <| Dict.values model.annotations
-
+pathsObject : AnnotationSet -> JE.Value
+pathsObject set =
+    JE.array <| Array.map Ann.pathObject set
 
 
 
 -- OTHER #############################################################
 
 
-
-{-| Indicates if the annotation set has at least one selection -}
-hasSelection : Model -> Bool
-hasSelection (AnnSet model) =
-    List.any Ann.hasSelection (Dict.values model.annotations)
+{-| Indicates if the annotation set has at least one selection
+-}
+hasSelection : AnnotationSet -> Bool
+hasSelection set =
+    List.any Ann.hasSelection <| Array.toList set
