@@ -3,7 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Selections.RectangleSelection exposing (..)
+module Selections.Rectangle exposing (..)
 
 {-| RectangleSelection contains the tools to manipule rectangle selections.
 -}
