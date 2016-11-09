@@ -2,27 +2,19 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-module Selections.RectangleSelection exposing
-    (..)
 
+module Selections.RectangleSelection exposing (..)
 
 {-| RectangleSelection contains the tools to manipule rectangle selections.
 -}
 
-
-import Svg
+import Svg exposing (Svg)
 import Svg.Attributes as SvgA
 import Json.Encode as JE
-
-
-import Selections.Selection as Sel
-
-
+import Selections.Selection as Sel exposing (Selection)
 
 
 -- MODEL #############################################################
-
-
 
 
 type alias Geometry =
@@ -31,124 +23,110 @@ type alias Geometry =
     }
 
 
-type alias Model_ =
-    { selection : Sel.Selection
+defaultGeometry : Geometry
+defaultGeometry =
+    { pos = Sel.Pos 0 0
+    , size = Sel.Size 0 0
+    }
+
+
+type alias Rectangle =
+    { selection : Selection
     , geometry : Geometry
     }
 
 
-type Model = Model Model_
-
-
-init : (Int, Int) -> (Int, Int) -> (Model, Cmd Msg)
-init (left, top) (width, height) =
-    ( Model <| Model_
-        Sel.defaultSelection
-        (Geometry (Sel.Pos left top) (Sel.Size width height))
-    , Cmd.none
-    )
-
-
-defaultModel : Model
-defaultModel =
-    fst <| init (0, 0) (0, 0)
-
+defaultRectangle : Rectangle
+defaultRectangle =
+    { selection = Sel.defaultSelection
+    , geometry = defaultGeometry
+    }
 
 
 
 -- UPDATE ############################################################
 
 
+changeStrokeWidth : Float -> Rectangle -> Rectangle
+changeStrokeWidth width rect =
+    { rect | selection = Sel.changeStrokeWidth width rect.selection }
 
 
-type Msg
-    = Style (Maybe String) (Maybe Int) (Maybe Bool)
-    | Geom (Maybe (Int, Int)) (Maybe (Int, Int))
-
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg (Model model) =
-    case msg of
-        Style color strokeWidth highlighted ->
-            ( Model { model
-                | selection = Sel.changeSelectionStyle
-                    color
-                    strokeWidth
-                    highlighted
-                    model.selection
-                }
-            , Cmd.none
-            )
-        Geom pos size ->
-            ( Model {model | geometry = changeGeometry pos size model.geometry}
-            , Cmd.none
-            )
-
-
-changeGeometry : Maybe (Int, Int) -> Maybe (Int, Int) -> Geometry -> Geometry
-changeGeometry pos size geom =
-    let
-        (x, y) = Maybe.withDefault (geom.pos.x, geom.pos.y) pos
-        (width, height) = Maybe.withDefault (geom.size.width, geom.size.height) size
-    in
-        Geometry (Sel.Pos x y) (Sel.Size width height)
-
+changeGeometry : ( Int, Int, Int, Int ) -> Rectangle -> Rectangle
+changeGeometry ( x, y, width, height ) rect =
+    { rect | geometry = Geometry (Sel.Pos x y) (Sel.Size width height) }
 
 
 
 -- VIEW ##############################################################
 
 
-
-
-view : Model -> Svg.Svg msg
-view (Model model) =
+view : Rectangle -> Svg msg
+view rect =
     Svg.rect
-        ( Sel.selectionAttributes model.selection
-        ++
-        [ SvgA.x (toString model.geometry.pos.x)
-        , SvgA.y (toString model.geometry.pos.y)
-        , SvgA.width (toString model.geometry.size.width)
-        , SvgA.height (toString model.geometry.size.height)
-        ]) []
+        (Sel.selectionAttributes rect.selection
+            ++ geometryAttributes rect.geometry
+        )
+        []
 
+
+geometryAttributes : Geometry -> List (Svg.Attribute msg)
+geometryAttributes geometry =
+    [ SvgA.x (toString geometry.pos.x)
+    , SvgA.y (toString geometry.pos.y)
+    , SvgA.width (toString geometry.size.width)
+    , SvgA.height (toString geometry.size.height)
+    ]
 
 
 
 -- OUTPUTS ##############################################################
 
 
-
-
-object : Model -> JE.Value
-object (Model model) =
+object : Rectangle -> JE.Value
+object rect =
     JE.object
-        [ ("geometry", geomObject model.geometry)
-        , ("selection", Sel.selectionObject model.selection)
+        [ ( "geometry", geomObject rect.geometry )
+        , ( "selection", Sel.selectionObject rect.selection )
         ]
 
 
 geomObject : Geometry -> JE.Value
 geomObject geom =
     JE.object
-        [ ("pos", Sel.posObject geom.pos)
-        , ("size", Sel.sizeObject geom.size)
+        [ ( "pos", Sel.posObject geom.pos )
+        , ( "size", Sel.sizeObject geom.size )
         ]
 
 
-pathObject : Model -> JE.Value
-pathObject (Model model) =
+pathObject : Rectangle -> JE.Value
+pathObject rect =
     let
         -- sides
-        left = model.geometry.pos.x
-        top = model.geometry.pos.y
-        right = left + model.geometry.size.width
-        bottom = top + model.geometry.size.height
+        left =
+            rect.geometry.pos.x
+
+        top =
+            rect.geometry.pos.y
+
+        right =
+            left + rect.geometry.size.width
+
+        bottom =
+            top + rect.geometry.size.height
+
         -- corners
-        top_left = Sel.posPathObject <| Sel.Pos left top
-        bottom_left = JE.list [JE.int left, JE.int bottom]
-        bottom_right = JE.list [JE.int right, JE.int bottom]
-        top_right = JE.list [JE.int right, JE.int top]
+        top_left =
+            Sel.posPathObject <| Sel.Pos left top
+
+        bottom_left =
+            Sel.posPathObject <| Sel.Pos left bottom
+
+        bottom_right =
+            Sel.posPathObject <| Sel.Pos right bottom
+
+        top_right =
+            Sel.posPathObject <| Sel.Pos right top
     in
         JE.list
             [ top_left, bottom_left, bottom_right, top_right ]
