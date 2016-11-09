@@ -1,41 +1,16 @@
-module Helpers.Events exposing (..)
+module Helpers.Events
+    exposing
+        ( preventAndStop
+        , offsetOn
+        , movementOn
+        , on
+        , onChange
+        )
 
-import Html as H
+import Html as H exposing (Html)
 import Html.Events as HE
-import Json.Decode as J
+import Json.Decode as JD
 import Helpers.DOM as DOM
-
-
-{-| Update again a couple (model, cmd) with a new message
--}
-updateAgain :
-    (msg -> model -> ( model, Cmd msg ))
-    -> msg
-    -> ( model, Cmd msg )
-    -> ( model, Cmd msg )
-updateAgain updateFunction msg ( model, cmd ) =
-    let
-        ( model', cmd' ) =
-            updateFunction msg model
-    in
-        model' ! [ cmd, cmd' ]
-
-
-{-| Update with multiple messages in order
--}
-updateFull :
-    (msg -> model -> ( model, Cmd msg ))
-    -> model
-    -> List msg
-    -> ( model, Cmd msg )
-updateFull updateFunction model =
-    List.foldl
-        (updateAgain updateFunction)
-        ( model, Cmd.none )
-
-
-
--- ATTRIBUTE MSG ON MOUSE EVENTS #####################################
 
 
 floatToInt : ( Float, Float ) -> ( Int, Int )
@@ -43,32 +18,38 @@ floatToInt ( x, y ) =
     ( round x, round y )
 
 
+preventAndStop : HE.Options
+preventAndStop =
+    { stopPropagation = True
+    , preventDefault = True
+    }
+
+
 {-| Get the offsetX and offsetY properties of a mouse event
 -}
-offsetOn : String -> ((( Int, Int ) -> msg) -> H.Attribute msg)
-offsetOn mouseEvent =
-    specialOn mouseEvent DOM.offset floatToInt
+offsetOn : String -> (( Int, Int ) -> msg) -> H.Attribute msg
+offsetOn mouseEvent msgMaker =
+    on mouseEvent DOM.offset (msgMaker << floatToInt)
 
 
 {-| Get the movementX and movementY properties of a mouse event
 -}
-movementOn : String -> ((( Int, Int ) -> msg) -> H.Attribute msg)
-movementOn mouseEvent =
-    specialOn mouseEvent DOM.movement floatToInt
+movementOn : String -> (( Int, Int ) -> msg) -> H.Attribute msg
+movementOn mouseEvent msgMaker =
+    on mouseEvent DOM.movement (msgMaker << floatToInt)
 
 
 {-| Generic function to get results from transformed properties at a mouse event.
 It uses a decoder and a function transforming the decoder results.
 -}
-specialOn : String -> J.Decoder a -> (a -> b) -> ((b -> msg) -> H.Attribute msg)
-specialOn mouseEvent decoder transform =
-    \tagger ->
-        HE.onWithOptions
-            mouseEvent
-            { stopPropagation = True, preventDefault = True }
-            (J.map (tagger << transform) decoder)
+on : String -> JD.Decoder a -> (a -> msg) -> H.Attribute msg
+on mouseEvent decoder msgMaker =
+    HE.onWithOptions
+        mouseEvent
+        preventAndStop
+        (JD.map msgMaker decoder)
 
 
 onChange : (String -> msg) -> H.Attribute msg
-onChange tagger =
-    HE.on "change" (J.map tagger HE.targetValue)
+onChange msgMaker =
+    HE.on "change" (JD.map msgMaker HE.targetValue)
