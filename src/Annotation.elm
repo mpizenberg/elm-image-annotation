@@ -20,19 +20,20 @@ import Selections.Outline as SO exposing (Outline)
 
 
 type Selection
-    = RSel Rectangle
+    = NoSelection
+    | RSel Rectangle
     | OSel Outline
 
 
 type alias Annotation =
-    { selection : Maybe Selection
+    { selection : Selection
     , label : Maybe String
     }
 
 
 emptyAnnotation : Annotation
 emptyAnnotation =
-    { selection = Nothing
+    { selection = NoSelection
     , label = Nothing
     }
 
@@ -44,13 +45,13 @@ emptyAnnotation =
 selectionView : Annotation -> Svg msg
 selectionView { selection } =
     case selection of
-        Nothing ->
+        NoSelection ->
             Svg.text "No Selection"
 
-        Just (RSel rect) ->
+        RSel rect ->
             SR.view rect
 
-        Just (OSel outline) ->
+        OSel outline ->
             SO.view outline
 
 
@@ -64,13 +65,13 @@ optionTag currentId ( id, { selection } ) =
         [ H.text <|
             toString id
                 ++ case selection of
-                    Nothing ->
+                    NoSelection ->
                         ": No Selection"
 
-                    Just (RSel _) ->
+                    RSel _ ->
                         ": Rectangle"
 
-                    Just (OSel _) ->
+                    OSel _ ->
                         ": Outline"
         ]
 
@@ -84,13 +85,13 @@ object annotation =
     JE.object
         [ ( "selection"
           , case annotation.selection of
-                Nothing ->
+                NoSelection ->
                     JE.null
 
-                Just (RSel rect) ->
+                RSel rect ->
                     JE.object [ ( "Rectangle", SR.object rect ) ]
 
-                Just (OSel outline) ->
+                OSel outline ->
                     JE.object [ ( "Outline", SO.object outline ) ]
           )
         , ( "label"
@@ -107,13 +108,13 @@ object annotation =
 pathObject : Annotation -> JE.Value
 pathObject annotation =
     case annotation.selection of
-        Nothing ->
+        NoSelection ->
             JE.null
 
-        Just (RSel rect) ->
+        RSel rect ->
             SR.pathObject rect
 
-        Just (OSel outline) ->
+        OSel outline ->
             SO.pathObject outline
 
 
@@ -125,4 +126,4 @@ pathObject annotation =
 -}
 hasSelection : Annotation -> Bool
 hasSelection annotation =
-    annotation.selection /= Nothing
+    annotation.selection /= NoSelection
