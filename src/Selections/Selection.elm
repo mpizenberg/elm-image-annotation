@@ -31,7 +31,7 @@ type alias Size =
 
 type alias Style =
     { color : String
-    , strokeWidth : Int
+    , strokeWidth : Float
     , highlighted : Bool
     }
 
@@ -65,6 +65,15 @@ defaultSelection =
 
 
 -- UPDATE ############################################################
+
+
+changeStrokeWidth : Float -> Selection -> Selection
+changeStrokeWidth width selection =
+    let
+        oldStyle =
+            selection.style
+    in
+        { selection | style = { oldStyle | strokeWidth = width } }
 
 
 updateStartTime : Maybe Time -> Selection -> Selection
@@ -184,6 +193,6 @@ styleObject : Style -> JE.Value
 styleObject style =
     JE.object
         [ ( "color", JE.string style.color )
-        , ( "strokeWidth", JE.int style.strokeWidth )
+        , ( "strokeWidth", JE.float style.strokeWidth )
         , ( "highlighted", JE.bool style.highlighted )
         ]
