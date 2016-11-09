@@ -2,194 +2,127 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-module Annotation exposing (..)
 
+module Annotation exposing (..)
 
 {-| An annotation is the combination of a selection and a label.
 -}
 
-
-import Html as H
+import Html as H exposing (Html)
 import Html.Attributes as HA
-import Svg
+import Svg exposing (Svg)
 import Json.Encode as JE
-
-
-import Selections.RectangleSelection as RS
-import Selections.OutlineSelection as OS
-
-
+import Selections.Rectangle as SR exposing (Rectangle)
+import Selections.Outline as SO exposing (Outline)
 
 
 -- MODEL #############################################################
 
 
+type Selection
+    = RSel Rectangle
+    | OSel Outline
 
 
-type SelectionModel
-    = RSModel RS.Model
-    | OSModel OS.Model
-
-
-type SelectionMsg
-    = RSMsg RS.Msg
-    | OSMsg OS.Msg
-
-
-type alias Model_ =
-    { selection : Maybe SelectionModel
+type alias Annotation =
+    { selection : Maybe Selection
     , label : Maybe String
     }
 
 
-type Model = Model Model_
-
-
-init : Maybe SelectionModel -> Maybe String -> (Model, Cmd msg)
-init selModel label =
-    ( Model <| Model_ selModel label
-    , Cmd.none
-    )
-
-
-
-
--- UPDATE ############################################################
-
-
-
-
-type Msg
-    = Selection (Maybe SelectionMsg)
-    | Label (Maybe String)
-
-
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg (Model model) =
-    case msg of
-        Label label ->
-            (Model {model | label = label}, Cmd.none)
-        Selection selMsg ->
-            case selMsg of
-                Nothing ->
-                    ( Model <| Model_ Nothing model.label
-                    , Cmd.none
-                    )
-                Just (RSMsg rsMsg) ->
-                    updateRS rsMsg model
-                Just (OSMsg osMsg) ->
-                    updateOS osMsg model
-
-
-updateRS : RS.Msg -> Model_ -> (Model, Cmd Msg)
-updateRS rsMsg model =
-    case model.selection of
-        Nothing ->
-            updateRS
-                rsMsg
-                {model | selection = Just (RSModel RS.defaultModel)}
-        Just (OSModel _) ->
-            updateRS rsMsg {model | selection = Nothing}
-        Just (RSModel rsModel) ->
-            let
-                (rsModel', cmdRsMsg) = RS.update rsMsg rsModel
-            in
-                ( Model
-                    {model | selection = Just (RSModel rsModel')}
-                , Cmd.map (Selection << Just << RSMsg) cmdRsMsg
-                )
-
-
-updateOS : OS.Msg -> Model_ -> (Model, Cmd Msg)
-updateOS osMsg model =
-    case model.selection of
-        Nothing ->
-            updateOS
-                osMsg
-                {model | selection = Just (OSModel OS.defaultModel)}
-        Just (RSModel _) ->
-            updateOS osMsg {model | selection = Nothing}
-        Just (OSModel osModel) ->
-            let
-                (osModel', cmdOsMsg) = OS.update osMsg osModel
-            in
-                ( Model
-                    {model | selection = Just (OSModel osModel')}
-                , Cmd.map (Selection << Just << OSMsg) cmdOsMsg
-                )
-
+emptyAnnotation : Annotation
+emptyAnnotation =
+    { selection = Nothing
+    , label = Nothing
+    }
 
 
 
 -- VIEW ##############################################################
 
 
-
-
-selectionView : Model -> Svg.Svg msg
-selectionView (Model model) =
-    case model.selection of
+selectionView : Annotation -> Svg msg
+selectionView { selection } =
+    case selection of
         Nothing ->
             Svg.text "No Selection"
-        Just (RSModel rsModel) ->
-            RS.view rsModel
-        Just (OSModel osModel) ->
-            OS.view osModel
+
+        Just (RSel rect) ->
+            SR.view rect
+
+        Just (OSel outline) ->
+            SO.view outline
 
 
-optionTag : Maybe Int -> (Int, Model) -> H.Html msg
-optionTag currentId (id, (Model model)) =
+{-| An <option> tag to be put in a <select> tag.
+   currentId is the id of the currently selected option.
+-}
+optionTag : Maybe Int -> ( Int, Annotation ) -> Html msg
+optionTag currentId ( id, { selection } ) =
     H.option
-        [ HA.value (toString id), HA.selected (currentId == Just id)]
-        [ H.text <| toString id ++
-            case model.selection of
-                Nothing -> ": No Selection"
-                Just (RSModel _) -> ": Rectangle"
-                Just (OSModel _) -> ": Outline"
-        ]
+        [ HA.value (toString id), HA.selected (currentId == Just id) ]
+        [ H.text <|
+            toString id
+                ++ case selection of
+                    Nothing ->
+                        ": No Selection"
 
+                    Just (RSel _) ->
+                        ": Rectangle"
+
+                    Just (OSel _) ->
+                        ": Outline"
+        ]
 
 
 
 -- OUTPUTS ##############################################################
 
 
-
-
-object : Model -> JE.Value
-object (Model model) =
+object : Annotation -> JE.Value
+object annotation =
     JE.object
-        [ ("selection", case model.selection of
-            Nothing -> JE.null
-            Just (RSModel rsModel) ->
-                JE.object [("Rectangle", RS.object rsModel)]
-            Just (OSModel osModel) ->
-                JE.object [("Outline", OS.object osModel)]
+        [ ( "selection"
+          , case annotation.selection of
+                Nothing ->
+                    JE.null
+
+                Just (RSel rect) ->
+                    JE.object [ ( "Rectangle", SR.object rect ) ]
+
+                Just (OSel outline) ->
+                    JE.object [ ( "Outline", SO.object outline ) ]
           )
-        , ("label", case model.label of
-            Nothing -> JE.null
-            Just label -> JE.string label
+        , ( "label"
+          , case annotation.label of
+                Nothing ->
+                    JE.null
+
+                Just label ->
+                    JE.string label
           )
         ]
 
 
-selectionPathObject : Model -> JE.Value
-selectionPathObject (Model model) =
-    case model.selection of
-        Nothing -> JE.null
-        Just (RSModel rsModel) ->
-            RS.pathObject rsModel
-        Just (OSModel osModel) ->
-            OS.pathObject osModel
+pathObject : Annotation -> JE.Value
+pathObject annotation =
+    case annotation.selection of
+        Nothing ->
+            JE.null
 
+        Just (RSel rect) ->
+            SR.pathObject rect
+
+        Just (OSel outline) ->
+            SO.pathObject outline
 
 
 
 -- OTHER #############################################################
 
 
-
-{-| Indicates if the annotation has a selection -}
-hasSelection : Model -> Bool
-hasSelection (Model model) =
-    model.selection /= Nothing
+{-| Indicates if the annotation has a selection
+-}
+hasSelection : Annotation -> Bool
+hasSelection annotation =
+    annotation.selection /= Nothing
