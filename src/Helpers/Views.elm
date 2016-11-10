@@ -27,25 +27,37 @@ autoSelectTag pairs =
                     , encoder = encoder
                     , decoder = autoDecoder defaultValue pairs
                     , allValues = fst <| List.unzip pairs
+                    , compare = (==)
                     }
             in
                 selectTag config
 
 
 selectTagFromArray :
+    -- describer
     (( Int, value ) -> String)
+    -- default value
     -> value
+       -- array of values
     -> Array value
+       -- currentValue
     -> ( Int, value )
+       -- msgMaker
     -> (( Int, value ) -> msg)
+       -- <select> tag
     -> Html msg
 selectTagFromArray describer defaultValue array =
     let
+        compare : ( Int, value ) -> ( Int, value ) -> Bool
+        compare ( id1, _ ) ( id2, _ ) =
+            id1 == id2
+
         config =
             { describer = describer
             , encoder = arrayEncoder
             , decoder = arrayDecoder defaultValue array
             , allValues = Array.toIndexedList array
+            , compare = compare
             }
     in
         selectTag config
@@ -106,6 +118,7 @@ type alias SelectConfig value =
     , encoder : value -> String
     , decoder : String -> value
     , allValues : List value
+    , compare : value -> value -> Bool
     }
 
 
@@ -114,16 +127,28 @@ selectTag config currentValue msgMaker =
     H.select
         [ HPE.onChange <| msgMaker << config.decoder ]
         (List.map
-            (optionTag config.encoder config.describer currentValue)
+            (optionTag config.describer config.encoder config.compare currentValue)
             config.allValues
         )
 
 
-optionTag : (value -> String) -> (value -> String) -> value -> value -> Html msg
-optionTag encoder describer currentValue value =
+optionTag :
+    -- describer
+    (value -> String)
+    -- encoder
+    -> (value -> String)
+       -- compareFunction
+    -> (value -> value -> Bool)
+       -- currentValue
+    -> value
+       -- option value
+    -> value
+       -- <option> tag
+    -> Html msg
+optionTag describer encoder compareFunction currentValue value =
     H.option
         [ HA.value <| encoder value
-        , HA.selected (currentValue == value)
+        , HA.selected <| compareFunction currentValue value
         ]
         [ H.text <| describer value
         ]

@@ -45,8 +45,19 @@ viewLastSelection set =
         viewAllSelections <| Array.slice (length - 1) length set
 
 
-{-| Create a <select> tag with an <option> tag for each annotation
-   currentId is the id of the currently selected option.
+{-| Create a <select> tag with an <option> tag for each annotation.
+currentId is the id of the currently selected option.
+
+type Msg
+    = SelectAnnotation (Int, Annotation)
+
+currentAnnotation =
+    Maybe.withDefault Ann.emptyAnnotation <| Array.get currentId set
+
+html =
+    H.div
+        []
+        (selectTag set (currentId, currentAnnotation) SelectAnnotation)
 -}
 selectTag : AnnotationSet -> ( Int, Annotation ) -> (( Int, Annotation ) -> msg) -> Html msg
 selectTag =
