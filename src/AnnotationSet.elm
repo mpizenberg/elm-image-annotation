@@ -16,6 +16,7 @@ import Json.Encode as JE
 import Array exposing (Array)
 import Annotation as Ann exposing (Annotation)
 import Helpers.Events as HPE
+import Helpers.Views as HPV
 
 
 -- MODEL #############################################################
@@ -47,17 +48,27 @@ viewLastSelection set =
 {-| Create a <select> tag with an <option> tag for each annotation
    currentId is the id of the currently selected option.
 -}
-selectTag : Maybe Int -> (Maybe Int -> msg) -> AnnotationSet -> Html msg
-selectTag currentId msgMaker set =
-    H.select
-        [ HPE.onChange <| msgMaker << Result.toMaybe << String.toInt ]
-        (H.option
-            [ HA.value "none", HA.selected (currentId == Nothing) ]
-            [ H.text "None" ]
-            :: List.map
-                (Ann.optionTag currentId)
-                (Array.toIndexedList set)
-        )
+selectTag : AnnotationSet -> ( Int, Annotation ) -> (( Int, Annotation ) -> msg) -> Html msg
+selectTag =
+    HPV.selectTagFromArray optionDescriber Ann.emptyAnnotation
+
+
+optionDescriber : ( Int, Annotation ) -> String
+optionDescriber ( id, annotation ) =
+    toString id
+        ++ ": "
+        ++ (case annotation.selection of
+                Ann.NoSelection ->
+                    "No Selection"
+
+                Ann.RSel _ ->
+                    "Rectangle"
+
+                Ann.OSel _ ->
+                    "Outline"
+           )
+        ++ " | "
+        ++ annotation.label
 
 
 
