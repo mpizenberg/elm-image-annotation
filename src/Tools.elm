@@ -21,43 +21,10 @@ type Tool
 -- VIEW ##############################################################
 
 
-selectConfig : HPV.SelectConfig Tool
-selectConfig =
-    { describer = toolName
-    , encoder = toolName
-    , decoder = stringToTool
-    , allValues = [ None, Rectangle, Outline ]
-    }
-
-
-{-| A select form tag to change dynamically the current Tool
--}
 selectTag : Tool -> (Tool -> msg) -> Html msg
 selectTag =
-    HPV.selectTag selectConfig
-
-
-stringToTool : String -> Tool
-stringToTool toolName =
-    case toolName of
-        "Rectangle" ->
-            Rectangle
-
-        "Outline" ->
-            Outline
-
-        _ ->
-            None
-
-
-toolName : Tool -> String
-toolName tool =
-    case tool of
-        None ->
-            "None"
-
-        Rectangle ->
-            "Rectangle"
-
-        Outline ->
-            "Outline"
+    HPV.autoSelectTag
+        [ ( None, "None" )
+        , ( Rectangle, "Rectangle" )
+        , ( Outline, "Outline" )
+        ]
