@@ -27,14 +27,14 @@ type Selection
 
 type alias Annotation =
     { selection : Selection
-    , label : Maybe String
+    , label : String
     }
 
 
 emptyAnnotation : Annotation
 emptyAnnotation =
     { selection = NoSelection
-    , label = Nothing
+    , label = "No label"
     }
 
 
@@ -94,14 +94,7 @@ object annotation =
                 OSel outline ->
                     JE.object [ ( "Outline", SO.object outline ) ]
           )
-        , ( "label"
-          , case annotation.label of
-                Nothing ->
-                    JE.null
-
-                Just label ->
-                    JE.string label
-          )
+        , ( "label", JE.string annotation.label )
         ]
 
 
