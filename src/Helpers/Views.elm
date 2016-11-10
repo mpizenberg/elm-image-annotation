@@ -2,10 +2,10 @@ module Helpers.Views exposing (..)
 
 import Html as H exposing (Html)
 import Html.Attributes as HA
-import List.Extra as LE
 import Array exposing (Array)
 import String
 import Helpers.Events as HPE
+import Helpers.List as HPL
 
 
 -- AUTO SELECT #######################################################
@@ -71,7 +71,7 @@ selectTagFromArray describer defaultValue array =
 -}
 autoEncoder : string -> List ( value, string ) -> value -> string
 autoEncoder default pairs value =
-    LE.find (fst >> (==) value) pairs
+    HPL.find (fst >> (==) value) pairs
         |> Maybe.withDefault ( value, default )
         |> snd
 
@@ -80,7 +80,7 @@ autoEncoder default pairs value =
 -}
 autoDecoder : value -> List ( value, string ) -> string -> value
 autoDecoder default pairs string =
-    LE.find (snd >> (==) string) pairs
+    HPL.find (snd >> (==) string) pairs
         |> Maybe.withDefault ( default, string )
         |> fst
 
