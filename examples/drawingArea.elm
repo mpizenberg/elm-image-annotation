@@ -8,6 +8,7 @@ import Json.Encode as JE
 import DrawingArea as Area exposing (DrawingArea)
 import Annotation as Ann exposing (Annotation)
 import Tools exposing (Tool)
+import Pointer exposing (Pointer)
 
 
 main =
@@ -26,12 +27,13 @@ type alias Model =
     { area : DrawingArea
     , current : Maybe ( Int, Annotation )
     , jsonExport : String
+    , pointer : Maybe Pointer
     }
 
 
 init : Model
 init =
-    Model Area.default Nothing ""
+    Model Area.default Nothing "" Nothing
 
 
 
@@ -44,6 +46,7 @@ type Msg
     | Select (Maybe ( Int, Annotation ))
     | SelectTool Tool
     | ExportAnnotations
+    | PointerEvent Pointer
 
 
 update : Msg -> Model -> Model
@@ -79,6 +82,21 @@ update msg model =
                     JE.encode 0 <| Area.exportSelectionsPaths model.area
             }
 
+        PointerEvent pointer ->
+            { model
+                | pointer =
+                    case pointer.event of
+                        Pointer.Down ->
+                            Just pointer
+
+                        Pointer.Move ->
+                            Just pointer
+
+                        _ ->
+                            Nothing
+                , area = model.area
+            }
+
 
 
 -- VIEW ##############################################################
@@ -95,8 +113,13 @@ view model =
         , Area.selectToolTag model.area SelectTool
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
-        , Area.view [] model.area
+        , Area.view (pointerEventAttributes model.pointer) model.area
         , H.textarea [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)
         ]
+
+
+pointerEventAttributes : Maybe Pointer -> List (H.Attribute Msg)
+pointerEventAttributes =
+    Pointer.attributes PointerEvent
