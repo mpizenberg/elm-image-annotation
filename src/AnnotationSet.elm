@@ -52,7 +52,7 @@ type Msg
     = SelectAnnotation (Int, Annotation)
 
 currentAnnotation =
-    Maybe.withDefault Ann.emptyAnnotation <| Array.get currentId set
+    Maybe.withDefault Ann.default <| Array.get currentId set
 
 html =
     H.div
@@ -61,7 +61,7 @@ html =
 -}
 selectTag : AnnotationSet -> ( Int, Annotation ) -> (( Int, Annotation ) -> msg) -> Html msg
 selectTag =
-    HPV.selectTagFromArray optionDescriber Ann.emptyAnnotation
+    HPV.selectTagFromArray optionDescriber Ann.default
 
 
 optionDescriber : ( Int, Annotation ) -> String

@@ -31,8 +31,8 @@ type alias Annotation =
     }
 
 
-emptyAnnotation : Annotation
-emptyAnnotation =
+default : Annotation
+default =
     { selection = NoSelection
     , label = "No label"
     }
