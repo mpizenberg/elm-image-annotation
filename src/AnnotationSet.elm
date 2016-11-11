@@ -17,6 +17,7 @@ import Array exposing (Array)
 import Annotation as Ann exposing (Annotation)
 import Helpers.Events as HPE
 import Helpers.Views as HPV
+import Helpers.Array as HPA
 
 
 -- MODEL #############################################################
@@ -24,6 +25,15 @@ import Helpers.Views as HPV
 
 type alias AnnotationSet =
     Array Annotation
+
+
+
+-- UPDATE ############################################################
+
+
+remove : Int -> AnnotationSet -> AnnotationSet
+remove id set =
+    HPA.removeAt id set
 
 
 

@@ -1,19 +1,19 @@
 module Main exposing (..)
 
-import Html as H
+import Html as H exposing (Html)
 import Html.App as App
 import Html.Events as HE
 import Html.Attributes as HA
 import Json.Encode as JE
-import DrawingArea
-import Utils.Helpers as HP
+import DrawingArea as Area exposing (DrawingArea)
+import Annotation as Ann exposing (Annotation)
+import Tools exposing (Tool)
 
 
 main =
-    App.program
-        { init = init
+    App.beginnerProgram
+        { model = init
         , update = update
-        , subscriptions = (\_ -> Sub.none)
         , view = view
         }
 
@@ -23,20 +23,15 @@ main =
 
 
 type alias Model =
-    { drawingArea : DrawingArea.Model
+    { area : DrawingArea
+    , current : Maybe ( Int, Annotation )
     , jsonExport : String
     }
 
 
-init : ( Model, Cmd Msg )
+init : Model
 init =
-    let
-        ( drawModel, drawCmd ) =
-            DrawingArea.init
-    in
-        ( Model drawModel ""
-        , Cmd.map Draw drawCmd
-        )
+    Model Area.default Nothing ""
 
 
 
@@ -46,57 +41,58 @@ init =
 type Msg
     = NewAnnotation
     | Delete
-    | Select (Maybe Int)
+    | Select ( Int, Annotation )
+    | SelectTool Tool
     | ExportAnnotations
-    | Draw DrawingArea.Msg
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> Model
 update msg model =
     case msg of
         NewAnnotation ->
-            update (Draw DrawingArea.CreateAnnotation) model
+            { model | area = Area.create model.area }
 
         Delete ->
-            update (Draw DrawingArea.DeleteAnnotation) model
+            { model
+                | current = Nothing
+                , area =
+                    case model.current of
+                        Nothing ->
+                            model.area
 
-        Select maybeId ->
-            update (Draw <| DrawingArea.SelectAnnotation maybeId) model
+                        Just ( id, annotation ) ->
+                            Area.remove id model.area
+            }
+
+        Select ( id, annotation ) ->
+            { model | current = Just ( id, annotation ) }
+
+        SelectTool tool ->
+            { model | area = Area.useTool tool model.area }
 
         ExportAnnotations ->
-            ( { model
+            { model
                 | jsonExport =
-                    JE.encode 0 <|
-                        DrawingArea.exportSelectionsPaths model.drawingArea
-              }
-            , Cmd.none
-            )
-
-        Draw drawMsg ->
-            let
-                ( drawModel, drawCmd ) =
-                    DrawingArea.update drawMsg model.drawingArea
-            in
-                ( { model | drawingArea = drawModel }
-                , Cmd.map Draw drawCmd
-                )
+                    JE.encode 0 <| Area.exportSelectionsPaths model.area
+            }
 
 
 
 -- VIEW ##############################################################
 
 
-view : Model -> H.Html Msg
+view : Model -> Html Msg
 view model =
     H.body []
         [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
+        , H.text " Annotation: "
+        , Area.selectAnnotationTag model.area model.current Select
         , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
-        , App.map Draw <| DrawingArea.selectHtml model.drawingArea
         , H.text " Tool: "
-        , App.map Draw <| DrawingArea.selectToolView model.drawingArea
+        , Area.selectToolTag model.area SelectTool
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
-        , App.map Draw <| DrawingArea.view model.drawingArea
+        , Area.view [] model.area
         , H.textarea [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)

@@ -3,15 +3,18 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs view
+@docs create, remove, get, useTool
+@docs view, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
 @docs hasSelection
 -}
 
 import Array exposing (Array)
+import Html exposing (Html)
 import Svg exposing (Svg)
 import Json.Encode as JE
 import Image exposing (Image)
+import Annotation as Ann exposing (Annotation)
 import AnnotationSet as AnnSet exposing (AnnotationSet)
 import SvgViewer exposing (SvgViewer)
 import Tools exposing (Tool)
@@ -41,6 +44,42 @@ default =
 
 
 -- UPDATE ############################################################
+
+
+{-| Create new annotation.
+-}
+create : DrawingArea -> DrawingArea
+create area =
+    { area | annotations = Array.push Ann.default area.annotations }
+
+
+{-| Remove annotation having a certain id.
+-}
+remove : Int -> DrawingArea -> DrawingArea
+remove id area =
+    { area | annotations = AnnSet.remove id area.annotations }
+
+
+{-| Returns an annotation with its id if it exists.
+-}
+get : Int -> DrawingArea -> Maybe ( Int, Annotation )
+get id area =
+    case Array.get id area.annotations of
+        Nothing ->
+            Nothing
+
+        Just annotation ->
+            Just ( id, annotation )
+
+
+{-| Change the current tool.
+-}
+useTool : Tool -> DrawingArea -> DrawingArea
+useTool tool area =
+    { area | currentTool = tool }
+
+
+
 -- VIEW ##############################################################
 
 
@@ -49,6 +88,25 @@ default =
 view : List (Svg.Attribute msg) -> DrawingArea -> Svg msg
 view attributes area =
     SvgViewer.view attributes area.annotations area.viewer
+
+
+{-| Create a <select> tag for the annotations.
+-}
+selectAnnotationTag :
+    DrawingArea
+    -> Maybe ( Int, Annotation )
+    -> (( Int, Annotation ) -> msg)
+    -> Html msg
+selectAnnotationTag area maybeCurrent =
+    AnnSet.selectTag area.annotations <|
+        Maybe.withDefault ( -1, Ann.default ) maybeCurrent
+
+
+{-| Create a <select> tag for the tools.
+-}
+selectToolTag : DrawingArea -> (Tool -> msg) -> Html msg
+selectToolTag area =
+    Tools.selectTag area.currentTool
 
 
 
