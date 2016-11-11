@@ -26,26 +26,27 @@ attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
 attributes msgMaker currentTool previousPointer =
     case currentTool of
         Tools.None ->
-            []
+            mouseAttributes HPE.movementOn pointerMovement msgMaker currentTool previousPointer
 
         _ ->
-            autoAttributes HPE.offsetOn msgMaker currentTool previousPointer
+            mouseAttributes HPE.offsetOn pointerOffset msgMaker currentTool previousPointer
 
 
-autoAttributes :
+mouseAttributes :
     (String -> (( Int, Int ) -> msg) -> H.Attribute msg)
+    -> (Event -> ( Int, Int ) -> Pointer)
     -> (Pointer -> msg)
     -> Tool
     -> Maybe Pointer
     -> List (H.Attribute msg)
-autoAttributes eventDetector msgMaker currentTool previousPointer =
-    [ eventDetector "mousedown" <| msgMaker << (pointerOffset Down)
-    , eventDetector "mouseup" <| msgMaker << (pointerOffset Up)
+mouseAttributes mouseDetector pointerMaker msgMaker currentTool previousPointer =
+    [ mouseDetector "mousedown" <| msgMaker << (pointerMaker Down)
+    , mouseDetector "mouseup" <| msgMaker << (pointerMaker Up)
     ]
         ++ if previousPointer == Nothing then
             []
            else
-            [ eventDetector "mousemove" <| msgMaker << (pointerOffset Move) ]
+            [ mouseDetector "mousemove" <| msgMaker << (pointerMaker Move) ]
 
 
 pointerOffset : Event -> ( Int, Int ) -> Pointer
