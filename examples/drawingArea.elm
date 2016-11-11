@@ -113,13 +113,13 @@ view model =
         , Area.selectToolTag model.area SelectTool
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
-        , Area.view (pointerEventAttributes model.pointer) model.area
+        , Area.view (pointerEventAttributes model.area.currentTool model.pointer) model.area
         , H.textarea [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)
         ]
 
 
-pointerEventAttributes : Maybe Pointer -> List (H.Attribute Msg)
+pointerEventAttributes : Tool -> Maybe Pointer -> List (H.Attribute Msg)
 pointerEventAttributes =
     Pointer.attributes PointerEvent
