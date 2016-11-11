@@ -1,10 +1,10 @@
+module Main exposing (..)
+
 import Html as H
 import Html.App as App
 import Html.Events as HE
 import Html.Attributes as HA
 import Json.Encode as JE
-
-
 import DrawingArea
 import Utils.Helpers as HP
 
@@ -19,10 +19,7 @@ main =
 
 
 
-
 -- MODEL #############################################################
-
-
 
 
 type alias Model =
@@ -31,10 +28,11 @@ type alias Model =
     }
 
 
-init : (Model, Cmd Msg)
+init : ( Model, Cmd Msg )
 init =
     let
-        (drawModel, drawCmd) = DrawingArea.init
+        ( drawModel, drawCmd ) =
+            DrawingArea.init
     in
         ( Model drawModel ""
         , Cmd.map Draw drawCmd
@@ -42,10 +40,7 @@ init =
 
 
 
-
 -- UPDATE ############################################################
-
-
 
 
 type Msg
@@ -56,49 +51,53 @@ type Msg
     | Draw DrawingArea.Msg
 
 
-update : Msg -> Model -> (Model, Cmd Msg)
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewAnnotation ->
             update (Draw DrawingArea.CreateAnnotation) model
+
         Delete ->
             update (Draw DrawingArea.DeleteAnnotation) model
+
         Select maybeId ->
             update (Draw <| DrawingArea.SelectAnnotation maybeId) model
+
         ExportAnnotations ->
-            ( { model | jsonExport = JE.encode 0 <|
-                    DrawingArea.exportSelectionsPaths model.drawingArea }
+            ( { model
+                | jsonExport =
+                    JE.encode 0 <|
+                        DrawingArea.exportSelectionsPaths model.drawingArea
+              }
             , Cmd.none
             )
+
         Draw drawMsg ->
             let
-                (drawModel, drawCmd) = DrawingArea.update drawMsg model.drawingArea
+                ( drawModel, drawCmd ) =
+                    DrawingArea.update drawMsg model.drawingArea
             in
-                ( {model | drawingArea = drawModel}
+                ( { model | drawingArea = drawModel }
                 , Cmd.map Draw drawCmd
                 )
-
 
 
 
 -- VIEW ##############################################################
 
 
-
-
 view : Model -> H.Html Msg
 view model =
     H.body []
-        [ H.button [HE.onClick NewAnnotation] [H.text "New Annotation"]
-        , H.button [HE.onClick Delete] [H.text "Delete"]
+        [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
+        , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
         , App.map Draw <| DrawingArea.selectHtml model.drawingArea
         , H.text " Tool: "
         , App.map Draw <| DrawingArea.selectToolView model.drawingArea
-        , H.button [HE.onClick ExportAnnotations] [H.text "Export"]
+        , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
         , App.map Draw <| DrawingArea.view model.drawingArea
-        , H.textarea [] [H.text model.jsonExport]
+        , H.textarea [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)
         ]
-

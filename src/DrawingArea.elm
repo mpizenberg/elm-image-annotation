@@ -1,6 +1,11 @@
-module Main exposing (..)
+module DrawingArea exposing (..)
 
 {-| The DrawingArea module aims at collecting annotations.
+
+@docs DrawingArea, default
+@docs view
+@docs exportAnnotations, exportSelectionsPaths
+@docs hasSelection
 -}
 
 import Array exposing (Array)
@@ -15,6 +20,8 @@ import Tools exposing (Tool)
 -- MODEL #############################################################
 
 
+{-| A drawing area.
+-}
 type alias DrawingArea =
     { annotations : AnnotationSet
     , viewer : SvgViewer
@@ -22,6 +29,8 @@ type alias DrawingArea =
     }
 
 
+{-| The default drawing area, no annotation and no tool.
+-}
 default : DrawingArea
 default =
     { annotations = Array.empty
