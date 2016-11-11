@@ -19,8 +19,7 @@ module Helpers.DOM
         , test
         )
 
-import Json.Decode as J
-import Json.Decode exposing ((:=))
+import Json.Decode as JD exposing ((:=))
 
 
 -- DOM DECODERS (from elm-dom package)
@@ -28,7 +27,7 @@ import Json.Decode exposing ((:=))
 
 {-| Get the target DOM element of an event
 -}
-target : J.Decoder a -> J.Decoder a
+target : JD.Decoder a -> JD.Decoder a
 target decoder =
     "target" := decoder
 
@@ -38,54 +37,54 @@ Returns first argument if the current element is already the root;
 applies the second argument to the parent element if not.
 To do traversals of the DOM, exploit that Elm allows recursive values.
 -}
-offsetParent : a -> J.Decoder a -> J.Decoder a
+offsetParent : a -> JD.Decoder a -> JD.Decoder a
 offsetParent x decoder =
-    J.oneOf
-        [ "offsetParent" := J.null x
+    JD.oneOf
+        [ "offsetParent" := JD.null x
         , "offsetParent" := decoder
         ]
 
 
 {-| Get the width of an element in pixels
 -}
-offsetWidth : J.Decoder Float
+offsetWidth : JD.Decoder Float
 offsetWidth =
-    "offsetWidth" := J.float
+    "offsetWidth" := JD.float
 
 
 {-| Get the heigh of an element in pixels
 -}
-offsetHeight : J.Decoder Float
+offsetHeight : JD.Decoder Float
 offsetHeight =
-    "offsetHeight" := J.float
+    "offsetHeight" := JD.float
 
 
 {-| Get the left-offset of the element in the parent element in pixels
 -}
-offsetLeft : J.Decoder Float
+offsetLeft : JD.Decoder Float
 offsetLeft =
-    "offsetLeft" := J.float
+    "offsetLeft" := JD.float
 
 
 {-| Get the top-offset of the element in the parent element in pixels
 -}
-offsetTop : J.Decoder Float
+offsetTop : JD.Decoder Float
 offsetTop =
-    "offsetTop" := J.float
+    "offsetTop" := JD.float
 
 
 {-| Get the amount of left scroll of the element in pixels
 -}
-scrollLeft : J.Decoder Float
+scrollLeft : JD.Decoder Float
 scrollLeft =
-    "scrollLeft" := J.float
+    "scrollLeft" := JD.float
 
 
 {-| Get the amount of top scroll of the element in pixels
 -}
-scrollTop : J.Decoder Float
+scrollTop : JD.Decoder Float
 scrollTop =
-    "scrollTop" := J.float
+    "scrollTop" := JD.float
 
 
 {-| Type for rectangles
@@ -108,9 +107,9 @@ Complexity : O(lg n) traversal of the DOM,
 only now through presumably expensive JSON decoders.
 It's 2007 forever, baby!
 -}
-boundingClientRect : J.Decoder Rectangle
+boundingClientRect : JD.Decoder Rectangle
 boundingClientRect =
-    J.object3
+    JD.object3
         (\( x, y ) width height -> Rectangle x y width height)
         (position 0 0)
         offsetWidth
@@ -133,9 +132,9 @@ boundingClientRect =
 -}
 
 
-position : Float -> Float -> J.Decoder ( Float, Float )
+position : Float -> Float -> JD.Decoder ( Float, Float )
 position x y =
-    J.object4
+    JD.object4
         (\scrollLeft scrollTop offsetLeft offsetTop ->
             ( x + offsetLeft - scrollLeft, y + offsetTop - scrollTop )
         )
@@ -143,7 +142,7 @@ position x y =
         scrollTop
         offsetLeft
         offsetTop
-        `J.andThen` (\( x', y' ) -> offsetParent ( x', y' ) (position x' y'))
+        `JD.andThen` (\( x', y' ) -> offsetParent ( x', y' ) (position x' y'))
 
 
 
@@ -152,39 +151,39 @@ position x y =
 
 {-| Get the current target DOM element of an event
 -}
-currentTarget : J.Decoder a -> J.Decoder a
+currentTarget : JD.Decoder a -> JD.Decoder a
 currentTarget decoder =
     "currentTarget" := decoder
 
 
 {-| Decode the "offsetX and "offsetY" values from a JSON
 -}
-offset : J.Decoder ( Float, Float )
+offset : JD.Decoder ( Float, Float )
 offset =
-    J.object2 (,) ("offsetX" := J.float) ("offsetY" := J.float)
+    JD.object2 (,) ("offsetX" := JD.float) ("offsetY" := JD.float)
 
 
 {-| Decode the "clientX" and "clientY" values from a JSON
 -}
-client : J.Decoder ( Float, Float )
+client : JD.Decoder ( Float, Float )
 client =
-    J.object2 (,) ("clientX" := J.float) ("clientY" := J.float)
+    JD.object2 (,) ("clientX" := JD.float) ("clientY" := JD.float)
 
 
 {-| Decode the "pageX" and "pageY" values from a JSON
 -}
-page : J.Decoder ( Float, Float )
+page : JD.Decoder ( Float, Float )
 page =
-    J.object2 (,) ("pageX" := J.float) ("pageY" := J.float)
+    JD.object2 (,) ("pageX" := JD.float) ("pageY" := JD.float)
 
 
 {-| Decode computed (expensively) offset from values from a JSON.
 Should be replaced by offset when implemented correctly in firefox
 (with currentTarget instead of target).
 -}
-computedOffset : J.Decoder ( Float, Float )
+computedOffset : JD.Decoder ( Float, Float )
 computedOffset =
-    J.object2
+    JD.object2
         (\( x, y ) rect -> ( x - rect.left, y - rect.top ))
         page
         (currentTarget boundingClientRect)
@@ -192,11 +191,11 @@ computedOffset =
 
 {-| Decode the "movementX" and "movementY" values from a JSON
 -}
-movement : J.Decoder ( Float, Float )
+movement : JD.Decoder ( Float, Float )
 movement =
-    J.object2 (,) ("movementX" := J.float) ("movementY" := J.float)
+    JD.object2 (,) ("movementX" := JD.float) ("movementY" := JD.float)
 
 
-test : J.Decoder ( Float, Float )
+test : JD.Decoder ( Float, Float )
 test =
-    J.object1 (\rect -> ( rect.left, rect.top )) boundingClientRect
+    JD.object1 (\rect -> ( rect.left, rect.top )) boundingClientRect
