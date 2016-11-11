@@ -84,18 +84,22 @@ update msg model =
 
         PointerEvent pointer ->
             { model
-                | pointer =
-                    case pointer.event of
-                        Pointer.Down ->
-                            Just pointer
-
-                        Pointer.Move ->
-                            Just pointer
-
-                        _ ->
-                            Nothing
-                , area = model.area
+                | pointer = updatePointer pointer
+                , area = Area.updateArea pointer model.current model.area
             }
+
+
+updatePointer : Pointer -> Maybe Pointer
+updatePointer pointer =
+    case pointer.event of
+        Pointer.Down ->
+            Just pointer
+
+        Pointer.Move ->
+            Just pointer
+
+        _ ->
+            Nothing
 
 
 

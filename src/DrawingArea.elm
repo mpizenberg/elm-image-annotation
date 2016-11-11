@@ -3,7 +3,7 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs create, remove, get, useTool
+@docs create, remove, get, useTool, updateArea
 @docs view, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
 @docs hasSelection
@@ -18,6 +18,7 @@ import Annotation as Ann exposing (Annotation)
 import AnnotationSet as AnnSet exposing (AnnotationSet)
 import SvgViewer exposing (SvgViewer)
 import Tools exposing (Tool)
+import Pointer exposing (Pointer)
 
 
 -- MODEL #############################################################
@@ -77,6 +78,18 @@ get id area =
 useTool : Tool -> DrawingArea -> DrawingArea
 useTool tool area =
     { area | currentTool = tool }
+
+
+{-| Update the drawing area depending on the mouse event.
+-}
+updateArea : Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> DrawingArea
+updateArea pointer maybeItem area =
+    case area.currentTool of
+        Tools.None ->
+            { area | viewer = SvgViewer.update pointer area.viewer }
+
+        _ ->
+            area
 
 
 

@@ -17,8 +17,8 @@ type alias Pointer =
     { event : Event
     , offsetX : Int
     , offsetY : Int
-    , movementX : Int
-    , movementY : Int
+    , movementX : Float
+    , movementY : Float
     }
 
 
@@ -26,27 +26,32 @@ attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
 attributes msgMaker currentTool previousPointer =
     case currentTool of
         Tools.None ->
-            mouseAttributes HPE.movementOn pointerMovement msgMaker currentTool previousPointer
+            noToolAttributes msgMaker previousPointer
 
         _ ->
-            mouseAttributes HPE.offsetOn pointerOffset msgMaker currentTool previousPointer
+            toolAttributes msgMaker previousPointer
 
 
-mouseAttributes :
-    (String -> (( Float, Float ) -> msg) -> H.Attribute msg)
-    -> (Event -> ( Float, Float ) -> Pointer)
-    -> (Pointer -> msg)
-    -> Tool
-    -> Maybe Pointer
-    -> List (H.Attribute msg)
-mouseAttributes mouseDetector pointerMaker msgMaker currentTool previousPointer =
-    [ mouseDetector "mousedown" <| msgMaker << (pointerMaker Down)
-    , mouseDetector "mouseup" <| msgMaker << (pointerMaker Up)
+noToolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
+noToolAttributes msgMaker previousPointer =
+    [ HPE.movementOn "mousedown" <| msgMaker << (pointerOffset Down)
+    , HPE.movementOn "mouseup" <| msgMaker << (pointerOffset Up)
     ]
         ++ if previousPointer == Nothing then
             []
            else
-            [ mouseDetector "mousemove" <| msgMaker << (pointerMaker Move) ]
+            [ HPE.movementOn "mousemove" <| msgMaker << (pointerMovement Move) ]
+
+
+toolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
+toolAttributes msgMaker previousPointer =
+    [ HPE.offsetOn "mousedown" <| msgMaker << (pointerOffset Down)
+    , HPE.offsetOn "mouseup" <| msgMaker << (pointerOffset Up)
+    ]
+        ++ if previousPointer == Nothing then
+            []
+           else
+            [ HPE.offsetOn "mousemove" <| msgMaker << (pointerOffset Move) ]
 
 
 pointerOffset : Event -> ( Float, Float ) -> Pointer
@@ -64,6 +69,6 @@ pointerMovement event ( movementX, movementY ) =
     { event = event
     , offsetX = 0
     , offsetY = 0
-    , movementX = round movementX
-    , movementY = round movementY
+    , movementX = movementX
+    , movementY = movementY
     }

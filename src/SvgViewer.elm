@@ -7,6 +7,7 @@ import Svg.Attributes as SvgA
 import Html.Attributes as HA
 import Image exposing (Image)
 import AnnotationSet as AnnSet exposing (AnnotationSet)
+import Pointer exposing (Pointer)
 
 
 -- MODEL #############################################################
@@ -116,6 +117,23 @@ reCenter ( x, y ) viewer =
             | origin =
                 ( x - 0.5 * width / viewer.zoom
                 , y - 0.5 * height / viewer.zoom
+                )
+        }
+
+
+update : Pointer -> SvgViewer -> SvgViewer
+update pointer viewer =
+    let
+        ( left, top ) =
+            viewer.origin
+
+        ( dx, dy ) =
+            ( pointer.movementX, pointer.movementY )
+    in
+        { viewer
+            | origin =
+                ( left - dx / viewer.zoom
+                , top - dy / viewer.zoom
                 )
         }
 
