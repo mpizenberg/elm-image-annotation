@@ -53,16 +53,19 @@ update msg model =
             { model | area = Area.create model.area }
 
         Delete ->
-            { model
-                | current = Nothing
-                , area =
-                    case model.current of
-                        Nothing ->
-                            model.area
+            case model.current of
+                Nothing ->
+                    model
 
-                        Just ( id, annotation ) ->
+                Just ( id, annotation ) ->
+                    let
+                        area =
                             Area.remove id model.area
-            }
+
+                        current =
+                            Area.get 0 model.area
+                    in
+                        { model | area = area, current = current }
 
         Select ( id, annotation ) ->
             { model | current = Just ( id, annotation ) }
