@@ -41,7 +41,7 @@ init =
 type Msg
     = NewAnnotation
     | Delete
-    | Select ( Int, Annotation )
+    | Select (Maybe ( Int, Annotation ))
     | SelectTool Tool
     | ExportAnnotations
 
@@ -63,12 +63,12 @@ update msg model =
                             Area.remove id model.area
 
                         current =
-                            Area.get 0 model.area
+                            Area.get 0 area
                     in
                         { model | area = area, current = current }
 
-        Select ( id, annotation ) ->
-            { model | current = Just ( id, annotation ) }
+        Select maybeItem ->
+            { model | current = maybeItem }
 
         SelectTool tool ->
             { model | area = Area.useTool tool model.area }

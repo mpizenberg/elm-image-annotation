@@ -69,27 +69,36 @@ html =
         []
         (selectTag set (currentId, currentAnnotation) SelectAnnotation)
 -}
-selectTag : AnnotationSet -> ( Int, Annotation ) -> (( Int, Annotation ) -> msg) -> Html msg
+selectTag :
+    AnnotationSet
+    -> Maybe ( Int, Annotation )
+    -> (Maybe ( Int, Annotation ) -> msg)
+    -> Html msg
 selectTag =
-    HPV.selectTagFromArray optionDescriber Ann.default
+    HPV.selectTagFromArray optionDescriber
 
 
-optionDescriber : ( Int, Annotation ) -> String
-optionDescriber ( id, annotation ) =
-    toString id
-        ++ ": "
-        ++ (case annotation.selection of
-                Ann.NoSelection ->
-                    "No Selection"
+optionDescriber : Maybe ( Int, Annotation ) -> String
+optionDescriber maybeItem =
+    case maybeItem of
+        Nothing ->
+            ""
 
-                Ann.RSel _ ->
-                    "Rectangle"
+        Just ( id, annotation ) ->
+            toString id
+                ++ ": "
+                ++ (case annotation.selection of
+                        Ann.NoSelection ->
+                            "No Selection"
 
-                Ann.OSel _ ->
-                    "Outline"
-           )
-        ++ " | "
-        ++ annotation.label
+                        Ann.RSel _ ->
+                            "Rectangle"
+
+                        Ann.OSel _ ->
+                            "Outline"
+                   )
+                ++ " | "
+                ++ annotation.label
 
 
 

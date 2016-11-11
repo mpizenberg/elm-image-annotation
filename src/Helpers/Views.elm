@@ -35,28 +35,38 @@ autoSelectTag pairs =
 
 selectTagFromArray :
     -- describer
-    (( Int, value ) -> String)
-    -- default value
-    -> value
-       -- array of values
+    (Maybe ( Int, value ) -> String)
+    -- array of values
     -> Array value
        -- currentValue
-    -> ( Int, value )
+    -> Maybe ( Int, value )
        -- msgMaker
-    -> (( Int, value ) -> msg)
+    -> (Maybe ( Int, value ) -> msg)
        -- <select> tag
     -> Html msg
-selectTagFromArray describer defaultValue array =
+selectTagFromArray describer array =
     let
-        compare : ( Int, value ) -> ( Int, value ) -> Bool
-        compare ( id1, _ ) ( id2, _ ) =
-            id1 == id2
+        compare : Maybe ( Int, value ) -> Maybe ( Int, value ) -> Bool
+        compare maybe1 maybe2 =
+            case ( maybe1, maybe2 ) of
+                ( Nothing, Nothing ) ->
+                    True
+
+                ( Just ( id1, _ ), Just ( id2, _ ) ) ->
+                    id1 == id2
+
+                _ ->
+                    False
+
+        -- allValues : List (Maybe ( Int, value ))
+        allValues =
+            Nothing :: (List.map Just <| Array.toIndexedList array)
 
         config =
             { describer = describer
             , encoder = arrayEncoder
-            , decoder = arrayDecoder defaultValue array
-            , allValues = Array.toIndexedList array
+            , decoder = arrayDecoder array
+            , allValues = allValues
             , compare = compare
             }
     in
@@ -87,26 +97,31 @@ autoDecoder default pairs string =
 
 {-| An encoder for when dealing with elements of an array
 -}
-arrayEncoder : ( Int, value ) -> String
-arrayEncoder ( id, value ) =
-    toString id
+arrayEncoder : Maybe ( Int, value ) -> String
+arrayEncoder maybeItem =
+    case maybeItem of
+        Nothing ->
+            "-1"
+
+        Just ( id, value ) ->
+            toString id
 
 
 {-| A decoder for when dealing with elements of an array
 -}
-arrayDecoder : value -> Array value -> String -> ( Int, value )
-arrayDecoder defaultValue array stringId =
+arrayDecoder : Array value -> String -> Maybe ( Int, value )
+arrayDecoder array stringId =
     case String.toInt stringId of
         Err _ ->
-            ( -1, defaultValue )
+            Nothing
 
         Ok id ->
             case Array.get id array of
                 Nothing ->
-                    ( -1, defaultValue )
+                    Nothing
 
                 Just value ->
-                    ( id, value )
+                    Just ( id, value )
 
 
 

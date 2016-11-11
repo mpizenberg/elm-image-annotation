@@ -95,11 +95,10 @@ view attributes area =
 selectAnnotationTag :
     DrawingArea
     -> Maybe ( Int, Annotation )
-    -> (( Int, Annotation ) -> msg)
+    -> (Maybe ( Int, Annotation ) -> msg)
     -> Html msg
-selectAnnotationTag area maybeCurrent =
-    AnnSet.selectTag area.annotations <|
-        Maybe.withDefault ( -1, Ann.default ) maybeCurrent
+selectAnnotationTag area =
+    AnnSet.selectTag area.annotations
 
 
 {-| Create a <select> tag for the tools.
