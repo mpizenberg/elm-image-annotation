@@ -33,8 +33,8 @@ attributes msgMaker currentTool previousPointer =
 
 
 mouseAttributes :
-    (String -> (( Int, Int ) -> msg) -> H.Attribute msg)
-    -> (Event -> ( Int, Int ) -> Pointer)
+    (String -> (( Float, Float ) -> msg) -> H.Attribute msg)
+    -> (Event -> ( Float, Float ) -> Pointer)
     -> (Pointer -> msg)
     -> Tool
     -> Maybe Pointer
@@ -49,21 +49,21 @@ mouseAttributes mouseDetector pointerMaker msgMaker currentTool previousPointer 
             [ mouseDetector "mousemove" <| msgMaker << (pointerMaker Move) ]
 
 
-pointerOffset : Event -> ( Int, Int ) -> Pointer
+pointerOffset : Event -> ( Float, Float ) -> Pointer
 pointerOffset event ( offsetX, offsetY ) =
     { event = event
-    , offsetX = offsetX
-    , offsetY = offsetY
+    , offsetX = round offsetX
+    , offsetY = round offsetY
     , movementX = 0
     , movementY = 0
     }
 
 
-pointerMovement : Event -> ( Int, Int ) -> Pointer
+pointerMovement : Event -> ( Float, Float ) -> Pointer
 pointerMovement event ( movementX, movementY ) =
     { event = event
     , offsetX = 0
     , offsetY = 0
-    , movementX = movementX
-    , movementY = movementY
+    , movementX = round movementX
+    , movementY = round movementY
     }

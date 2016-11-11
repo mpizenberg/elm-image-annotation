@@ -27,16 +27,16 @@ preventAndStop =
 
 {-| Get the offsetX and offsetY properties of a mouse event
 -}
-offsetOn : String -> (( Int, Int ) -> msg) -> H.Attribute msg
+offsetOn : String -> (( Float, Float ) -> msg) -> H.Attribute msg
 offsetOn mouseEvent msgMaker =
-    on mouseEvent DOM.offset (msgMaker << floatToInt)
+    on mouseEvent DOM.offset msgMaker
 
 
 {-| Get the movementX and movementY properties of a mouse event
 -}
-movementOn : String -> (( Int, Int ) -> msg) -> H.Attribute msg
+movementOn : String -> (( Float, Float ) -> msg) -> H.Attribute msg
 movementOn mouseEvent msgMaker =
-    on mouseEvent DOM.movement (msgMaker << floatToInt)
+    on mouseEvent DOM.movement msgMaker
 
 
 {-| Generic function to get results from transformed properties at a mouse event.
