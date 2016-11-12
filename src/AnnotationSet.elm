@@ -18,6 +18,7 @@ import Annotation as Ann exposing (Annotation)
 import Helpers.Events as HPE
 import Helpers.Views as HPV
 import Helpers.Array as HPA
+import Tools exposing (Tool)
 
 
 -- MODEL #############################################################
@@ -34,6 +35,16 @@ type alias AnnotationSet =
 remove : Int -> AnnotationSet -> AnnotationSet
 remove id set =
     HPA.removeAt id set
+
+
+update : ( Int, Int ) -> ( Int, Int ) -> Tool -> Maybe ( Int, Annotation ) -> AnnotationSet -> AnnotationSet
+update origin newPos tool maybeItem set =
+    case maybeItem of
+        Nothing ->
+            set
+
+        Just ( id, annotation ) ->
+            Array.set id (Ann.update origin newPos tool annotation) set
 
 
 

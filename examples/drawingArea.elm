@@ -28,12 +28,13 @@ type alias Model =
     , current : Maybe ( Int, Annotation )
     , jsonExport : String
     , pointer : Maybe Pointer
+    , downOrigin : ( Float, Float )
     }
 
 
 init : Model
 init =
-    Model Area.default Nothing "" Nothing
+    Model Area.default Nothing "" Nothing ( 0, 0 )
 
 
 
@@ -83,10 +84,20 @@ update msg model =
             }
 
         PointerEvent pointer ->
-            { model
-                | pointer = updatePointer pointer
-                , area = Area.updateArea pointer model.current model.area
-            }
+            let
+                downOrigin =
+                    case pointer.event of
+                        Pointer.Down ->
+                            ( pointer.offsetX, pointer.offsetY )
+
+                        _ ->
+                            model.downOrigin
+            in
+                { model
+                    | pointer = updatePointer pointer
+                    , area = Area.updateArea downOrigin pointer model.current model.area
+                    , downOrigin = downOrigin
+                }
 
 
 updatePointer : Pointer -> Maybe Pointer

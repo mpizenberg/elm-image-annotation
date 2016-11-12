@@ -14,6 +14,7 @@ import Svg exposing (Svg)
 import Json.Encode as JE
 import Selections.Rectangle as SR exposing (Rectangle)
 import Selections.Outline as SO exposing (Outline)
+import Tools exposing (Tool)
 
 
 -- MODEL #############################################################
@@ -36,6 +37,36 @@ default =
     { selection = NoSelection
     , label = "No label"
     }
+
+
+
+-- UPDATE ############################################################
+
+
+update : ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
+update origin newPos tool annotation =
+    case tool of
+        Tools.None ->
+            annotation
+
+        Tools.Rectangle ->
+            let
+                rectangle =
+                    case annotation.selection of
+                        NoSelection ->
+                            SR.defaultRectangle
+
+                        RSel rect ->
+                            rect
+
+                        OSel outline ->
+                            SR.defaultRectangle |> SR.changeSel outline.selection
+            in
+                { annotation | selection = RSel <| SR.update origin newPos rectangle }
+
+        Tools.Outline ->
+            -- TODO
+            annotation
 
 
 

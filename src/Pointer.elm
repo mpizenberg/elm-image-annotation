@@ -15,8 +15,8 @@ type Event
 
 type alias Pointer =
     { event : Event
-    , offsetX : Int
-    , offsetY : Int
+    , offsetX : Float
+    , offsetY : Float
     , movementX : Float
     , movementY : Float
     }
@@ -57,8 +57,8 @@ toolAttributes msgMaker previousPointer =
 pointerOffset : Event -> ( Float, Float ) -> Pointer
 pointerOffset event ( offsetX, offsetY ) =
     { event = event
-    , offsetX = round offsetX
-    , offsetY = round offsetY
+    , offsetX = offsetX
+    , offsetY = offsetY
     , movementX = 0
     , movementY = 0
     }

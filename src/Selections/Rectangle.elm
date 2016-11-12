@@ -30,6 +30,26 @@ defaultGeometry =
     }
 
 
+geomFrom2Points : ( Int, Int ) -> ( Int, Int ) -> Geometry
+geomFrom2Points ( x1, y1 ) ( x2, y2 ) =
+    let
+        left =
+            min x1 x2
+
+        top =
+            min y1 y2
+
+        width =
+            abs (x1 - x2)
+
+        height =
+            abs (y1 - y2)
+    in
+        { pos = Sel.Pos left top
+        , size = Sel.Size width height
+        }
+
+
 type alias Rectangle =
     { selection : Selection
     , geometry : Geometry
@@ -47,6 +67,11 @@ defaultRectangle =
 -- UPDATE ############################################################
 
 
+changeSel : Sel.Selection -> Rectangle -> Rectangle
+changeSel sel rect =
+    { rect | selection = sel }
+
+
 changeStrokeWidth : Float -> Rectangle -> Rectangle
 changeStrokeWidth width rect =
     { rect | selection = Sel.changeStrokeWidth width rect.selection }
@@ -55,6 +80,11 @@ changeStrokeWidth width rect =
 changeGeometry : ( Int, Int, Int, Int ) -> Rectangle -> Rectangle
 changeGeometry ( x, y, width, height ) rect =
     { rect | geometry = Geometry (Sel.Pos x y) (Sel.Size width height) }
+
+
+update : ( Int, Int ) -> ( Int, Int ) -> Rectangle -> Rectangle
+update origin newPos rect =
+    { rect | geometry = geomFrom2Points origin newPos }
 
 
 
