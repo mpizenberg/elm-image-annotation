@@ -63,15 +63,6 @@ viewAllSelections set =
         |> Array.toList
 
 
-viewLastSelection : AnnotationSet -> List (Svg msg)
-viewLastSelection set =
-    let
-        length =
-            Array.length set
-    in
-        viewAllSelections <| Array.slice (length - 1) length set
-
-
 {-| Create a <select> tag with an <option> tag for each annotation.
 currentId is the id of the currently selected option.
 

@@ -25,8 +25,7 @@ type alias OptionSet =
 defaultOptions : OptionSet
 defaultOptions =
     Dict.fromList
-        [ ( "LastAnnotationOnly", True )
-        ]
+        []
 
 
 type alias SvgViewer =
@@ -171,10 +170,7 @@ view attributes set viewer =
                 Just image ->
                     [ Image.viewSvg [] Nothing image ]
              )
-                ++ if (optionValue "LastAnnotationOnly" viewer) then
-                    AnnSet.viewLastSelection set
-                   else
-                    AnnSet.viewAllSelections set
+                ++ AnnSet.viewAllSelections set
             )
         ]
 
