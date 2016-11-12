@@ -4,6 +4,7 @@ module DrawingArea exposing (..)
 
 @docs DrawingArea, default
 @docs create, remove, get, useTool, updateArea
+@docs changeBgImage, fitImage
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
 @docs hasSelection
@@ -119,6 +120,20 @@ updateArea origin pointer current area =
                 ( newCurrent
                 , { area | annotations = newSet }
                 )
+
+
+{-| Change the background image.
+-}
+changeBgImage : Maybe Image -> DrawingArea -> DrawingArea
+changeBgImage maybeImage area =
+    { area | viewer = SvgViewer.changeBgImage maybeImage area.viewer }
+
+
+{-| Adapt the view so that the image fit a certain percentage of the view.
+-}
+fitImage : Float -> DrawingArea -> DrawingArea
+fitImage ratio area =
+    { area | viewer = SvgViewer.fitImage ratio area.viewer }
 
 
 

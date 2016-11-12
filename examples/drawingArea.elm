@@ -10,6 +10,7 @@ import DrawingArea as Area exposing (DrawingArea)
 import Annotation as Ann exposing (Annotation)
 import Tools exposing (Tool)
 import Pointer exposing (Pointer)
+import Image exposing (Image)
 
 
 main =
@@ -35,7 +36,15 @@ type alias Model =
 
 init : Model
 init =
-    Model Area.default Nothing "" Nothing ( 0, 0 )
+    Model
+        (Area.default
+            |> Area.changeBgImage (Just (Image "http://lorempixel.com/200/200" 200 200))
+            |> Area.fitImage 0.8
+        )
+        Nothing
+        ""
+        Nothing
+        ( 0, 0 )
 
 
 

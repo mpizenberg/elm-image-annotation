@@ -56,6 +56,35 @@ changeBgImage maybeImage viewer =
     { viewer | bgImage = maybeImage }
 
 
+fitImage : Float -> SvgViewer -> SvgViewer
+fitImage ratio viewer =
+    case viewer.bgImage of
+        Nothing ->
+            viewer
+
+        Just image ->
+            let
+                ( vW, vH ) =
+                    viewer.size
+
+                ( imW, imH ) =
+                    ( toFloat image.width, toFloat image.height )
+
+                zoom =
+                    ratio * min (vW / imW) (vH / imH)
+
+                origin =
+                    ( 0.5 * (imW - vW / zoom)
+                    , 0.5 * (imH - vH / zoom)
+                    )
+            in
+                { viewer
+                    | bgImage = Just image
+                    , origin = origin
+                    , zoom = zoom
+                }
+
+
 optionValue : Option -> SvgViewer -> Bool
 optionValue option viewer =
     case Dict.get option viewer.options of
