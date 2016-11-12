@@ -67,6 +67,11 @@ defaultSelection =
 -- UPDATE ############################################################
 
 
+changeSel : Selection -> { a | selection : Selection } -> { a | selection : Selection }
+changeSel selCommon selection =
+    { selection | selection = selCommon }
+
+
 changeStrokeWidth : Float -> Selection -> Selection
 changeStrokeWidth width selection =
     let

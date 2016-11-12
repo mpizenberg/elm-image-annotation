@@ -67,11 +67,6 @@ defaultRectangle =
 -- UPDATE ############################################################
 
 
-changeSel : Sel.Selection -> Rectangle -> Rectangle
-changeSel sel rect =
-    { rect | selection = sel }
-
-
 changeStrokeWidth : Float -> Rectangle -> Rectangle
 changeStrokeWidth width rect =
     { rect | selection = Sel.changeStrokeWidth width rect.selection }

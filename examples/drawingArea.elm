@@ -92,10 +92,14 @@ update msg model =
 
                         _ ->
                             model.downOrigin
+
+                ( newCurrent, newArea ) =
+                    Area.updateArea downOrigin pointer model.current model.area
             in
                 { model
                     | pointer = updatePointer pointer
-                    , area = Area.updateArea downOrigin pointer model.current model.area
+                    , area = newArea
+                    , current = newCurrent
                     , downOrigin = downOrigin
                 }
 

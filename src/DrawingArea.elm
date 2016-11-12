@@ -82,7 +82,7 @@ useTool tool area =
 
 {-| Update the drawing area depending on the mouse event.
 -}
-updateArea : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> DrawingArea
+updateArea : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
 updateArea origin pointer maybeItem area =
     case area.currentTool of
         Tools.None ->
@@ -93,20 +93,32 @@ updateArea origin pointer maybeItem area =
                 moveY =
                     pointer.movementY
             in
-                { area | viewer = SvgViewer.move ( moveX, moveY ) area.viewer }
+                ( Nothing
+                , { area | viewer = SvgViewer.move ( moveX, moveY ) area.viewer }
+                )
 
         _ ->
             let
+                event =
+                    case pointer.event of
+                        Pointer.Down ->
+                            Ann.Start
+
+                        _ ->
+                            Ann.Continue
+
                 ( x, y ) =
                     SvgViewer.transformPos area.viewer ( pointer.offsetX, pointer.offsetY )
 
                 ( ox, oy ) =
                     SvgViewer.transformPos area.viewer origin
+
+                ( newCurrent, newSet ) =
+                    AnnSet.update event ( ox, oy ) ( x, y ) area.currentTool maybeItem area.annotations
             in
-                { area
-                    | annotations =
-                        AnnSet.update ( ox, oy ) ( x, y ) area.currentTool maybeItem area.annotations
-                }
+                ( newCurrent
+                , { area | annotations = newSet }
+                )
 
 
 

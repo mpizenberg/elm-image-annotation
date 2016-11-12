@@ -12,6 +12,7 @@ import Html as H exposing (Html)
 import Html.Attributes as HA
 import Svg exposing (Svg)
 import Json.Encode as JE
+import Selections.Selection as Sel
 import Selections.Rectangle as SR exposing (Rectangle)
 import Selections.Outline as SO exposing (Outline)
 import Tools exposing (Tool)
@@ -24,6 +25,11 @@ type Selection
     = NoSelection
     | RSel Rectangle
     | OSel Outline
+
+
+type Event
+    = Start
+    | Continue
 
 
 type alias Annotation =
@@ -43,8 +49,8 @@ default =
 -- UPDATE ############################################################
 
 
-update : ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
-update origin newPos tool annotation =
+update : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
+update event origin newPos tool annotation =
     case tool of
         Tools.None ->
             annotation
@@ -60,13 +66,29 @@ update origin newPos tool annotation =
                             rect
 
                         OSel outline ->
-                            SR.defaultRectangle |> SR.changeSel outline.selection
+                            SR.defaultRectangle |> Sel.changeSel outline.selection
             in
                 { annotation | selection = RSel <| SR.update origin newPos rectangle }
 
         Tools.Outline ->
-            -- TODO
-            annotation
+            let
+                outline =
+                    case annotation.selection of
+                        NoSelection ->
+                            SO.defaultOutline
+
+                        RSel rect ->
+                            SO.defaultOutline |> Sel.changeSel rect.selection
+
+                        OSel oldOutline ->
+                            case event of
+                                Start ->
+                                    SO.resetPath oldOutline
+
+                                _ ->
+                                    oldOutline
+            in
+                { annotation | selection = OSel <| SO.addPoint newPos outline }
 
 
 
