@@ -140,7 +140,19 @@ view model =
         , Area.selectToolTag model.area SelectTool
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
-        , Area.view (pointerEventAttributes model.area.currentTool model.pointer) model.area
+        , let
+            annotation =
+                case model.current of
+                    Nothing ->
+                        Nothing
+
+                    Just ( id, ann ) ->
+                        Just ann
+          in
+            Area.viewAnnotation
+                (pointerEventAttributes model.area.currentTool model.pointer)
+                annotation
+                model.area
         , H.textarea [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)

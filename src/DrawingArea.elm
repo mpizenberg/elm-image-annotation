@@ -4,7 +4,7 @@ module DrawingArea exposing (..)
 
 @docs DrawingArea, default
 @docs create, remove, get, useTool, updateArea
-@docs view, selectAnnotationTag, selectToolTag
+@docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
 @docs hasSelection
 -}
@@ -130,6 +130,22 @@ updateArea origin pointer current area =
 view : List (Svg.Attribute msg) -> DrawingArea -> Svg msg
 view attributes area =
     SvgViewer.view attributes area.annotations area.viewer
+
+
+{-| View the given annotation.
+-}
+viewAnnotation : List (Svg.Attribute msg) -> Maybe Annotation -> DrawingArea -> Svg msg
+viewAnnotation attributes maybeAnn area =
+    let
+        annotation =
+            case maybeAnn of
+                Nothing ->
+                    Array.empty
+
+                Just ann ->
+                    Array.fromList [ ann ]
+    in
+        view attributes { area | annotations = annotation }
 
 
 {-| Create a <select> tag for the annotations.
