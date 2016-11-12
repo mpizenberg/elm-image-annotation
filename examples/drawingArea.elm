@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Array exposing (Array)
 import Html as H exposing (Html)
 import Html.App as App
 import Html.Events as HE
@@ -54,7 +55,14 @@ update : Msg -> Model -> Model
 update msg model =
     case msg of
         NewAnnotation ->
-            { model | area = Area.create model.area }
+            let
+                area =
+                    Area.create model.area
+
+                length =
+                    Array.length area.annotations
+            in
+                { model | area = area, current = Area.get (length - 1) area }
 
         Delete ->
             case model.current of
