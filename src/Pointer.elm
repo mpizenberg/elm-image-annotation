@@ -34,28 +34,28 @@ attributes msgMaker currentTool previousPointer =
 
 noToolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
 noToolAttributes msgMaker previousPointer =
-    [ HPE.movementOn "mousedown" <| msgMaker << (pointerOffset Down)
-    , HPE.movementOn "mouseup" <| msgMaker << (pointerOffset Up)
+    [ HPE.movementOn "mousedown" <| msgMaker << (fromOffset Down)
+    , HPE.movementOn "mouseup" <| msgMaker << (fromOffset Up)
     ]
         ++ if previousPointer == Nothing then
             []
            else
-            [ HPE.movementOn "mousemove" <| msgMaker << (pointerMovement Move) ]
+            [ HPE.movementOn "mousemove" <| msgMaker << (fromMovement Move) ]
 
 
 toolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
 toolAttributes msgMaker previousPointer =
-    [ HPE.offsetOn "mousedown" <| msgMaker << (pointerOffset Down)
-    , HPE.offsetOn "mouseup" <| msgMaker << (pointerOffset Up)
+    [ HPE.offsetOn "mousedown" <| msgMaker << (fromOffset Down)
+    , HPE.offsetOn "mouseup" <| msgMaker << (fromOffset Up)
     ]
         ++ if previousPointer == Nothing then
             []
            else
-            [ HPE.offsetOn "mousemove" <| msgMaker << (pointerOffset Move) ]
+            [ HPE.offsetOn "mousemove" <| msgMaker << (fromOffset Move) ]
 
 
-pointerOffset : Event -> ( Float, Float ) -> Pointer
-pointerOffset event ( offsetX, offsetY ) =
+fromOffset : Event -> ( Float, Float ) -> Pointer
+fromOffset event ( offsetX, offsetY ) =
     { event = event
     , offsetX = offsetX
     , offsetY = offsetY
@@ -64,8 +64,8 @@ pointerOffset event ( offsetX, offsetY ) =
     }
 
 
-pointerMovement : Event -> ( Float, Float ) -> Pointer
-pointerMovement event ( movementX, movementY ) =
+fromMovement : Event -> ( Float, Float ) -> Pointer
+fromMovement event ( movementX, movementY ) =
     { event = event
     , offsetX = 0
     , offsetY = 0
