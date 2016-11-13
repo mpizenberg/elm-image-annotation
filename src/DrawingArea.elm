@@ -3,7 +3,8 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs createAnnotation, removeAnnotation, getAnnotation, setAnnotation, useTool, updateArea, updateAnnotation
+@docs createAnnotation, removeAnnotation, getAnnotation, setAnnotation
+@docs useTool, updateArea, updateAnnotation
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths

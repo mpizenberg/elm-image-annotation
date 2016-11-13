@@ -88,6 +88,7 @@ update msg model =
                 length =
                     Array.length area.annotations
             in
+                -- Select the newly created annotation as the current one.
                 { model | area = area, current = Area.getAnnotation (length - 1) area }
                     ! []
 
@@ -101,11 +102,11 @@ update msg model =
                         area =
                             Area.removeAnnotation id model.area
 
+                        -- Select the first annotation as the new current annotation.
                         current =
                             Area.getAnnotation 0 area
                     in
-                        { model | area = area, current = current }
-                            ! []
+                        { model | area = area, current = current } ! []
 
         Select maybeItem ->
             { model | current = maybeItem } ! []
@@ -263,7 +264,7 @@ view model =
                         Just ann
           in
             Area.viewAnnotation
-                ((pointerEventAttributes model.area.currentTool model.pointer)
+                ((Pointer.attributes PointerEvent model.area.currentTool model.pointer)
                     ++ [ HA.style [ ( "border", "1px solid black" ) ] ]
                 )
                 annotation
@@ -272,8 +273,3 @@ view model =
         , H.br [] []
         , H.text (toString model)
         ]
-
-
-pointerEventAttributes : Tool -> Maybe Pointer -> List (H.Attribute Msg)
-pointerEventAttributes =
-    Pointer.attributes PointerEvent
