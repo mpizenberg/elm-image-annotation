@@ -43,7 +43,7 @@ It holds all the geometric properties of the view.
 @docs transformPos, transformSize
 
 # View
-view
+@docs view
 -}
 
 import Dict exposing (Dict)
