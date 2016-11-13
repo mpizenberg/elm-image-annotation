@@ -14,9 +14,10 @@ import Image exposing (Image)
 
 
 main =
-    App.beginnerProgram
-        { model = init
+    App.program
+        { init = init
         , update = update
+        , subscriptions = always Sub.none
         , view = view
         }
 
@@ -40,7 +41,7 @@ type alias Model =
     }
 
 
-init : Model
+init : ( Model, Cmd msg )
 init =
     Model
         (Area.default
@@ -52,6 +53,7 @@ init =
         Nothing
         ( 0, 0 )
         ""
+        ! []
 
 
 
@@ -70,7 +72,7 @@ type Msg
     | ApplyLabel
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewAnnotation ->
@@ -82,11 +84,12 @@ update msg model =
                     Array.length area.annotations
             in
                 { model | area = area, current = Area.getAnnotation (length - 1) area }
+                    ! []
 
         Delete ->
             case model.current of
                 Nothing ->
-                    model
+                    model ! []
 
                 Just ( id, annotation ) ->
                     let
@@ -97,18 +100,20 @@ update msg model =
                             Area.getAnnotation 0 area
                     in
                         { model | area = area, current = current }
+                            ! []
 
         Select maybeItem ->
-            { model | current = maybeItem }
+            { model | current = maybeItem } ! []
 
         SelectTool tool ->
-            { model | area = Area.useTool tool model.area }
+            { model | area = Area.useTool tool model.area } ! []
 
         ExportAnnotations ->
             { model
                 | jsonExport =
                     JE.encode 0 <| Area.exportSelectionsPaths model.area
             }
+                ! []
 
         PointerEvent pointer ->
             let
@@ -129,22 +134,23 @@ update msg model =
                     , current = newCurrent
                     , downOrigin = downOrigin
                 }
+                    ! []
 
         Zoom var ->
             case var of
                 ZoomIn ->
-                    { model | area = Area.zoomIn model.area }
+                    { model | area = Area.zoomIn model.area } ! []
 
                 ZoomOut ->
-                    { model | area = Area.zoomOut model.area }
+                    { model | area = Area.zoomOut model.area } ! []
 
         ChangeLabel label ->
-            { model | label = label }
+            { model | label = label } ! []
 
         ApplyLabel ->
             case model.current of
                 Nothing ->
-                    model
+                    model ! []
 
                 Just ( id, annotation ) ->
                     let
@@ -157,7 +163,7 @@ update msg model =
                         area =
                             Area.setAnnotation id ann model.area
                     in
-                        { model | area = area, current = current }
+                        { model | area = area, current = current } ! []
 
 
 updatePointer : Pointer -> Maybe Pointer
