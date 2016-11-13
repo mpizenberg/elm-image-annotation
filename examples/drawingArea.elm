@@ -5,7 +5,6 @@
 
 module Main exposing (..)
 
-import Array exposing (Array)
 import Html as H exposing (Html)
 import Html.App as App
 import Html.Events as HE
@@ -90,7 +89,7 @@ update msg model =
                     Area.createAnnotation model.area
 
                 length =
-                    Array.length area.annotations
+                    Area.nbAnnotations area
             in
                 -- Select the newly created annotation as the current one.
                 { model | area = area, current = Area.getAnnotation (length - 1) area }
