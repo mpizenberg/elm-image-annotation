@@ -70,6 +70,7 @@ type Msg
     | ExportAnnotations
     | PointerEvent Pointer
     | Zoom ZoomVariation
+    | FitImage
     | ChangeLabel String
     | ApplyLabel
     | StartTime (Maybe Time)
@@ -155,6 +156,9 @@ update msg model =
                 ZoomOut ->
                     { model | area = Area.zoomOut model.area } ! []
 
+        FitImage ->
+            { model | area = Area.fitImage 0.8 model.area } ! []
+
         ChangeLabel label ->
             { model | label = label } ! []
 
@@ -239,10 +243,14 @@ view model =
         , H.input [ HA.type' "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
         , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
         , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
+        , H.br [] []
         , H.text " Tool: "
         , Area.selectToolTag model.area SelectTool
+        , H.br [] []
         , H.button [ HE.onClick <| Zoom ZoomIn ] [ H.text "Zoom In" ]
         , H.button [ HE.onClick <| Zoom ZoomOut ] [ H.text "Zoom Out" ]
+        , H.button [ HE.onClick <| FitImage ] [ H.text "Fit Image" ]
+        , H.br [] []
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
         , let
