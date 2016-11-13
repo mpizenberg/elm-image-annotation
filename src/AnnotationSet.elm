@@ -3,27 +3,55 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module AnnotationSet exposing (..)
+module AnnotationSet
+    exposing
+        ( AnnotationSet
+          -- UPDATE
+        , remove
+          -- VIEW
+        , viewAllSelections
+        , selectTag
+          -- OUTPUT
+        , object
+        , pathsObject
+          -- OTHER
+        , hasSelection
+        )
 
 {-| AnnotationSet aims at managing a set of annotations.
+Basically, it is an array of Annotation.
+So anything that can be done on arrays can be done on an AnnotationSet.
+
+# Model
+@docs AnnotationSet
+
+# Update
+@docs remove
+
+# View
+@docs viewAllSelections, selectTag
+
+# Output
+@docs object, pathsObject
+
+# Other
+@docs hasSelection
 -}
 
-import String
 import Html as H exposing (Html)
-import Html.Attributes as HA
 import Svg exposing (Svg)
 import Json.Encode as JE
 import Array exposing (Array)
 import Annotation as Ann exposing (Annotation)
-import Helpers.Events as HPE
 import Helpers.Views as HPV
 import Helpers.Array as HPA
-import Tools exposing (Tool)
 
 
 -- MODEL #############################################################
 
 
+{-| An annotation set is basically an array of annotations.
+-}
 type alias AnnotationSet =
     Array Annotation
 
@@ -32,6 +60,8 @@ type alias AnnotationSet =
 -- UPDATE ############################################################
 
 
+{-| Remove the annotation at the given id from the set.
+-}
 remove : Int -> AnnotationSet -> AnnotationSet
 remove id set =
     HPA.removeAt id set
@@ -41,6 +71,8 @@ remove id set =
 -- VIEW ##############################################################
 
 
+{-| View of the SVG representation of all the annotations in the set.
+-}
 viewAllSelections : AnnotationSet -> List (Svg msg)
 viewAllSelections set =
     Array.map Ann.selectionView set
@@ -97,11 +129,15 @@ optionDescriber maybeItem =
 -- OUTPUTS ##############################################################
 
 
+{-| JavaScript object representing an annotation set.
+-}
 object : AnnotationSet -> JE.Value
 object set =
     JE.array <| Array.map Ann.object set
 
 
+{-| Simplified JavaScript object representing the selection paths of the annotation set.
+-}
 pathsObject : AnnotationSet -> JE.Value
 pathsObject set =
     JE.array <| Array.map Ann.pathObject set
@@ -111,7 +147,7 @@ pathsObject set =
 -- OTHER #############################################################
 
 
-{-| Indicates if the annotation set has at least one selection
+{-| Indicates if the annotation set has at least one selection.
 -}
 hasSelection : AnnotationSet -> Bool
 hasSelection set =
