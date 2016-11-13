@@ -263,7 +263,9 @@ view model =
                         Just ann
           in
             Area.viewAnnotation
-                (pointerEventAttributes model.area.currentTool model.pointer)
+                ((pointerEventAttributes model.area.currentTool model.pointer)
+                    ++ [ HA.style [ ( "border", "1px solid black" ) ] ]
+                )
                 annotation
                 model.area
         , H.p [] [ H.text model.jsonExport ]
