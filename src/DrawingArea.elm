@@ -3,7 +3,7 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs create, remove, getAnnotation, setAnnotation, useTool, updateAnnotations
+@docs create, remove, getAnnotation, setAnnotation, useTool, updateArea
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
@@ -90,8 +90,8 @@ useTool tool area =
 
 {-| Update the drawing area depending on the mouse event.
 -}
-updateAnnotations : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
-updateAnnotations origin pointer current area =
+updateArea : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
+updateArea origin pointer current area =
     case area.currentTool of
         Tools.None ->
             let
