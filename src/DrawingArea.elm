@@ -4,7 +4,7 @@ module DrawingArea exposing (..)
 
 @docs DrawingArea, default
 @docs create, remove, get, useTool, updateArea
-@docs changeBgImage, fitImage
+@docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
 @docs hasSelection
@@ -134,6 +134,20 @@ changeBgImage maybeImage area =
 fitImage : Float -> DrawingArea -> DrawingArea
 fitImage ratio area =
     { area | viewer = SvgViewer.fitImage ratio area.viewer }
+
+
+{-| Zoom in the view.
+-}
+zoomIn : DrawingArea -> DrawingArea
+zoomIn area =
+    { area | viewer = SvgViewer.zoomIn area.viewer }
+
+
+{-| Zoom out the view.
+-}
+zoomOut : DrawingArea -> DrawingArea
+zoomOut area =
+    { area | viewer = SvgViewer.zoomOut area.viewer }
 
 
 

@@ -25,6 +25,11 @@ main =
 -- MODEL #############################################################
 
 
+type ZoomVariation
+    = ZoomIn
+    | ZoomOut
+
+
 type alias Model =
     { area : DrawingArea
     , current : Maybe ( Int, Annotation )
@@ -58,6 +63,7 @@ type Msg
     | SelectTool Tool
     | ExportAnnotations
     | PointerEvent Pointer
+    | Zoom ZoomVariation
 
 
 update : Msg -> Model -> Model
@@ -120,6 +126,14 @@ update msg model =
                     , downOrigin = downOrigin
                 }
 
+        Zoom var ->
+            case var of
+                ZoomIn ->
+                    { model | area = Area.zoomIn model.area }
+
+                ZoomOut ->
+                    { model | area = Area.zoomOut model.area }
+
 
 updatePointer : Pointer -> Maybe Pointer
 updatePointer pointer =
@@ -147,6 +161,8 @@ view model =
         , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
         , H.text " Tool: "
         , Area.selectToolTag model.area SelectTool
+        , H.button [ HE.onClick <| Zoom ZoomIn ] [ H.text "Zoom In" ]
+        , H.button [ HE.onClick <| Zoom ZoomOut ] [ H.text "Zoom Out" ]
         , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
         , H.br [] []
         , let
