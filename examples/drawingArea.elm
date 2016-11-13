@@ -120,7 +120,7 @@ update msg model =
                 downOrigin =
                     case pointer.event of
                         Pointer.Down ->
-                            ( pointer.offsetX, pointer.offsetY )
+                            Pointer.offset pointer
 
                         _ ->
                             model.downOrigin
