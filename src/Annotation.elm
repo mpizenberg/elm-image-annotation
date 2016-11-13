@@ -3,9 +3,42 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Annotation exposing (..)
+module Annotation
+    exposing
+        ( Selection(..)
+        , Event(..)
+        , Annotation
+        , default
+          -- UPDATE
+        , setStartTime
+        , setStopTime
+        , setLabel
+        , updateSelection
+          -- VIEW
+        , selectionView
+          -- OUTPUTS
+        , object
+        , pathObject
+          -- OTHERS
+        , hasSelection
+        )
 
 {-| An annotation is the combination of a selection and a label.
+
+# Model
+@docs Selection, Event, Annotation, default
+
+# Update
+@docs setStartTime, setStopTime, setLabel, updateSelection
+
+# View
+@docs selectionView
+
+# Outputs
+@docs object, pathObject
+
+# Others
+@docs hasSelection
 -}
 
 import Html as H exposing (Html)
@@ -22,23 +55,44 @@ import Time exposing (Time)
 -- MODEL #############################################################
 
 
+{-| What can be the selection of an annotation.
+-}
 type Selection
     = NoSelection
     | RSel Rectangle
     | OSel Outline
 
 
+{-| Event marking the starting of a new selection or just the continuation of the current one.
+-}
 type Event
     = Start
     | Continue
 
 
+{-| An annotation is composed of a selection and has a label.
+-}
 type alias Annotation =
     { selection : Selection
     , label : String
     }
 
 
+{-| Default empty annotation.
+-}
+default : Annotation
+default =
+    { selection = NoSelection
+    , label = "No label"
+    }
+
+
+
+-- UPDATE ############################################################
+
+
+{-| Set the start time of the annotation.
+-}
 setStartTime : Maybe Time -> Annotation -> Annotation
 setStartTime maybeTime annotation =
     case annotation.selection of
@@ -52,6 +106,8 @@ setStartTime maybeTime annotation =
             { annotation | selection = OSel <| SO.setStartTime maybeTime outline }
 
 
+{-| Set the stop time of the annotation.
+-}
 setStopTime : Maybe Time -> Annotation -> Annotation
 setStopTime maybeTime annotation =
     case annotation.selection of
@@ -65,22 +121,16 @@ setStopTime maybeTime annotation =
             { annotation | selection = OSel <| SO.setStopTime maybeTime outline }
 
 
-default : Annotation
-default =
-    { selection = NoSelection
-    , label = "No label"
-    }
-
-
-
--- UPDATE ############################################################
-
-
+{-| Set the label of the annotation.
+-}
 setLabel : String -> Annotation -> Annotation
 setLabel label annotation =
     { annotation | label = label }
 
 
+{-| Update the selection of the annotation depending on the type of event,
+the corner positions and the current tool.
+-}
 updateSelection : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
 updateSelection event origin newPos tool annotation =
     case tool of
@@ -127,6 +177,8 @@ updateSelection event origin newPos tool annotation =
 -- VIEW ##############################################################
 
 
+{-| Svg view representing the annotation.
+-}
 selectionView : Annotation -> Svg msg
 selectionView { selection } =
     case selection of
@@ -140,31 +192,12 @@ selectionView { selection } =
             SO.view outline
 
 
-{-| An <option> tag to be put in a <select> tag.
-   currentId is the id of the currently selected option.
--}
-optionTag : Maybe Int -> ( Int, Annotation ) -> Html msg
-optionTag currentId ( id, { selection } ) =
-    H.option
-        [ HA.value (toString id), HA.selected (currentId == Just id) ]
-        [ H.text <|
-            toString id
-                ++ case selection of
-                    NoSelection ->
-                        ": No Selection"
-
-                    RSel _ ->
-                        ": Rectangle"
-
-                    OSel _ ->
-                        ": Outline"
-        ]
-
-
 
 -- OUTPUTS ##############################################################
 
 
+{-| Return JS object representing the annotation.
+-}
 object : Annotation -> JE.Value
 object annotation =
     JE.object
@@ -183,6 +216,8 @@ object annotation =
         ]
 
 
+{-| Return JS object simplified version of the path only.
+-}
 pathObject : Annotation -> JE.Value
 pathObject annotation =
     case annotation.selection of
@@ -200,7 +235,7 @@ pathObject annotation =
 -- OTHER #############################################################
 
 
-{-| Indicates if the annotation has a selection
+{-| Indicates if the annotation has a selection.
 -}
 hasSelection : Annotation -> Bool
 hasSelection annotation =
