@@ -3,7 +3,7 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs createAnnotation, remove, getAnnotation, setAnnotation, useTool, updateArea, updateAnnotation
+@docs createAnnotation, removeAnnotation, getAnnotation, setAnnotation, useTool, updateArea, updateAnnotation
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
@@ -57,8 +57,8 @@ createAnnotation area =
 
 {-| Remove annotation having a certain id.
 -}
-remove : Int -> DrawingArea -> DrawingArea
-remove id area =
+removeAnnotation : Int -> DrawingArea -> DrawingArea
+removeAnnotation id area =
     { area | annotations = AnnSet.remove id area.annotations }
 
 

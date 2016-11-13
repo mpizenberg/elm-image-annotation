@@ -99,7 +99,7 @@ update msg model =
                 Just ( id, annotation ) ->
                     let
                         area =
-                            Area.remove id model.area
+                            Area.removeAnnotation id model.area
 
                         current =
                             Area.getAnnotation 0 area
