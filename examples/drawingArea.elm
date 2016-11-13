@@ -36,6 +36,7 @@ type alias Model =
     , jsonExport : String
     , pointer : Maybe Pointer
     , downOrigin : ( Float, Float )
+    , label : String
     }
 
 
@@ -50,6 +51,7 @@ init =
         ""
         Nothing
         ( 0, 0 )
+        ""
 
 
 
@@ -64,6 +66,8 @@ type Msg
     | ExportAnnotations
     | PointerEvent Pointer
     | Zoom ZoomVariation
+    | ChangeLabel String
+    | ApplyLabel
 
 
 update : Msg -> Model -> Model
@@ -134,6 +138,27 @@ update msg model =
                 ZoomOut ->
                     { model | area = Area.zoomOut model.area }
 
+        ChangeLabel label ->
+            { model | label = label }
+
+        ApplyLabel ->
+            case model.current of
+                Nothing ->
+                    model
+
+                Just ( id, annotation ) ->
+                    let
+                        ann =
+                            { annotation | label = model.label }
+
+                        current =
+                            Just ( id, ann )
+
+                        area =
+                            Area.set id ann model.area
+                    in
+                        { model | area = area, current = current }
+
 
 updatePointer : Pointer -> Maybe Pointer
 updatePointer pointer =
@@ -158,6 +183,8 @@ view model =
         [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
         , H.text " Annotation: "
         , Area.selectAnnotationTag model.area model.current Select
+        , H.input [ HA.type' "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
+        , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
         , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
         , H.text " Tool: "
         , Area.selectToolTag model.area SelectTool
