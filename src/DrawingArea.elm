@@ -3,7 +3,7 @@ module DrawingArea exposing (..)
 {-| The DrawingArea module aims at collecting annotations.
 
 @docs DrawingArea, default
-@docs create, remove, getAnnotation, setAnnotation, useTool, updateArea
+@docs create, remove, getAnnotation, setAnnotation, useTool, updateArea, updateAnnotation
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
@@ -94,39 +94,45 @@ updateArea : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> Drawing
 updateArea origin pointer current area =
     case area.currentTool of
         Tools.None ->
-            let
-                moveX =
-                    pointer.movementX
-
-                moveY =
-                    pointer.movementY
-            in
-                ( current
-                , { area | viewer = SvgViewer.move ( moveX, moveY ) area.viewer }
-                )
+            ( current
+            , { area | viewer = SvgViewer.move (Pointer.movement pointer) area.viewer }
+            )
 
         _ ->
-            let
-                event =
-                    case pointer.event of
-                        Pointer.Down ->
-                            Ann.Start
+            case current of
+                Nothing ->
+                    ( current, area )
 
-                        _ ->
-                            Ann.Continue
+                Just ( id, annotation ) ->
+                    let
+                        newAnnotation =
+                            updateAnnotation origin pointer area.viewer area.currentTool annotation
+                    in
+                        ( Just ( id, newAnnotation )
+                        , setAnnotation id newAnnotation area
+                        )
 
-                ( x, y ) =
-                    SvgViewer.transformPos area.viewer ( pointer.offsetX, pointer.offsetY )
 
-                ( ox, oy ) =
-                    SvgViewer.transformPos area.viewer origin
+{-| Update an annotation
+-}
+updateAnnotation : ( Float, Float ) -> Pointer -> SvgViewer -> Tool -> Annotation -> Annotation
+updateAnnotation origin pointer viewer tool annotation =
+    let
+        event =
+            case pointer.event of
+                Pointer.Down ->
+                    Ann.Start
 
-                ( newCurrent, newSet ) =
-                    AnnSet.update event ( ox, oy ) ( x, y ) area.currentTool current area.annotations
-            in
-                ( newCurrent
-                , { area | annotations = newSet }
-                )
+                _ ->
+                    Ann.Continue
+
+        ( ox, oy ) =
+            SvgViewer.transformPos viewer origin
+
+        ( x, y ) =
+            SvgViewer.transformPos viewer <| Pointer.offset pointer
+    in
+        Ann.update event ( ox, oy ) ( x, y ) tool annotation
 
 
 {-| Change the background image.

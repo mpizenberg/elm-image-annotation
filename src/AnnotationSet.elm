@@ -37,22 +37,6 @@ remove id set =
     HPA.removeAt id set
 
 
-update : Ann.Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Maybe ( Int, Annotation ) -> AnnotationSet -> ( Maybe ( Int, Annotation ), AnnotationSet )
-update event origin newPos tool current set =
-    case current of
-        Nothing ->
-            ( Nothing, set )
-
-        Just ( id, annotation ) ->
-            let
-                newAnnotation =
-                    Ann.update event origin newPos tool annotation
-            in
-                ( Just ( id, newAnnotation )
-                , Array.set id newAnnotation set
-                )
-
-
 
 -- VIEW ##############################################################
 
