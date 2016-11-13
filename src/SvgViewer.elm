@@ -3,7 +3,48 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module SvgViewer exposing (..)
+module SvgViewer
+    exposing
+        ( Option
+        , OptionSet
+        , defaultOptions
+        , SvgViewer
+        , default
+          -- UPDATE
+        , changeBgImage
+        , fitImage
+        , optionValue
+        , changeOption
+        , resize
+        , changeZoom
+        , changeZoomCentered
+        , zoomIn
+        , zoomOut
+        , currentCenter
+        , reCenter
+        , move
+        , transformPos
+        , transformSize
+          -- VIEW
+        , view
+        )
+
+{-| The viewer of a drawing area.
+It holds all the geometric properties of the view.
+
+# Model
+@docs Option, OptionSet, defaultOptions, SvgViewer, default
+
+# Update
+@docs changeBgImage, fitImage
+@docs optionValue, changeOption
+@docs resize, changeZoom, changeZoomCentered, zoomIn, zoomOut
+@docs currentCenter, reCenter, move
+@docs transformPos, transformSize
+
+# View
+view
+-}
 
 import Dict exposing (Dict)
 import Array exposing (Array)
@@ -17,10 +58,14 @@ import AnnotationSet as AnnSet exposing (AnnotationSet)
 -- MODEL #############################################################
 
 
+{-| One option (a string giving its name).
+-}
 type alias Option =
     String
 
 
+{-| Regrouping off the viewer options.
+-}
 type alias OptionSet =
     Dict Option Bool
 
@@ -33,6 +78,8 @@ defaultOptions =
         []
 
 
+{-| An Svg viewer has a background image and some geometric properties.
+-}
 type alias SvgViewer =
     { bgImage : Maybe Image
     , options : OptionSet
@@ -42,6 +89,8 @@ type alias SvgViewer =
     }
 
 
+{-| The default Svg viewer for a drawing area.
+-}
 default : SvgViewer
 default =
     { bgImage = Nothing
@@ -56,11 +105,15 @@ default =
 -- UPDATE ############################################################
 
 
+{-| Change the background image.
+-}
 changeBgImage : Maybe Image -> SvgViewer -> SvgViewer
 changeBgImage maybeImage viewer =
     { viewer | bgImage = maybeImage }
 
 
+{-| Fit the view so that the image takes a certain percentage of its max viewable size.
+-}
 fitImage : Float -> SvgViewer -> SvgViewer
 fitImage ratio viewer =
     case viewer.bgImage of
@@ -90,6 +143,8 @@ fitImage ratio viewer =
                 }
 
 
+{-| Get the value of an option.
+-}
 optionValue : Option -> SvgViewer -> Bool
 optionValue option viewer =
     case Dict.get option viewer.options of
@@ -100,21 +155,29 @@ optionValue option viewer =
             value
 
 
+{-| Change an option of the viewer.
+-}
 changeOption : Option -> Bool -> SvgViewer -> SvgViewer
 changeOption option value viewer =
     { viewer | options = Dict.insert option value viewer.options }
 
 
+{-| Resize the viewer.
+-}
 resize : ( Float, Float ) -> SvgViewer -> SvgViewer
 resize size viewer =
     { viewer | size = size }
 
 
+{-| Change and zoom value.
+-}
 changeZoom : Float -> SvgViewer -> SvgViewer
 changeZoom zoom viewer =
     { viewer | zoom = zoom }
 
 
+{-| Change and zoom value while keeping the current center.
+-}
 changeZoomCentered : Float -> SvgViewer -> SvgViewer
 changeZoomCentered zoom viewer =
     let
@@ -125,16 +188,22 @@ changeZoomCentered zoom viewer =
             |> reCenter center
 
 
+{-| Zoom in (x2).
+-}
 zoomIn : SvgViewer -> SvgViewer
 zoomIn viewer =
     changeZoomCentered (2 * viewer.zoom) viewer
 
 
+{-| Zoom out (x0.5).
+-}
 zoomOut : SvgViewer -> SvgViewer
 zoomOut viewer =
     changeZoomCentered (0.5 * viewer.zoom) viewer
 
 
+{-| Get the current center of the viewer.
+-}
 currentCenter : SvgViewer -> ( Float, Float )
 currentCenter viewer =
     let
@@ -149,6 +218,8 @@ currentCenter viewer =
         )
 
 
+{-| Recenter the viewer at a given point.
+-}
 reCenter : ( Float, Float ) -> SvgViewer -> SvgViewer
 reCenter ( x, y ) viewer =
     let
@@ -163,6 +234,8 @@ reCenter ( x, y ) viewer =
         }
 
 
+{-| Move the viewer.
+-}
 move : ( Float, Float ) -> SvgViewer -> SvgViewer
 move ( moveX, moveY ) viewer =
     let
@@ -177,6 +250,8 @@ move ( moveX, moveY ) viewer =
         }
 
 
+{-| Transform coordinates of a position.
+-}
 transformPos : SvgViewer -> ( Float, Float ) -> ( Int, Int )
 transformPos viewer ( x, y ) =
     let
@@ -188,6 +263,8 @@ transformPos viewer ( x, y ) =
         )
 
 
+{-| Transform coordinates of a size.
+-}
 transformSize : SvgViewer -> ( Float, Float ) -> ( Int, Int )
 transformSize viewer ( width, height ) =
     ( round <| width / viewer.zoom
