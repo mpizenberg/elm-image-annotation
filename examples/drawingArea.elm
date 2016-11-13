@@ -155,7 +155,7 @@ update msg model =
                             Just ( id, ann )
 
                         area =
-                            Area.set id ann model.area
+                            Area.setAnnotation id ann model.area
                     in
                         { model | area = area, current = current }
 
