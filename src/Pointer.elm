@@ -22,6 +22,20 @@ type alias Pointer =
     }
 
 
+offset : Pointer -> ( Float, Float )
+offset pointer =
+    ( pointer.offsetX, pointer.offsetY )
+
+
+movement : Pointer -> ( Float, Float )
+movement pointer =
+    ( pointer.movementX, pointer.movementY )
+
+
+
+-- HTML ATTRIBUTES ###################################################
+
+
 attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
 attributes msgMaker currentTool previousPointer =
     case currentTool of
