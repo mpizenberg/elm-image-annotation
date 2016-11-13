@@ -4,7 +4,7 @@ module DrawingArea exposing (..)
 
 @docs DrawingArea, default
 @docs createAnnotation, removeAnnotation, getAnnotation, setAnnotation
-@docs useTool, updateArea, updateAnnotation
+@docs useTool, updateArea, updateSelection
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
@@ -107,17 +107,17 @@ updateArea origin pointer current area =
                 Just ( id, annotation ) ->
                     let
                         newAnnotation =
-                            updateAnnotation origin pointer area.viewer area.currentTool annotation
+                            updateSelection origin pointer area.viewer area.currentTool annotation
                     in
                         ( Just ( id, newAnnotation )
                         , setAnnotation id newAnnotation area
                         )
 
 
-{-| Update an annotation
+{-| Update the selection of an annotation.
 -}
-updateAnnotation : ( Float, Float ) -> Pointer -> SvgViewer -> Tool -> Annotation -> Annotation
-updateAnnotation origin pointer viewer tool annotation =
+updateSelection : ( Float, Float ) -> Pointer -> SvgViewer -> Tool -> Annotation -> Annotation
+updateSelection origin pointer viewer tool annotation =
     let
         event =
             case pointer.event of
@@ -133,7 +133,7 @@ updateAnnotation origin pointer viewer tool annotation =
         ( x, y ) =
             SvgViewer.transformPos viewer <| Pointer.offset pointer
     in
-        Ann.update event ( ox, oy ) ( x, y ) tool annotation
+        Ann.updateSelection event ( ox, oy ) ( x, y ) tool annotation
 
 
 {-| Change the background image.

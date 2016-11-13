@@ -76,8 +76,8 @@ default =
 -- UPDATE ############################################################
 
 
-update : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
-update event origin newPos tool annotation =
+updateSelection : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
+updateSelection event origin newPos tool annotation =
     case tool of
         Tools.None ->
             annotation
