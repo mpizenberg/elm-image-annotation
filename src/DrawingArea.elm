@@ -3,16 +3,62 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module DrawingArea exposing (..)
+module DrawingArea
+    exposing
+        ( DrawingArea
+        , default
+          -- ANNOTATIONS
+        , nbAnnotations
+        , createAnnotation
+        , removeAnnotation
+        , getAnnotation
+        , setAnnotation
+        , updateAnnotation
+          -- TOOLS
+        , useTool
+          -- UPDATE
+        , updateArea
+          -- VIEWER
+        , changeBgImage
+        , fitImage
+        , zoomIn
+        , zoomOut
+          -- VIEW
+        , view
+        , viewAnnotation
+        , selectAnnotationTag
+        , selectToolTag
+          -- OUTPUTS
+        , exportAnnotations
+        , exportSelectionsPaths
+          -- OTHERS
+        , hasSelection
+        )
 
 {-| The DrawingArea module aims at collecting annotations.
 
+# Model
 @docs DrawingArea, default
-@docs nbAnnotations, createAnnotation, removeAnnotation, getAnnotation, setAnnotation
-@docs useTool, updateArea, updateSelection, updateAnnotation
+
+# Annotations
+@docs nbAnnotations, createAnnotation, removeAnnotation, getAnnotation, setAnnotation, updateAnnotation
+
+# Tools
+@docs useTool
+
+# Update
+@docs updateArea
+
+# Svg viewer management
 @docs changeBgImage, fitImage, zoomIn, zoomOut
+
+# View
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
+
+# Outputs
 @docs exportAnnotations, exportSelectionsPaths
+
+# Others
 @docs hasSelection
 -}
 
