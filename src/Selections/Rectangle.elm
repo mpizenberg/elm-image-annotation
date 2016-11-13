@@ -169,5 +169,7 @@ pathObject rect =
         top_right =
             Sel.posPathObject <| Sel.Pos right top
     in
-        JE.list
-            [ top_left, bottom_left, bottom_right, top_right ]
+        JE.object
+            [ ( "duration", Sel.maybeTimeObject <| Sel.duration rect.selection.timings )
+            , ( "path", JE.list [ top_left, bottom_left, bottom_right, top_right ] )
+            ]
