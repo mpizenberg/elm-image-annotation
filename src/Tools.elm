@@ -3,11 +3,18 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Tools exposing (..)
+module Tools
+    exposing
+        ( Tool(..)
+        , selectTag
+        )
+
+{-| Tools aims at providing helper functions related to the drawing area tools.
+
+@docs Tool, selectTag
+-}
 
 import Html as H exposing (Html)
-import Html.Attributes as HA
-import Helpers.Events as HPE
 import Helpers.Views as HPV
 
 
@@ -26,6 +33,8 @@ type Tool
 -- VIEW ##############################################################
 
 
+{-| An html <select> tag enabling the choice of a tool.
+-}
 selectTag : Tool -> (Tool -> msg) -> Html msg
 selectTag =
     HPV.autoSelectTag
