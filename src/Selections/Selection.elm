@@ -81,13 +81,13 @@ changeStrokeWidth width selection =
         { selection | style = { oldStyle | strokeWidth = width } }
 
 
-updateStartTime : Maybe Time -> Selection -> Selection
-updateStartTime t selection =
+setStartTime : Maybe Time -> Selection -> Selection
+setStartTime t selection =
     { selection | timings = ( t, snd selection.timings ) }
 
 
-updateStopTime : Maybe Time -> Selection -> Selection
-updateStopTime t selection =
+setStopTime : Maybe Time -> Selection -> Selection
+setStopTime t selection =
     { selection | timings = ( fst selection.timings, t ) }
 
 

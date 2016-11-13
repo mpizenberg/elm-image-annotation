@@ -12,6 +12,7 @@ import Svg exposing (Svg)
 import Svg.Attributes as SvgA
 import Json.Encode as JE
 import Selections.Selection as Sel exposing (Selection)
+import Time exposing (Time)
 
 
 -- MODEL #############################################################
@@ -80,6 +81,21 @@ changeGeometry ( x, y, width, height ) rect =
 update : ( Int, Int ) -> ( Int, Int ) -> Rectangle -> Rectangle
 update origin newPos rect =
     { rect | geometry = geomFrom2Points origin newPos }
+
+
+resetTimings : Rectangle -> Rectangle
+resetTimings rect =
+    { rect | selection = Sel.resetTimings rect.selection }
+
+
+setStartTime : Maybe Time -> Rectangle -> Rectangle
+setStartTime t rect =
+    { rect | selection = Sel.setStartTime t rect.selection }
+
+
+setStopTime : Maybe Time -> Rectangle -> Rectangle
+setStopTime t rect =
+    { rect | selection = Sel.setStopTime t rect.selection }
 
 
 

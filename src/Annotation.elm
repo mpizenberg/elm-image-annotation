@@ -16,6 +16,7 @@ import Selections.Selection as Sel
 import Selections.Rectangle as SR exposing (Rectangle)
 import Selections.Outline as SO exposing (Outline)
 import Tools exposing (Tool)
+import Time exposing (Time)
 
 
 -- MODEL #############################################################
@@ -36,6 +37,32 @@ type alias Annotation =
     { selection : Selection
     , label : String
     }
+
+
+setStartTime : Maybe Time -> Annotation -> Annotation
+setStartTime maybeTime annotation =
+    case annotation.selection of
+        NoSelection ->
+            annotation
+
+        RSel rect ->
+            { annotation | selection = RSel <| SR.setStartTime maybeTime rect }
+
+        OSel outline ->
+            { annotation | selection = OSel <| SO.setStartTime maybeTime outline }
+
+
+setStopTime : Maybe Time -> Annotation -> Annotation
+setStopTime maybeTime annotation =
+    case annotation.selection of
+        NoSelection ->
+            annotation
+
+        RSel rect ->
+            { annotation | selection = RSel <| SR.setStopTime maybeTime rect }
+
+        OSel outline ->
+            { annotation | selection = OSel <| SO.setStopTime maybeTime outline }
 
 
 default : Annotation

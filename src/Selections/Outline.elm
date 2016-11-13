@@ -56,14 +56,14 @@ resetTimings outline =
     { outline | selection = Sel.resetTimings outline.selection }
 
 
-updateStartTime : Maybe Time -> Outline -> Outline
-updateStartTime t outline =
-    { outline | selection = Sel.updateStartTime t outline.selection }
+setStartTime : Maybe Time -> Outline -> Outline
+setStartTime t outline =
+    { outline | selection = Sel.setStartTime t outline.selection }
 
 
-updateStopTime : Maybe Time -> Outline -> Outline
-updateStopTime t outline =
-    { outline | selection = Sel.updateStopTime t outline.selection }
+setStopTime : Maybe Time -> Outline -> Outline
+setStopTime t outline =
+    { outline | selection = Sel.setStopTime t outline.selection }
 
 
 

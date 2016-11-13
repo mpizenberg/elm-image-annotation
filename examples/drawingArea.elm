@@ -11,6 +11,8 @@ import Annotation as Ann exposing (Annotation)
 import Tools exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
+import Time exposing (Time)
+import Task exposing (Task)
 
 
 main =
@@ -70,6 +72,8 @@ type Msg
     | Zoom ZoomVariation
     | ChangeLabel String
     | ApplyLabel
+    | StartTime (Maybe Time)
+    | StopTime (Maybe Time)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -117,13 +121,20 @@ update msg model =
 
         PointerEvent pointer ->
             let
-                downOrigin =
+                ( downOrigin, timeCmd ) =
                     case pointer.event of
                         Pointer.Down ->
-                            Pointer.offset pointer
+                            ( Pointer.offset pointer
+                            , Task.perform (identity) (StartTime << Just) Time.now
+                            )
+
+                        Pointer.Move ->
+                            ( model.downOrigin, Cmd.none )
 
                         _ ->
-                            model.downOrigin
+                            ( model.downOrigin
+                            , Task.perform (identity) (StopTime << Just) Time.now
+                            )
 
                 ( newCurrent, newArea ) =
                     Area.updateArea downOrigin pointer model.current model.area
@@ -134,7 +145,7 @@ update msg model =
                     , current = newCurrent
                     , downOrigin = downOrigin
                 }
-                    ! []
+                    ! [ timeCmd ]
 
         Zoom var ->
             case var of
@@ -162,6 +173,42 @@ update msg model =
 
                         area =
                             Area.setAnnotation id ann model.area
+                    in
+                        { model | area = area, current = current } ! []
+
+        StartTime maybeTime ->
+            case model.current of
+                Nothing ->
+                    model ! []
+
+                Just ( id, annotation ) ->
+                    let
+                        newAnnotation =
+                            Ann.setStartTime maybeTime annotation
+
+                        current =
+                            Just ( id, newAnnotation )
+
+                        area =
+                            Area.setAnnotation id newAnnotation model.area
+                    in
+                        { model | area = area, current = current } ! []
+
+        StopTime maybeTime ->
+            case model.current of
+                Nothing ->
+                    model ! []
+
+                Just ( id, annotation ) ->
+                    let
+                        newAnnotation =
+                            Ann.setStopTime maybeTime annotation
+
+                        current =
+                            Just ( id, newAnnotation )
+
+                        area =
+                            Area.setAnnotation id newAnnotation model.area
                     in
                         { model | area = area, current = current } ! []
 
