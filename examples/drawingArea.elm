@@ -258,7 +258,7 @@ view model =
                 (pointerEventAttributes model.area.currentTool model.pointer)
                 annotation
                 model.area
-        , H.textarea [] [ H.text model.jsonExport ]
+        , H.p [] [ H.text model.jsonExport ]
         , H.br [] []
         , H.text (toString model)
         ]
