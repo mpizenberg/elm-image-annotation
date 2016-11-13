@@ -83,7 +83,7 @@ update msg model =
         NewAnnotation ->
             let
                 area =
-                    Area.create model.area
+                    Area.createAnnotation model.area
 
                 length =
                     Array.length area.annotations
