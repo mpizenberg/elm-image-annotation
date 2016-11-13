@@ -81,7 +81,7 @@ update msg model =
                 length =
                     Array.length area.annotations
             in
-                { model | area = area, current = Area.get (length - 1) area }
+                { model | area = area, current = Area.getAnnotation (length - 1) area }
 
         Delete ->
             case model.current of
@@ -94,7 +94,7 @@ update msg model =
                             Area.remove id model.area
 
                         current =
-                            Area.get 0 area
+                            Area.getAnnotation 0 area
                     in
                         { model | area = area, current = current }
 
