@@ -1,518 +1,318 @@
-module DrawingArea exposing
-    ( Tool(..), Model, init
-    , Msg(..), update
-    , view, viewLastOnly, viewWithImage, selectHtml, selectToolView
-    , exportAnnotations, exportSelectionsPaths
-    , hasSelection
-    )
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+
+module DrawingArea
+    exposing
+        ( DrawingArea
+        , default
+          -- ANNOTATIONS
+        , nbAnnotations
+        , createAnnotation
+        , removeAnnotation
+        , getAnnotation
+        , setAnnotation
+        , updateAnnotation
+          -- TOOLS
+        , useTool
+          -- UPDATE
+        , updateArea
+          -- VIEWER
+        , changeBgImage
+        , fitImage
+        , zoomIn
+        , zoomOut
+          -- VIEW
+        , view
+        , viewAnnotation
+        , selectAnnotationTag
+        , selectToolTag
+          -- OUTPUTS
+        , exportAnnotations
+        , exportSelectionsPaths
+          -- OTHERS
+        , hasSelection
+        )
 
 {-| The DrawingArea module aims at collecting annotations.
 
 # Model
-@docs Tool, Model, init
+@docs DrawingArea, default
+
+# Annotations
+@docs nbAnnotations, createAnnotation, removeAnnotation, getAnnotation, setAnnotation, updateAnnotation
+
+# Tools
+@docs useTool
 
 # Update
-@docs Msg, update
+@docs updateArea
+
+# Svg viewer management
+@docs changeBgImage, fitImage, zoomIn, zoomOut
 
 # View
-@docs view, viewLastOnly, viewWithImage, selectHtml, selectToolView
+@docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 
 # Outputs
 @docs exportAnnotations, exportSelectionsPaths
 
-# Other
+# Others
 @docs hasSelection
-
 -}
 
-import Svg
-import Svg.Attributes as SvgA
-import Html as H
-import Html.App as App
-import Html.Attributes as HA
-import Html.Events as HE
-import Json.Decode as Json
+import Array exposing (Array)
+import Html exposing (Html)
+import Svg exposing (Svg)
 import Json.Encode as JE
-import String
-
-
-import Utils.Helpers as HP
-import Image
-import Annotation as Ann
-import AnnotationSet as AnnSet
-import Selections.RectangleSelection as RS
-import Selections.OutlineSelection as OS
-
-
+import Image exposing (Image)
+import Annotation as Ann exposing (Annotation)
+import AnnotationSet as AnnSet exposing (AnnotationSet)
+import SvgViewer exposing (SvgViewer)
+import Tools exposing (Tool)
+import Pointer exposing (Pointer)
 
 
 -- MODEL #############################################################
 
 
-
-
-{-| The type of tool that can be used to draw selections -}
-type Tool
-    = NoTool
-    | RectangleTool
-    | OutlineTool
-
-
--- Options of the drawing area
-type Option
-    = Option_WheelZoom Bool
-
-
-defaultOptions : List Option
-defaultOptions =
-    [ Option_WheelZoom False
-    ]
-
-
-type alias Model_ =
-    { bgImage : Maybe Image.Model
-    , annotations : AnnSet.Model
-    , tool : Tool
-    , options : List Option
-    -- Area Management
-    , size : (Float, Float)
-    , zoomLevel : Float
-    , origin : (Float, Float)
-    -- Mouse Management
-    , mouseDown : Bool
-    , downPos : Maybe (Int, Int)
+{-| A drawing area.
+-}
+type alias DrawingArea =
+    { annotations : AnnotationSet
+    , viewer : SvgViewer
+    , currentTool : Tool
     }
 
 
-{-| The model to manipulate drawing areas -}
-type Model = DrawingArea Model_
-
-
-{-| Initialize a DrawingArea.Model -}
-init : (Model, Cmd Msg)
-init =
-    ( DrawingArea <| Model_
-        Nothing -- bgImage
-        (fst AnnSet.init)
-        NoTool
-        defaultOptions
-        (800,400) -- (width, height)
-        1.0 -- zoomLevel
-        (0,0) -- origin
-        False -- mouseDown
-        Nothing -- downPos
-    , Cmd.none
-    )
-
+{-| The default drawing area, no annotation and no tool.
+-}
+default : DrawingArea
+default =
+    { annotations = Array.empty
+    , viewer = SvgViewer.default
+    , currentTool = Tools.None
+    }
 
 
 
 -- UPDATE ############################################################
 
 
+{-| Return the number of annotations in the annotation set.
+-}
+nbAnnotations : DrawingArea -> Int
+nbAnnotations area =
+    Array.length area.annotations
 
 
-{-| The messages used to Manipulate a DrawingArea -}
-type Msg
-    -- Area Management
-    = ZoomIn
-    | ZoomOut
-    | Wheel Float
-    | ChangeZoomLevel Float
-    | ChangeOrigin (Float, Float)
-    | Center (Float, Float)
-    -- Mouse Management
-    | Down Bool (Int, Int)
-    | Move (Int, Int)
-    | Up
-    -- Background Image Management
-    | ChangeImage (Maybe Image.Model)
-    | CenterImage (Int, Int)
-    -- Annotations Management
-    | CreateAnnotation
-    | DeleteAnnotation
-    | ResetAnnotation
-    | SelectAnnotation (Maybe Int)
-    | SelectTool Tool
-    -- Other messages
-    | Annotations AnnSet.Msg
+{-| Create new annotation.
+-}
+createAnnotation : DrawingArea -> DrawingArea
+createAnnotation area =
+    { area | annotations = Array.push Ann.default area.annotations }
 
 
-{-| Update a DrawingArea model -}
-update : Msg -> Model -> (Model, Cmd Msg)
-update msg (DrawingArea model) =
-    case msg of
-        -- Area Management
-        ZoomIn ->
-            updateZoom 2 (DrawingArea model)
-        ZoomOut ->
-            updateZoom 0.5 (DrawingArea model)
-        Wheel deltaY ->
-            if deltaY > 0
-            then updateZoom 0.5 (DrawingArea model)
-            else updateZoom 2 (DrawingArea model)
-        ChangeZoomLevel zoom ->
-            ( DrawingArea {model | zoomLevel = zoom}
-            , Cmd.none
+{-| Remove annotation having a certain id.
+-}
+removeAnnotation : Int -> DrawingArea -> DrawingArea
+removeAnnotation id area =
+    { area | annotations = AnnSet.remove id area.annotations }
+
+
+{-| Returns an annotation with its id if it exists.
+-}
+getAnnotation : Int -> DrawingArea -> Maybe ( Int, Annotation )
+getAnnotation id area =
+    case Array.get id area.annotations of
+        Nothing ->
+            Nothing
+
+        Just annotation ->
+            Just ( id, annotation )
+
+
+{-| Set an annotation of the drawing area.
+-}
+setAnnotation : Int -> Annotation -> DrawingArea -> DrawingArea
+setAnnotation id annotation area =
+    { area | annotations = Array.set id annotation area.annotations }
+
+
+{-| Change the current tool.
+-}
+useTool : Tool -> DrawingArea -> DrawingArea
+useTool tool area =
+    { area | currentTool = tool }
+
+
+{-| Update the drawing area depending on the mouse event.
+-}
+updateArea : ( Float, Float ) -> Pointer -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
+updateArea origin pointer current area =
+    case area.currentTool of
+        Tools.None ->
+            ( current
+            , { area | viewer = SvgViewer.move (Pointer.movement pointer) area.viewer }
             )
-        ChangeOrigin (left, top) ->
-            ( DrawingArea {model | origin = (left, top)}
-            , Cmd.none
-            )
-        Center (cx, cy) ->
-            let
-                (width, height) = model.size
-            in
-                ( DrawingArea {model | origin =
-                    ( cx - 0.5 * width / model.zoomLevel
-                    , cy - 0.5 * height / model.zoomLevel
-                    )}
-                , Cmd.none
-                )
-        -- Mouse Management ->
-        Down createNewAnnotation (x, y) ->
-            if createNewAnnotation
-            then
-                HP.updateFull
-                    update
-                    (DrawingArea model)
-                    [CreateAnnotation, Down False (x,y)]
-            else
-                let
-                    (ox, oy) = model.origin
-                    x'' = round <| ox + (toFloat x) / model.zoomLevel
-                    y'' = round <| oy + (toFloat y) / model.zoomLevel
-                    model' = {model | downPos = Just (x'', y''), mouseDown = True}
-                in
-                    case model.tool of
-                        NoTool -> ( DrawingArea model', Cmd.none )
-                        RectangleTool ->
-                            update
-                                ( rsMsg <| RS.Geom (Just (x'', y'')) (Just (0,0)) )
-                                ( DrawingArea model' )
-                        OutlineTool ->
-                            update
-                                ( osMsg <| OS.ResetWithPoint (x'', y'') )
-                                ( DrawingArea model' )
-        Move (x', y') ->
-            case model.tool of
-                NoTool ->
+
+        _ ->
+            case current of
+                Nothing ->
+                    ( current, area )
+
+                Just ( id, annotation ) ->
                     let
-                        (x,y) = model.origin
+                        newAnnotation =
+                            updateSelection origin pointer area.viewer area.currentTool annotation
                     in
-                        update
-                            ( ChangeOrigin
-                                ( x - toFloat x' / model.zoomLevel
-                                , y - toFloat y' / model.zoomLevel
-                                )
-                            )
-                            ( DrawingArea model )
-                RectangleTool ->
-                    let
-                        (x,y) = Maybe.withDefault (0,0) model.downPos
-                        (ox, oy) = model.origin
-                        x'' = round <| ox + (toFloat x') / model.zoomLevel
-                        y'' = round <| oy + (toFloat y') / model.zoomLevel
-                        left = min x x''
-                        top = min y y''
-                        width = abs (x-x'')
-                        height = abs (y-y'')
-                    in
-                        update
-                            ( rsMsg <| RS.Geom
-                                (Just (left, top))
-                                (Just (width, height))
-                            )
-                            ( DrawingArea model )
-                OutlineTool ->
-                    let
-                        (ox, oy) = model.origin
-                        x'' = round <| ox + (toFloat x') / model.zoomLevel
-                        y'' = round <| oy + (toFloat y') / model.zoomLevel
-                    in
-                        update
-                            ( osMsg <| OS.AddPoint (x'',y'') )
-                            ( DrawingArea model )
-        Up ->
-            ( DrawingArea {model | mouseDown = False, downPos = Nothing}
-            , Cmd.none
-            )
-        -- Background Image Management ->
-        ChangeImage imModel ->
-            let
-                model' = {model | bgImage = imModel}
-            in
-                case imModel of
-                    Nothing -> (DrawingArea model', Cmd.none)
-                    Just im ->
-                        update (CenterImage <| Image.size im) (DrawingArea model')
-        CenterImage (imageWidth, imageHeight) ->
-            let
-                (w, h) = model.size
-                iw = toFloat imageWidth
-                ih = toFloat imageHeight
-                zoom = 0.8 * min (w/iw) (h/ih)
-                ox = 0.5 * (iw - w / zoom)
-                oy = 0.5 * (ih - h / zoom)
-            in
-                ( DrawingArea {model | origin = (ox,oy), zoomLevel = zoom}
-                , Cmd.none
-                )
-        -- Annotations Management ->
-        CreateAnnotation ->
-            update
-                ( Annotations AnnSet.CreateAnnotation )
-                ( DrawingArea model )
-        DeleteAnnotation ->
-            update
-                ( Annotations AnnSet.Delete )
-                ( DrawingArea model )
-        ResetAnnotation ->
-            update
-                ( Annotations AnnSet.ResetAnnotation )
-                ( DrawingArea model )
-        SelectAnnotation maybeId ->
-            update
-                ( Annotations <| AnnSet.Select maybeId )
-                ( DrawingArea model )
-        SelectTool tool ->
-            ( DrawingArea {model | tool = tool}
-            , Cmd.none
-            )
-        -- Other messages ->
-        Annotations annSetMsg ->
-            let
-                ( annSetModel, cmd ) =
-                    AnnSet.update annSetMsg model.annotations
-            in
-                ( DrawingArea {model | annotations = annSetModel}
-                , Cmd.map Annotations cmd
-                )
+                        ( Just ( id, newAnnotation )
+                        , setAnnotation id newAnnotation area
+                        )
 
 
-updateZoom : Float -> Model -> (Model, Cmd Msg)
-updateZoom zoomModifier (DrawingArea model) =
+{-| Update the selection of an annotation.
+-}
+updateSelection : ( Float, Float ) -> Pointer -> SvgViewer -> Tool -> Annotation -> Annotation
+updateSelection origin pointer viewer tool annotation =
     let
-        (left, top) = model.origin
-        (width, height) = model.size
-        centerX = left + 0.5 * width / model.zoomLevel
-        centerY = top + 0.5 * height / model.zoomLevel
+        event =
+            case pointer.event of
+                Pointer.Down ->
+                    Ann.Start
+
+                _ ->
+                    Ann.Continue
+
+        ( ox, oy ) =
+            SvgViewer.transformPos viewer origin
+
+        ( x, y ) =
+            SvgViewer.transformPos viewer <| Pointer.offset pointer
     in
-        update
-            ( Center (centerX, centerY) )
-            ( DrawingArea {model | zoomLevel = zoomModifier * model.zoomLevel} )
+        Ann.updateSelection event ( ox, oy ) ( x, y ) tool annotation
 
 
-selMsg : Ann.SelectionMsg -> Msg
-selMsg =
-    Annotations << AnnSet.Annotate << Ann.Selection << Just
+{-| Update the current annotation.
+-}
+updateAnnotation : (Annotation -> Annotation) -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
+updateAnnotation f current area =
+    case current of
+        Nothing ->
+            ( current, area )
+
+        Just ( id, annotation ) ->
+            let
+                newAnnotation =
+                    f annotation
+
+                current =
+                    Just ( id, newAnnotation )
+
+                newArea =
+                    setAnnotation id newAnnotation area
+            in
+                ( current, newArea )
 
 
-rsMsg : RS.Msg -> Msg
-rsMsg = selMsg << Ann.RSMsg
+{-| Change the background image.
+-}
+changeBgImage : Maybe Image -> DrawingArea -> DrawingArea
+changeBgImage maybeImage area =
+    { area | viewer = SvgViewer.changeBgImage maybeImage area.viewer }
 
 
-osMsg : OS.Msg -> Msg
-osMsg = selMsg << Ann.OSMsg
+{-| Adapt the view so that the image fit a certain percentage of the view.
+-}
+fitImage : Float -> DrawingArea -> DrawingArea
+fitImage ratio area =
+    { area | viewer = SvgViewer.fitImage ratio area.viewer }
 
+
+{-| Zoom in the view.
+-}
+zoomIn : DrawingArea -> DrawingArea
+zoomIn area =
+    { area | viewer = SvgViewer.zoomIn area.viewer }
+
+
+{-| Zoom out the view.
+-}
+zoomOut : DrawingArea -> DrawingArea
+zoomOut area =
+    { area | viewer = SvgViewer.zoomOut area.viewer }
 
 
 
 -- VIEW ##############################################################
 
 
+{-| View the svg tag representing the DrawingArea model
+-}
+view : List (Svg.Attribute msg) -> DrawingArea -> Svg msg
+view attributes area =
+    SvgViewer.view attributes area.annotations area.viewer
 
 
-{-| View the svg tag representing the DrawingArea model -}
-view : Model -> Svg.Svg Msg
-view (DrawingArea model) =
-    Svg.svg
-        ([ HE.onMouseUp Up
-        , drawingAreaStyle model.size ]
-        ++ offsetsEvents model.mouseDown False model.tool
-        ++ optionsAttributes (DrawingArea model)
-        )
-        [ Svg.g
-            [ svgTransform model.zoomLevel model.origin ]
-            ( ( case model.bgImage of
-                Nothing -> []
-                Just image ->
-                    [ Image.view
-                        Image.SvgTag
-                        (Just "bgImage")
-                        Nothing
-                        image
-                    ]
-              )
-            ++ AnnSet.selectionsView model.annotations
-            )
-        ]
-
-
-
-{-| View with only the last annotation -}
-viewLastOnly : Model -> Svg.Svg Msg
-viewLastOnly (DrawingArea model) =
-    Svg.svg
-        ([ HE.onMouseUp Up
-        , drawingAreaStyle model.size ]
-        ++ offsetsEvents model.mouseDown True model.tool
-        ++ optionsAttributes (DrawingArea model)
-        )
-        [ Svg.g
-            [ svgTransform model.zoomLevel model.origin ]
-            ( ( case model.bgImage of
-                Nothing -> []
-                Just image ->
-                    [ Image.view
-                        Image.SvgTag
-                        (Just "bgImage")
-                        Nothing
-                        image
-                    ]
-              )
-            ++ AnnSet.selectionsViewLastOnly model.annotations
-            )
-        ]
-
-
-{-| Same as view but with a background image given as argument -}
-viewWithImage : Maybe Image.Model -> Model -> Svg.Svg Msg
-viewWithImage maybeImage model =
-    view <| fst <| update (ChangeImage maybeImage) model
-
-
-
-
--- VIEW HELPERS ######################################################
-
-
-
-
-svgTransform : Float -> (Float, Float) -> Svg.Attribute msg
-svgTransform zoomLevel (x,y) =
-    SvgA.transform <|
-        "scale(" ++ toString zoomLevel ++ ") " ++
-        "translate" ++ toString (-x,-y)
-
-
-drawingAreaStyle : (Float, Float) -> Svg.Attribute msg
-drawingAreaStyle (width, height) =
-    HA.style
-        [ ("width", toString width ++ "px")
-        , ("height", toString height ++ "px")
-        ]
-
-
-optionsAttributes : Model -> List (Svg.Attribute Msg)
-optionsAttributes (DrawingArea model) =
+{-| View the given annotation.
+-}
+viewAnnotation : List (Svg.Attribute msg) -> Maybe Annotation -> DrawingArea -> Svg msg
+viewAnnotation attributes maybeAnn area =
     let
-        optionToAttributes : Option -> List (Svg.Attribute Msg)
-        optionToAttributes option = case option of
-            Option_WheelZoom bool ->
-                if bool then [ onWheel Wheel ] else []
+        annotation =
+            case maybeAnn of
+                Nothing ->
+                    Array.empty
+
+                Just ann ->
+                    Array.fromList [ ann ]
     in
-        List.concat <| List.map optionToAttributes model.options
+        view attributes { area | annotations = annotation }
 
 
-offsetsEvents : Bool -> Bool -> Tool -> List (Svg.Attribute Msg)
-offsetsEvents down createNewAnnotation tool =
-    let
-        baseOffsets = [(HP.offsetOn "mousedown") <| Down createNewAnnotation]
-    in
-        baseOffsets
-        ++ ( case (down, tool) of
-            (True, NoTool) ->
-                [(HP.movementOn "mousemove") Move]
-            (True, _) ->
-                [(HP.offsetOn "mousemove") Move]
-            (False, _) -> []
-        )
+{-| Create a <select> tag for the annotations.
+-}
+selectAnnotationTag :
+    DrawingArea
+    -> Maybe ( Int, Annotation )
+    -> (Maybe ( Int, Annotation ) -> msg)
+    -> Html msg
+selectAnnotationTag area =
+    AnnSet.selectTag area.annotations
 
 
-{-| Create a select form tag to change dynamically the current annotation -}
-selectHtml : Model -> H.Html Msg
-selectHtml (DrawingArea model) =
-    App.map Annotations <| AnnSet.selectHtml model.annotations
-
-
-{- Get the wheel deltaY attribute of a mouse event -}
-onWheel : ((Float -> msg) -> H.Attribute msg)
-onWheel =
-    HP.specialOn "wheel" deltaYDecoder identity
-
-
-deltaYDecoder : Json.Decoder Float
-deltaYDecoder = Json.at ["deltaY"] Json.float
-
-
-{-| A select form tag to change dynamically the current Tool -}
-selectToolView : Model -> H.Html Msg
-selectToolView (DrawingArea model) =
-    H.select
-        [HP.onChange <| SelectTool << optionToTool]
-        (List.map
-            (toolOptionTag model.tool)
-            [ (NoTool, "None")
-            , (RectangleTool, "Rectangle")
-            , (OutlineTool, "Outline")
-            ]
-        )
-
-
-optionToTool: String -> Tool
-optionToTool id =
-    let
-        id' = String.toInt id
-    in
-        case id' of
-            Err _ -> NoTool
-            Ok toolId ->
-                case toolId of
-                    1 -> RectangleTool
-                    2 -> OutlineTool
-                    _ -> NoTool
-
-
-toolOptionTag : Tool -> (Tool, String) -> H.Html Msg
-toolOptionTag currentTool (tool, message) =
-    H.option
-        [ HA.value <| case tool of
-            NoTool -> toString 0
-            RectangleTool -> toString 1
-            OutlineTool -> toString 2
-        , HA.selected (currentTool == tool)
-        ]
-        [ H.text message
-        ]
-
+{-| Create a <select> tag for the tools.
+-}
+selectToolTag : DrawingArea -> (Tool -> msg) -> Html msg
+selectToolTag area =
+    Tools.selectTag area.currentTool
 
 
 
 -- OUTPUTS ##############################################################
 
 
+{-| Export the complete model of the annotation set to a JS object
+-}
+exportAnnotations : DrawingArea -> JE.Value
+exportAnnotations area =
+    AnnSet.object area.annotations
 
 
-{-| Export the complete model of the annotation set to a JS object -}
-exportAnnotations : Model -> JE.Value
-exportAnnotations (DrawingArea model) =
-    AnnSet.object model.annotations
-
-
-{-| Export only the seletions paths to a JS object -}
-exportSelectionsPaths : Model -> JE.Value
-exportSelectionsPaths (DrawingArea model) =
-    AnnSet.selectionsPathsObject model.annotations
-
+{-| Export only the seletions paths to a JS object
+-}
+exportSelectionsPaths : DrawingArea -> JE.Value
+exportSelectionsPaths area =
+    AnnSet.pathsObject area.annotations
 
 
 
 -- OTHER #############################################################
 
 
-
-{-| Indicates if the drawing area has at least one selection -}
-hasSelection : Model -> Bool
-hasSelection (DrawingArea model) =
-    AnnSet.hasSelection model.annotations
+{-| Indicates if the drawing area has at least one selection
+-}
+hasSelection : DrawingArea -> Bool
+hasSelection area =
+    AnnSet.hasSelection area.annotations

@@ -7,14 +7,18 @@
         "src"
     ],
     "exposed-modules": [
-        "DrawingArea"
+        "Annotation",
+        "AnnotationSet",
+        "DrawingArea",
+        "Pointer",
+        "SvgViewer",
+        "Tools"
     ],
     "dependencies": {
-        "elm-community/list-extra": "3.1.0 <= v < 4.0.0",
         "elm-lang/core": "4.0.5 <= v < 5.0.0",
         "elm-lang/html": "1.1.0 <= v < 2.0.0",
         "elm-lang/svg": "1.1.1 <= v < 2.0.0",
-        "mpizenberg/elm-image-collection": "2.3.1 <= v < 3.0.0"
+        "mpizenberg/elm-image-collection": "3.0.0 <= v < 4.0.0"
     },
     "elm-version": "0.17.1 <= v < 0.18.0"
 }
