@@ -110,14 +110,24 @@ changeZoom zoom viewer =
     { viewer | zoom = zoom }
 
 
+changeZoomCentered : Float -> SvgViewer -> SvgViewer
+changeZoomCentered zoom viewer =
+    let
+        center =
+            currentCenter viewer
+    in
+        { viewer | zoom = zoom }
+            |> reCenter center
+
+
 zoomIn : SvgViewer -> SvgViewer
 zoomIn viewer =
-    changeZoom (2 * viewer.zoom) viewer
+    changeZoomCentered (2 * viewer.zoom) viewer
 
 
 zoomOut : SvgViewer -> SvgViewer
 zoomOut viewer =
-    changeZoom (0.5 * viewer.zoom) viewer
+    changeZoomCentered (0.5 * viewer.zoom) viewer
 
 
 currentCenter : SvgViewer -> ( Float, Float )
