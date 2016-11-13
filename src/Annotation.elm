@@ -76,6 +76,11 @@ default =
 -- UPDATE ############################################################
 
 
+setLabel : String -> Annotation -> Annotation
+setLabel label annotation =
+    { annotation | label = label }
+
+
 updateSelection : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
 updateSelection event origin newPos tool annotation =
     case tool of

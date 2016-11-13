@@ -4,7 +4,7 @@ module DrawingArea exposing (..)
 
 @docs DrawingArea, default
 @docs createAnnotation, removeAnnotation, getAnnotation, setAnnotation
-@docs useTool, updateArea, updateSelection
+@docs useTool, updateArea, updateSelection, updateAnnotation
 @docs changeBgImage, fitImage, zoomIn, zoomOut
 @docs view, viewAnnotation, selectAnnotationTag, selectToolTag
 @docs exportAnnotations, exportSelectionsPaths
@@ -134,6 +134,28 @@ updateSelection origin pointer viewer tool annotation =
             SvgViewer.transformPos viewer <| Pointer.offset pointer
     in
         Ann.updateSelection event ( ox, oy ) ( x, y ) tool annotation
+
+
+{-| Update the current annotation.
+-}
+updateAnnotation : (Annotation -> Annotation) -> Maybe ( Int, Annotation ) -> DrawingArea -> ( Maybe ( Int, Annotation ), DrawingArea )
+updateAnnotation f current area =
+    case current of
+        Nothing ->
+            ( current, area )
+
+        Just ( id, annotation ) ->
+            let
+                newAnnotation =
+                    f annotation
+
+                current =
+                    Just ( id, newAnnotation )
+
+                newArea =
+                    setAnnotation id newAnnotation area
+            in
+                ( current, newArea )
 
 
 {-| Change the background image.

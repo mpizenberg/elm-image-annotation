@@ -164,58 +164,22 @@ update msg model =
             { model | label = label } ! []
 
         ApplyLabel ->
-            case model.current of
-                Nothing ->
-                    model ! []
-
-                Just ( id, annotation ) ->
-                    let
-                        ann =
-                            { annotation | label = model.label }
-
-                        current =
-                            Just ( id, ann )
-
-                        area =
-                            Area.setAnnotation id ann model.area
-                    in
-                        { model | area = area, current = current } ! []
+            updateCurrentAnnotation (Ann.setLabel model.label) model
 
         StartTime maybeTime ->
-            case model.current of
-                Nothing ->
-                    model ! []
-
-                Just ( id, annotation ) ->
-                    let
-                        newAnnotation =
-                            Ann.setStartTime maybeTime annotation
-
-                        current =
-                            Just ( id, newAnnotation )
-
-                        area =
-                            Area.setAnnotation id newAnnotation model.area
-                    in
-                        { model | area = area, current = current } ! []
+            updateCurrentAnnotation (Ann.setStartTime maybeTime) model
 
         StopTime maybeTime ->
-            case model.current of
-                Nothing ->
-                    model ! []
+            updateCurrentAnnotation (Ann.setStopTime maybeTime) model
 
-                Just ( id, annotation ) ->
-                    let
-                        newAnnotation =
-                            Ann.setStopTime maybeTime annotation
 
-                        current =
-                            Just ( id, newAnnotation )
-
-                        area =
-                            Area.setAnnotation id newAnnotation model.area
-                    in
-                        { model | area = area, current = current } ! []
+updateCurrentAnnotation : (Annotation -> Annotation) -> Model -> ( Model, Cmd Msg )
+updateCurrentAnnotation modifier model =
+    let
+        ( current, area ) =
+            Area.updateAnnotation modifier model.current model.area
+    in
+        { model | area = area, current = current } ! []
 
 
 updatePointer : Pointer -> Maybe Pointer
