@@ -4,6 +4,8 @@ import Html as H exposing (Html)
 import Html.Events as HE
 import Helpers.Events as HPE
 import Tools exposing (Tool)
+import Time exposing (Time)
+import Task exposing (Task)
 
 
 type Event
@@ -33,7 +35,7 @@ movement pointer =
 
 
 
--- HTML ATTRIBUTES ###################################################
+-- HTML POINTER ATTRIBUTES ###########################################
 
 
 attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
@@ -86,3 +88,12 @@ fromMovement event ( movementX, movementY ) =
     , movementX = movementX
     , movementY = movementY
     }
+
+
+
+-- HTML TIME ATTRIBUTES ##############################################
+
+
+askTime : (Time -> msg) -> Cmd msg
+askTime msgMaker =
+    Task.perform identity msgMaker Time.now

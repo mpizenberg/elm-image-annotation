@@ -12,7 +12,6 @@ import Tools exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
 import Time exposing (Time)
-import Task exposing (Task)
 
 
 main =
@@ -73,8 +72,8 @@ type Msg
     | FitImage
     | ChangeLabel String
     | ApplyLabel
-    | StartTime (Maybe Time)
-    | StopTime (Maybe Time)
+    | StartTime Time
+    | StopTime Time
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -127,7 +126,7 @@ update msg model =
                     case pointer.event of
                         Pointer.Down ->
                             ( Pointer.offset pointer
-                            , Task.perform (identity) (StartTime << Just) Time.now
+                            , Pointer.askTime StartTime
                             )
 
                         Pointer.Move ->
@@ -135,7 +134,7 @@ update msg model =
 
                         _ ->
                             ( model.downOrigin
-                            , Task.perform (identity) (StopTime << Just) Time.now
+                            , Pointer.askTime StopTime
                             )
 
                 ( newCurrent, newArea ) =
@@ -166,11 +165,11 @@ update msg model =
         ApplyLabel ->
             updateCurrentAnnotation (Ann.setLabel model.label) model
 
-        StartTime maybeTime ->
-            updateCurrentAnnotation (Ann.setStartTime maybeTime) model
+        StartTime time ->
+            updateCurrentAnnotation (Ann.setStartTime <| Just time) model
 
-        StopTime maybeTime ->
-            updateCurrentAnnotation (Ann.setStopTime maybeTime) model
+        StopTime time ->
+            updateCurrentAnnotation (Ann.setStopTime <| Just time) model
 
 
 updateCurrentAnnotation : (Annotation -> Annotation) -> Model -> ( Model, Cmd Msg )
