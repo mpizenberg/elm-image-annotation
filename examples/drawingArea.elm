@@ -121,7 +121,7 @@ update msg model =
                             model.downOrigin
 
                 ( newCurrent, newArea ) =
-                    Area.updateArea downOrigin pointer model.current model.area
+                    Area.updateAnnotations downOrigin pointer model.current model.area
             in
                 { model
                     | pointer = updatePointer pointer
