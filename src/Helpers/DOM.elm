@@ -21,7 +21,7 @@ module Helpers.DOM
         , page
         , movement
         , computedOffset
-        , test
+        , computedTouchOffset
         )
 
 import Json.Decode as JD exposing ((:=))
@@ -194,13 +194,18 @@ computedOffset =
         (currentTarget boundingClientRect)
 
 
+{-| Decode the pseudo computed "offsetX" and "offsetY"
+-}
+computedTouchOffset : JD.Decoder ( Float, Float )
+computedTouchOffset =
+    JD.object2
+        (\( x, y ) ( left, top ) -> ( x - left, y - top ))
+        (JD.at [ "changedTouches", "0" ] client)
+        (currentTarget <| position 0 0)
+
+
 {-| Decode the "movementX" and "movementY" values from a JSON
 -}
 movement : JD.Decoder ( Float, Float )
 movement =
     JD.object2 (,) ("movementX" := JD.float) ("movementY" := JD.float)
-
-
-test : JD.Decoder ( Float, Float )
-test =
-    JD.object1 (\rect -> ( rect.left, rect.top )) boundingClientRect

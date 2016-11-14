@@ -90,12 +90,16 @@ noToolAttributes msgMaker previousPointer =
 toolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
 toolAttributes msgMaker previousPointer =
     [ HPE.offsetOn "mousedown" <| msgMaker << (fromOffset Down)
+    , HPE.computedTouchOffsetOn "touchstart" <| msgMaker << (fromOffset Down)
+    , HPE.computedTouchOffsetOn "touchmove" <| msgMaker << (fromOffset Move)
     , HPE.offsetOn "mouseup" <| msgMaker << (fromOffset Up)
+    , HPE.computedTouchOffsetOn "touchend" <| msgMaker << (fromOffset Up)
     ]
         ++ if previousPointer == Nothing then
             []
            else
-            [ HPE.offsetOn "mousemove" <| msgMaker << (fromOffset Move) ]
+            [ HPE.offsetOn "mousemove" <| msgMaker << (fromOffset Move)
+            ]
 
 
 fromOffset : Event -> ( Float, Float ) -> Pointer

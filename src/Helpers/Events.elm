@@ -7,6 +7,7 @@ module Helpers.Events
     exposing
         ( preventAndStop
         , offsetOn
+        , computedTouchOffsetOn
         , movementOn
         , on
         , onChange
@@ -35,6 +36,13 @@ preventAndStop =
 offsetOn : String -> (( Float, Float ) -> msg) -> H.Attribute msg
 offsetOn mouseEvent msgMaker =
     on mouseEvent DOM.offset msgMaker
+
+
+{-| Get the computed offsetX and offsetY properties of a touch event.
+-}
+computedTouchOffsetOn : String -> (( Float, Float ) -> msg) -> H.Attribute msg
+computedTouchOffsetOn touchEvent =
+    on touchEvent DOM.computedTouchOffset
 
 
 {-| Get the movementX and movementY properties of a mouse event
