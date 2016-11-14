@@ -200,7 +200,7 @@ computedTouchOffset : JD.Decoder ( Float, Float )
 computedTouchOffset =
     JD.object2
         (\( x, y ) ( left, top ) -> ( x - left, y - top ))
-        (JD.at [ "changedTouches", "0" ] client)
+        (JD.at [ "changedTouches", "0" ] page)
         (currentTarget <| position 0 0)
 
 
