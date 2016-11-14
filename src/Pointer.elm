@@ -10,12 +10,15 @@ module Pointer
         , offset
         , movement
         , attributes
+        , noToolAttributes
+        , toolAttributes
         , askTime
         )
 
 {-| This module aims at giving helper functions to deal with pointer events.
 
-@docs Event, Pointer, offset, movement, attributes, askTime
+@docs Event, Pointer, offset, movement, attributes, noToolAttributes, toolAttributes
+@docs askTime
 -}
 
 import Html as H exposing (Html)
@@ -76,6 +79,8 @@ attributes msgMaker currentTool previousPointer =
             toolAttributes msgMaker previousPointer
 
 
+{-| Returns a list of attribute messages to detect movement when no tool is used.
+-}
 noToolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
 noToolAttributes msgMaker previousPointer =
     [ HPE.movementOn "mousedown" <| msgMaker << (fromOffset Down)
@@ -87,6 +92,8 @@ noToolAttributes msgMaker previousPointer =
             [ HPE.movementOn "mousemove" <| msgMaker << (fromMovement Move) ]
 
 
+{-| Returns a list of attribute messages to detect movement when a tool is used.
+-}
 toolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
 toolAttributes msgMaker previousPointer =
     [ HPE.offsetOn "mousedown" <| msgMaker << (fromOffset Down)
