@@ -50,6 +50,7 @@ import Dict exposing (Dict)
 import Array exposing (Array)
 import Svg exposing (Svg)
 import Svg.Attributes as SvgA
+import Html as H exposing (Html)
 import Html.Attributes as HA
 import Image exposing (Image)
 import AnnotationSet as AnnSet exposing (AnnotationSet)
@@ -278,21 +279,29 @@ transformSize viewer ( width, height ) =
 
 {-| View the svg tag representing the DrawingArea model
 -}
-view : List (Svg.Attribute msg) -> AnnotationSet -> SvgViewer -> Svg msg
+view : List (H.Attribute msg) -> AnnotationSet -> SvgViewer -> Html msg
 view attributes set viewer =
-    Svg.svg
+    H.div
         (sizeStyleAttribute viewer :: attributes)
-        [ Svg.g
-            [ svgTransform viewer.zoom viewer.origin ]
-            ((case viewer.bgImage of
-                Nothing ->
-                    []
+        [ Svg.svg
+            [ HA.style
+                [ ( "width", "100%" )
+                , ( "height", "100%" )
+                , ( "display", "block" )
+                ]
+            ]
+            [ Svg.g
+                [ svgTransform viewer.zoom viewer.origin ]
+                ((case viewer.bgImage of
+                    Nothing ->
+                        []
 
-                Just image ->
-                    [ Image.viewSvg [] Nothing image ]
-             )
-                ++ AnnSet.viewAllSelections set
-            )
+                    Just image ->
+                        [ Image.viewSvg [] Nothing image ]
+                 )
+                    ++ AnnSet.viewAllSelections set
+                )
+            ]
         ]
 
 
