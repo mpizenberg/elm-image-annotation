@@ -39,6 +39,7 @@ So anything that can be done on arrays can be done on an AnnotationSet.
 -}
 
 import Html as H exposing (Html)
+import Html.Lazy exposing (lazy)
 import Svg exposing (Svg)
 import Json.Encode as JE
 import Array exposing (Array)
@@ -75,7 +76,7 @@ remove id set =
 -}
 viewAllSelections : AnnotationSet -> List (Svg msg)
 viewAllSelections set =
-    Array.map Ann.selectionView set
+    Array.map (lazy Ann.selectionView) set
         |> Array.toList
 
 

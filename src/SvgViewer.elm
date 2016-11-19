@@ -51,6 +51,7 @@ import Array exposing (Array)
 import Svg exposing (Svg)
 import Svg.Attributes as SvgA
 import Html as H exposing (Html)
+import Html.Lazy exposing (lazy2)
 import Html.Attributes as HA
 import Image exposing (Image)
 import AnnotationSet as AnnSet exposing (AnnotationSet)
@@ -283,25 +284,29 @@ view : List (H.Attribute msg) -> AnnotationSet -> SvgViewer -> Html msg
 view attributes set viewer =
     H.div
         (sizeStyleAttribute viewer :: attributes)
-        [ Svg.svg
-            [ HA.style
-                [ ( "width", "100%" )
-                , ( "height", "100%" )
-                , ( "display", "block" )
-                ]
-            ]
-            [ Svg.g
-                [ svgTransform viewer.zoom viewer.origin ]
-                ((case viewer.bgImage of
-                    Nothing ->
-                        []
+        [ (lazy2 innerView) set viewer ]
 
-                    Just image ->
-                        [ Image.viewSvg [] Nothing image ]
-                 )
-                    ++ AnnSet.viewAllSelections set
-                )
+
+innerView : AnnotationSet -> SvgViewer -> Html msg
+innerView set viewer =
+    Svg.svg
+        [ HA.style
+            [ ( "width", "100%" )
+            , ( "height", "100%" )
+            , ( "display", "block" )
             ]
+        ]
+        [ Svg.g
+            [ svgTransform viewer.zoom viewer.origin ]
+            ((case viewer.bgImage of
+                Nothing ->
+                    []
+
+                Just image ->
+                    [ Image.viewSvg [] Nothing image ]
+             )
+                ++ AnnSet.viewAllSelections set
+            )
         ]
 
 

@@ -230,13 +230,17 @@ view model =
 
                     Just ( id, ann ) ->
                         Just ann
-          in
-            Area.viewAnnotation
+
+            attributes =
                 ((Pointer.attributes PointerEvent model.area.currentTool model.pointer)
                     ++ [ HA.style [ ( "border", "1px solid black" ) ] ]
                 )
-                annotation
-                model.area
+          in
+            Area.view attributes model.area
+          -- Area.viewAnnotation
+          --     attributes
+          --     annotation
+          --     model.area
         , H.p [] [ H.text model.jsonExport ]
         , H.p [] [ H.text (toString model) ]
         ]
