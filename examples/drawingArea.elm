@@ -204,22 +204,24 @@ updatePointer pointer =
 view : Model -> Html Msg
 view model =
     H.body []
-        [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
-        , H.text " Annotation: "
-        , Area.selectAnnotationTag model.area model.current Select
-        , H.input [ HA.type_ "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
-        , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
-        , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
-        , H.br [] []
-        , H.text " Tool: "
-        , Area.selectToolTag model.area SelectTool
-        , H.br [] []
-        , H.button [ HE.onClick <| Zoom ZoomIn ] [ H.text "Zoom In" ]
-        , H.button [ HE.onClick <| Zoom ZoomOut ] [ H.text "Zoom Out" ]
-        , H.button [ HE.onClick <| FitImage ] [ H.text "Fit Image" ]
-        , H.br [] []
-        , H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ]
-        , H.br [] []
+        [ H.p []
+            [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
+            , H.text " Annotation: "
+            , Area.selectAnnotationTag model.area model.current Select
+            , H.input [ HA.type_ "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
+            , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
+            , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
+            ]
+        , H.p []
+            [ H.text " Tool: "
+            , Area.selectToolTag model.area SelectTool
+            ]
+        , H.p []
+            [ H.button [ HE.onClick <| Zoom ZoomIn ] [ H.text "Zoom In" ]
+            , H.button [ HE.onClick <| Zoom ZoomOut ] [ H.text "Zoom Out" ]
+            , H.button [ HE.onClick <| FitImage ] [ H.text "Fit Image" ]
+            ]
+        , H.p [] [ H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ] ]
         , let
             annotation =
                 case model.current of
@@ -236,6 +238,5 @@ view model =
                 annotation
                 model.area
         , H.p [] [ H.text model.jsonExport ]
-        , H.br [] []
-        , H.text (toString model)
+        , H.p [] [ H.text (toString model) ]
         ]
