@@ -137,4 +137,4 @@ fromMovement event ( movementX, movementY ) =
 -}
 askTime : (Time -> msg) -> Cmd msg
 askTime msgMaker =
-    Task.perform identity msgMaker Time.now
+    Task.perform msgMaker Time.now

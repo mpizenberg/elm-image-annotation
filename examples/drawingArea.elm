@@ -6,7 +6,6 @@
 module Main exposing (..)
 
 import Html as H exposing (Html)
-import Html.App as App
 import Html.Events as HE
 import Html.Attributes as HA
 import Json.Encode as JE
@@ -19,7 +18,7 @@ import Time exposing (Time)
 
 
 main =
-    App.program
+    H.program
         { init = init
         , update = update
         , subscriptions = always Sub.none
@@ -208,7 +207,7 @@ view model =
         [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
         , H.text " Annotation: "
         , Area.selectAnnotationTag model.area model.current Select
-        , H.input [ HA.type' "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
+        , H.input [ HA.type_ "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
         , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
         , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
         , H.br [] []

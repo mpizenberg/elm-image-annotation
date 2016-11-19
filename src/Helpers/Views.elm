@@ -31,7 +31,7 @@ autoSelectTag pairs =
                     { describer = encoder
                     , encoder = encoder
                     , decoder = autoDecoder defaultValue pairs
-                    , allValues = fst <| List.unzip pairs
+                    , allValues = Tuple.first <| List.unzip pairs
                     , compare = (==)
                     }
             in
@@ -86,18 +86,18 @@ selectTagFromArray describer array =
 -}
 autoEncoder : string -> List ( value, string ) -> value -> string
 autoEncoder default pairs value =
-    HPL.find (fst >> (==) value) pairs
+    HPL.find (Tuple.first >> (==) value) pairs
         |> Maybe.withDefault ( value, default )
-        |> snd
+        |> Tuple.second
 
 
 {-| Automatically generates a decoder from a list of pairs and a default.
 -}
 autoDecoder : value -> List ( value, string ) -> string -> value
 autoDecoder default pairs string =
-    HPL.find (snd >> (==) string) pairs
+    HPL.find (Tuple.second >> (==) string) pairs
         |> Maybe.withDefault ( default, string )
-        |> fst
+        |> Tuple.first
 
 
 {-| An encoder for when dealing with elements of an array

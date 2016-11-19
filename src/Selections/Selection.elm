@@ -83,12 +83,12 @@ changeStrokeWidth width selection =
 
 setStartTime : Maybe Time -> Selection -> Selection
 setStartTime t selection =
-    { selection | timings = ( t, snd selection.timings ) }
+    { selection | timings = ( t, Tuple.second selection.timings ) }
 
 
 setStopTime : Maybe Time -> Selection -> Selection
 setStopTime t selection =
-    { selection | timings = ( fst selection.timings, t ) }
+    { selection | timings = ( Tuple.first selection.timings, t ) }
 
 
 resetTimings : Selection -> Selection

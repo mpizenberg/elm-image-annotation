@@ -24,7 +24,7 @@ module Helpers.DOM
         , computedTouchOffset
         )
 
-import Json.Decode as JD exposing ((:=))
+import Json.Decode as Decode exposing (Decoder)
 
 
 -- DOM DECODERS (from elm-dom package)
@@ -32,9 +32,9 @@ import Json.Decode as JD exposing ((:=))
 
 {-| Get the target DOM element of an event
 -}
-target : JD.Decoder a -> JD.Decoder a
+target : Decoder a -> Decoder a
 target decoder =
-    "target" := decoder
+    Decode.field "target" decoder
 
 
 {-| Get the offsetParent of the current element.
@@ -42,54 +42,54 @@ Returns first argument if the current element is already the root;
 applies the second argument to the parent element if not.
 To do traversals of the DOM, exploit that Elm allows recursive values.
 -}
-offsetParent : a -> JD.Decoder a -> JD.Decoder a
+offsetParent : a -> Decoder a -> Decoder a
 offsetParent x decoder =
-    JD.oneOf
-        [ "offsetParent" := JD.null x
-        , "offsetParent" := decoder
+    Decode.oneOf
+        [ Decode.field "offsetParent" <| Decode.null x
+        , Decode.field "offsetParent" decoder
         ]
 
 
 {-| Get the width of an element in pixels
 -}
-offsetWidth : JD.Decoder Float
+offsetWidth : Decoder Float
 offsetWidth =
-    "offsetWidth" := JD.float
+    Decode.field "offsetWidth" Decode.float
 
 
 {-| Get the heigh of an element in pixels
 -}
-offsetHeight : JD.Decoder Float
+offsetHeight : Decoder Float
 offsetHeight =
-    "offsetHeight" := JD.float
+    Decode.field "offsetHeight" Decode.float
 
 
 {-| Get the left-offset of the element in the parent element in pixels
 -}
-offsetLeft : JD.Decoder Float
+offsetLeft : Decoder Float
 offsetLeft =
-    "offsetLeft" := JD.float
+    Decode.field "offsetLeft" Decode.float
 
 
 {-| Get the top-offset of the element in the parent element in pixels
 -}
-offsetTop : JD.Decoder Float
+offsetTop : Decoder Float
 offsetTop =
-    "offsetTop" := JD.float
+    Decode.field "offsetTop" Decode.float
 
 
 {-| Get the amount of left scroll of the element in pixels
 -}
-scrollLeft : JD.Decoder Float
+scrollLeft : Decoder Float
 scrollLeft =
-    "scrollLeft" := JD.float
+    Decode.field "scrollLeft" Decode.float
 
 
 {-| Get the amount of top scroll of the element in pixels
 -}
-scrollTop : JD.Decoder Float
+scrollTop : Decoder Float
 scrollTop =
-    "scrollTop" := JD.float
+    Decode.field "scrollTop" Decode.float
 
 
 {-| Type for rectangles
@@ -112,9 +112,9 @@ Complexity : O(lg n) traversal of the DOM,
 only now through presumably expensive JSON decoders.
 It's 2007 forever, baby!
 -}
-boundingClientRect : JD.Decoder Rectangle
+boundingClientRect : Decoder Rectangle
 boundingClientRect =
-    JD.object3
+    Decode.map3
         (\( x, y ) width height -> Rectangle x y width height)
         (position 0 0)
         offsetWidth
@@ -137,9 +137,9 @@ boundingClientRect =
 -}
 
 
-position : Float -> Float -> JD.Decoder ( Float, Float )
+position : Float -> Float -> Decoder ( Float, Float )
 position x y =
-    JD.object4
+    Decode.map4
         (\scrollLeft scrollTop offsetLeft offsetTop ->
             ( x + offsetLeft - scrollLeft, y + offsetTop - scrollTop )
         )
@@ -147,7 +147,7 @@ position x y =
         scrollTop
         offsetLeft
         offsetTop
-        `JD.andThen` (\( x', y' ) -> offsetParent ( x', y' ) (position x' y'))
+        |> Decode.andThen (\( x_, y_ ) -> offsetParent ( x_, y_ ) (position x_ y_))
 
 
 
@@ -156,39 +156,45 @@ position x y =
 
 {-| Get the current target DOM element of an event
 -}
-currentTarget : JD.Decoder a -> JD.Decoder a
+currentTarget : Decoder a -> Decoder a
 currentTarget decoder =
-    "currentTarget" := decoder
+    Decode.field "currentTarget" decoder
 
 
 {-| Decode the "offsetX and "offsetY" values from a JSON
 -}
-offset : JD.Decoder ( Float, Float )
+offset : Decoder ( Float, Float )
 offset =
-    JD.object2 (,) ("offsetX" := JD.float) ("offsetY" := JD.float)
+    Decode.map2 (,)
+        (Decode.field "offsetX" Decode.float)
+        (Decode.field "offsetY" Decode.float)
 
 
 {-| Decode the "clientX" and "clientY" values from a JSON
 -}
-client : JD.Decoder ( Float, Float )
+client : Decoder ( Float, Float )
 client =
-    JD.object2 (,) ("clientX" := JD.float) ("clientY" := JD.float)
+    Decode.map2 (,)
+        (Decode.field "clientX" Decode.float)
+        (Decode.field "clientY" Decode.float)
 
 
 {-| Decode the "pageX" and "pageY" values from a JSON
 -}
-page : JD.Decoder ( Float, Float )
+page : Decoder ( Float, Float )
 page =
-    JD.object2 (,) ("pageX" := JD.float) ("pageY" := JD.float)
+    Decode.map2 (,)
+        (Decode.field "pageX" Decode.float)
+        (Decode.field "pageY" Decode.float)
 
 
 {-| Decode computed (expensively) offset from values from a JSON.
 Should be replaced by offset when implemented correctly in firefox
 (with currentTarget instead of target).
 -}
-computedOffset : JD.Decoder ( Float, Float )
+computedOffset : Decoder ( Float, Float )
 computedOffset =
-    JD.object2
+    Decode.map2
         (\( x, y ) rect -> ( x - rect.left, y - rect.top ))
         page
         (currentTarget boundingClientRect)
@@ -196,16 +202,18 @@ computedOffset =
 
 {-| Decode the pseudo computed "offsetX" and "offsetY"
 -}
-computedTouchOffset : JD.Decoder ( Float, Float )
+computedTouchOffset : Decoder ( Float, Float )
 computedTouchOffset =
-    JD.object2
+    Decode.map2
         (\( x, y ) ( left, top ) -> ( x - left, y - top ))
-        (JD.at [ "changedTouches", "0" ] page)
+        (Decode.at [ "changedTouches", "0" ] page)
         (currentTarget <| position 0 0)
 
 
 {-| Decode the "movementX" and "movementY" values from a JSON
 -}
-movement : JD.Decoder ( Float, Float )
+movement : Decoder ( Float, Float )
 movement =
-    JD.object2 (,) ("movementX" := JD.float) ("movementY" := JD.float)
+    Decode.map2 (,)
+        (Decode.field "movementX" Decode.float)
+        (Decode.field "movementY" Decode.float)
