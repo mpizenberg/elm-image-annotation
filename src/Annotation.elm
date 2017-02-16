@@ -139,6 +139,7 @@ view annotation =
         defaultStyle =
             [ SvgA.stroke "red"
             , SvgA.strokeWidth "2"
+            , SvgA.pointerEvents "none"
             ]
     in
         case annotation.input of
