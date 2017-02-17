@@ -84,3 +84,26 @@ arrayDecoder stringId array =
 
                 Just value ->
                     Just ( id, value )
+
+
+
+-- AUTO CONFIG #######################################################
+
+
+arrayCompare : Maybe (Option Int value) -> Option Int value -> Bool
+arrayCompare current ( id, _ ) =
+    case current of
+        Nothing ->
+            False
+
+        Just ( currentId, _ ) ->
+            currentId == id
+
+
+arrayConfig : (Option Int value -> String) -> Array value -> Config (Option Int value)
+arrayConfig describe array =
+    { describe = describe
+    , encode = arrayEncoder
+    , decode = flip arrayDecoder array
+    , compare = arrayCompare
+    }
