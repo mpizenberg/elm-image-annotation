@@ -15,6 +15,8 @@ module Annotation
         , addPoint
           -- View
         , view
+        , Option
+        , optionDescriber
           -- Exports
         , encodePath
           -- Other
@@ -30,7 +32,7 @@ module Annotation
 @docs setLabel, setRectangle, initOutline, initScribble, addPoint
 
 # View
-@docs view
+@docs view, Option, optionDescriber
 
 # Exports
 @docs encodePath
@@ -148,6 +150,28 @@ view annotation =
 
             Scribble polyline ->
                 Svg.polyline2d defaultStyle polyline
+
+
+{-| Option type used for <select> tags
+-}
+type alias Option =
+    ( Int, Annotation )
+
+
+{-| Text of an <option> tag describing an annotation.
+-}
+optionDescriber : Option -> String
+optionDescriber ( id, annotation ) =
+    let
+        inputStr =
+            case annotation.input of
+                Selection _ ->
+                    "Selection"
+
+                Scribble _ ->
+                    "Scribble"
+    in
+        toString id ++ " : " ++ inputStr ++ " : " ++ annotation.label
 
 
 
