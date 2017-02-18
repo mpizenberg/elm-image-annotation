@@ -11,6 +11,9 @@ module Helpers.Select
         , ArrayOption
         , arrayConfig
         , arrayTag
+          -- Lists
+        , listConfig
+        , listTag
         )
 
 import Html exposing (Html)
@@ -46,13 +49,13 @@ optionTag config current option =
 
 
 
--- AUTO CODECS #######################################################
+-- AUTO LISTS ########################################################
 
 
 {-| Automatically generates an encoder from a list of pairs and a default.
 -}
-autoEncoder : string -> option -> List ( option, string ) -> string
-autoEncoder default option pairs =
+listEncoder : List ( option, string ) -> string -> option -> string
+listEncoder pairs default option =
     List.find (Tuple.first >> (==) option) pairs
         |> Maybe.withDefault ( option, default )
         |> Tuple.second
@@ -60,14 +63,36 @@ autoEncoder default option pairs =
 
 {-| Automatically generates a decoder from a list of pairs and a default.
 -}
-autoDecoder : string -> List ( option, string ) -> Maybe option
-autoDecoder value pairs =
+listDecoder : List ( option, string ) -> option -> string -> option
+listDecoder pairs default value =
     List.find (Tuple.second >> (==) value) pairs
-        |> Maybe.map Tuple.first
+        |> Maybe.withDefault ( default, value )
+        |> Tuple.first
+
+
+listConfig : ( option, String ) -> List ( option, String ) -> Config option
+listConfig ( defaultOption, defaultValue ) pairs =
+    { describe = listEncoder pairs defaultValue
+    , encode = listEncoder pairs defaultValue
+    , decode = listDecoder pairs defaultOption
+    , selected = (==)
+    }
+
+
+listTag : (option -> msg) -> option -> ( option, String ) -> List ( option, String ) -> Html msg
+listTag tagger current default pairs =
+    let
+        options =
+            Tuple.first default :: List.map Tuple.first pairs
+
+        config =
+            listConfig default pairs
+    in
+        tag config tagger current options
 
 
 
--- ARRAYS ############################################################
+-- AUTO ARRAYS #######################################################
 
 
 type alias ArrayOption value =
