@@ -68,13 +68,6 @@ view set =
 
 {-| Create a <select> tag with an <option> tag for each annotation.
 -}
-selectTag : (Maybe Option -> msg) -> Maybe Option -> Set -> Html msg
+selectTag : (Option -> msg) -> Option -> Set -> Html msg
 selectTag tagger current set =
-    let
-        config =
-            Select.arrayConfig Annotation.optionDescriber set
-
-        optionsList =
-            Array.toIndexedList set
-    in
-        Select.tag config tagger current optionsList
+    Select.arrayTag Annotation.optionDescriber tagger current set

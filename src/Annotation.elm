@@ -155,23 +155,28 @@ view annotation =
 {-| Option type used for <select> tags
 -}
 type alias Option =
-    ( Int, Annotation )
+    Maybe ( Int, Annotation )
 
 
 {-| Text of an <option> tag describing an annotation.
 -}
 optionDescriber : Option -> String
-optionDescriber ( id, annotation ) =
-    let
-        inputStr =
-            case annotation.input of
-                Selection _ ->
-                    "Selection"
+optionDescriber option =
+    case option of
+        Nothing ->
+            ""
 
-                Scribble _ ->
-                    "Scribble"
-    in
-        toString id ++ " : " ++ inputStr ++ " : " ++ annotation.label
+        Just ( id, annotation ) ->
+            let
+                inputStr =
+                    case annotation.input of
+                        Selection _ ->
+                            "Selection"
+
+                        Scribble _ ->
+                            "Scribble"
+            in
+                toString id ++ " : " ++ inputStr ++ " : " ++ annotation.label
 
 
 

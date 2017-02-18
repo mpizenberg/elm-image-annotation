@@ -5,10 +5,12 @@
 
 module Helpers.Select
     exposing
-        ( Option
-        , Config
+        ( Config
         , tag
+          -- Arrays
+        , ArrayOption
         , arrayConfig
+        , arrayTag
         )
 
 import Html exposing (Html)
@@ -18,30 +20,26 @@ import Helpers.List as List
 import Array exposing (Array)
 
 
-type alias Option key value =
-    ( key, value )
-
-
 type alias Config option =
     { describe : option -> String
     , encode : option -> String
-    , decode : String -> Maybe option
-    , compare : Maybe option -> option -> Bool
+    , decode : String -> option
+    , selected : option -> option -> Bool
     }
 
 
-tag : Config option -> (Maybe option -> msg) -> Maybe option -> List option -> Html msg
+tag : Config option -> (option -> msg) -> option -> List option -> Html msg
 tag config tagger current options =
     options
         |> List.map (optionTag config current)
         |> Html.select [ Events.onChange (tagger << config.decode) ]
 
 
-optionTag : Config option -> Maybe option -> option -> Html msg
+optionTag : Config option -> option -> option -> Html msg
 optionTag config current option =
     Html.option
         [ Attributes.value (config.encode option)
-        , Attributes.selected (config.compare current option)
+        , Attributes.selected (config.selected current option)
         ]
         [ Html.text (config.describe option)
         ]
@@ -68,17 +66,30 @@ autoDecoder value pairs =
         |> Maybe.map Tuple.first
 
 
+
+-- ARRAYS ############################################################
+
+
+type alias ArrayOption value =
+    Maybe ( Int, value )
+
+
 {-| Automatic encoder for array elements.
 -}
-arrayEncoder : Option Int value -> String
-arrayEncoder ( id, value ) =
-    toString id
+arrayEncoder : ArrayOption value -> String
+arrayEncoder option =
+    case option of
+        Nothing ->
+            toString -1
+
+        Just ( id, _ ) ->
+            toString id
 
 
 {-| Automatic decoder for array elements.
 -}
-arrayDecoder : String -> Array value -> Maybe (Option Int value)
-arrayDecoder stringId array =
+arrayDecoder : Array value -> String -> ArrayOption value
+arrayDecoder array stringId =
     case String.toInt stringId of
         Err _ ->
             Nothing
@@ -92,24 +103,44 @@ arrayDecoder stringId array =
                     Just ( id, value )
 
 
+arraySelected : ArrayOption value -> ArrayOption value -> Bool
+arraySelected maybeCurrent maybeOption =
+    case ( maybeCurrent, maybeOption ) of
+        ( Nothing, Nothing ) ->
+            True
 
--- AUTO CONFIG #######################################################
+        ( Just ( currentId, _ ), Just ( optionId, _ ) ) ->
+            currentId == optionId
 
-
-arrayCompare : Maybe (Option Int value) -> Option Int value -> Bool
-arrayCompare current ( id, _ ) =
-    case current of
-        Nothing ->
+        _ ->
             False
 
-        Just ( currentId, _ ) ->
-            currentId == id
 
-
-arrayConfig : (Option Int value -> String) -> Array value -> Config (Option Int value)
+arrayConfig : (ArrayOption value -> String) -> Array value -> Config (ArrayOption value)
 arrayConfig describe array =
     { describe = describe
     , encode = arrayEncoder
-    , decode = flip arrayDecoder array
-    , compare = arrayCompare
+    , decode = arrayDecoder array
+    , selected = arraySelected
     }
+
+
+arrayTag :
+    (ArrayOption value -> String)
+    -> (ArrayOption value -> msg)
+    -> ArrayOption value
+    -> Array value
+    -> Html msg
+arrayTag describe tagger current array =
+    let
+        options =
+            Array.toIndexedList array
+                |> List.map Just
+                |> (::) Nothing
+
+        config =
+            arrayConfig describe array
+    in
+        options
+            |> List.map (optionTag config current)
+            |> Html.select [ Events.onChange (tagger << config.decode) ]
