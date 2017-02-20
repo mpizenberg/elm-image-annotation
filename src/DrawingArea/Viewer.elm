@@ -15,7 +15,23 @@ module DrawingArea.Viewer
         , positionIn
         , sizeIn
           -- VIEW
+        , viewSet
         )
+
+{-| This module provides functions to manage the viewing of the drawing area.
+
+# Model
+@docs Viewer, defaultViewer
+
+# Update
+@docs setSize, center, centerAt
+@docs setZoom, setZoomCentered, zoomIn, zoomOut
+@docs fitImage
+@docs move, positionIn, sizeIn
+
+# View
+@docs viewSet
+-}
 
 import OpenSolid.Geometry.Types exposing (Frame2d, Point2d(..), Vector2d(..))
 import OpenSolid.Frame2d as Frame2d
@@ -30,6 +46,8 @@ import Image exposing (Image)
 import Annotation.Set as Set exposing (Set)
 
 
+{-| Parameters of the viewer.
+-}
 type alias Viewer =
     { frame : Frame2d
     , size : Vector2d
@@ -37,6 +55,8 @@ type alias Viewer =
     }
 
 
+{-| Default viewer.
+-}
 defaultViewer : Viewer
 defaultViewer =
     { frame = Frame2d.xy
@@ -52,12 +72,16 @@ setSize size viewer =
     { viewer | size = Vector2d size }
 
 
+{-| Compute the center point of the viewing area.
+-}
 center : Viewer -> Point2d
 center viewer =
     Frame2d.originPoint viewer.frame
         |> Point2d.translateBy (Vector2d.scaleBy (0.5 / viewer.zoom) viewer.size)
 
 
+{-| Recenter the viewing area at a given point.
+-}
 centerAt : Point2d -> Viewer -> Viewer
 centerAt centroid viewer =
     let

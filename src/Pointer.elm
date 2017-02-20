@@ -24,7 +24,7 @@ module Pointer
 import Html as H exposing (Html)
 import Html.Events as HE
 import Helpers.Events as HPE
-import Tools exposing (Tool)
+import Tool exposing (Tool)
 import Time exposing (Time)
 import Task exposing (Task)
 
@@ -72,7 +72,7 @@ movement pointer =
 attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
 attributes msgMaker currentTool previousPointer =
     case currentTool of
-        Tools.None ->
+        Tool.None ->
             noToolAttributes msgMaker previousPointer
 
         _ ->
