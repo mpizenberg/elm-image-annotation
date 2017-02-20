@@ -1,7 +1,7 @@
 module DrawingArea.Viewer
     exposing
         ( Viewer
-        , defaultViewer
+        , default
           -- UPDATE
         , setSize
         , center
@@ -21,7 +21,7 @@ module DrawingArea.Viewer
 {-| This module provides functions to manage the viewing of the drawing area.
 
 # Model
-@docs Viewer, defaultViewer
+@docs Viewer, default
 
 # Update
 @docs setSize, center, centerAt
@@ -57,8 +57,8 @@ type alias Viewer =
 
 {-| Default viewer.
 -}
-defaultViewer : Viewer
-defaultViewer =
+default : Viewer
+default =
     { frame = Frame2d.xy
     , size = Vector2d ( 800, 400 )
     , zoom = 1
@@ -158,12 +158,11 @@ move vector viewer =
 
 {-| Transform coordinates of a point in the frame to their actual coordinates.
 -}
-positionIn : Viewer -> Point2d -> Point2d
+positionIn : Viewer -> ( Float, Float ) -> ( Float, Float )
 positionIn viewer point =
-    Point2d.coordinates point
-        |> sizeIn viewer
-        |> Point2d
+    Point2d (sizeIn viewer point)
         |> Point2d.placeIn viewer.frame
+        |> Point2d.coordinates
 
 
 {-| Scale a size in the frame to its actual size.
@@ -193,14 +192,14 @@ sizeStyleAttribute viewer =
 
 {-| View the svg tag representing the DrawingArea model.
 -}
-viewSet : List (Html.Attribute msg) -> Viewer -> Maybe Image -> Set -> Html msg
+viewSet : List (Html.Attribute msg) -> Viewer -> Maybe Image -> Set -> Svg msg
 viewSet attributes viewer image set =
-    Html.div
+    Svg.svg
         (sizeStyleAttribute viewer :: attributes)
         [ lazy3 innerView viewer image set ]
 
 
-innerView : Viewer -> Maybe Image -> Set -> Html msg
+innerView : Viewer -> Maybe Image -> Set -> Svg msg
 innerView viewer maybeImage set =
     let
         innerStyle =
@@ -221,5 +220,5 @@ innerView viewer maybeImage set =
     in
         (svgImage ++ Set.view set)
             |> Svg.g []
-            |> Svg.scaleAbout Point2d.origin viewer.zoom
             |> Svg.relativeTo viewer.frame
+            |> Svg.scaleAbout Point2d.origin viewer.zoom

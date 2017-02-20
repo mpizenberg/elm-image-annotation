@@ -7,12 +7,14 @@ module Annotation
     exposing
         ( Annotation
         , Input
+        , empty
           -- Update
         , setLabel
         , setRectangle
         , initOutline
         , initScribble
         , addPoint
+        , update
           -- View
         , view
         , Option
@@ -26,10 +28,10 @@ module Annotation
 {-| An annotation can be a selection or a scribble.
 
 # Model
-@docs Annotation, Input
+@docs Annotation, Input, empty
 
 # Update
-@docs setLabel, setRectangle, initOutline, initScribble, addPoint
+@docs setLabel, setRectangle, initOutline, initScribble, addPoint, update
 
 # View
 @docs view, Option, optionDescriber
@@ -49,6 +51,8 @@ import OpenSolid.Point2d as Point2d
 import OpenSolid.Svg as Svg
 import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
+import Pointer exposing (Pointer)
+import Tool exposing (Tool)
 
 
 -- MODEL #############################################################
@@ -67,6 +71,15 @@ type alias Annotation =
 type Input
     = Selection Polygon2d
     | Scribble Polyline2d
+
+
+{-| An empty annotation, only useful as startup.
+-}
+empty : String -> Annotation
+empty label =
+    { label = label
+    , input = Selection <| Polygon2d []
+    }
 
 
 
@@ -129,6 +142,54 @@ addPoint point annotation =
         { annotation | input = input }
 
 
+{-| Update an annotation depending on pointer events
+-}
+update : Pointer -> Pointer.Track -> Tool -> Int -> Option -> Option
+update pointer track tool newId option =
+    case ( tool, track, pointer.event, option ) of
+        ( Tool.Rectangle, _, Pointer.Down, _ ) ->
+            option
+
+        ( Tool.Rectangle, Pointer.Started start, Pointer.Move, _ ) ->
+            updateRectangle start pointer newId option
+
+        ( Tool.Rectangle, Pointer.Moved start _, Pointer.Move, _ ) ->
+            updateRectangle start pointer newId option
+
+        ( Tool.Outline, _, Pointer.Down, _ ) ->
+            Maybe.withDefault ( newId, empty "outline" ) option
+                |> Tuple.mapSecond (initOutline (Point2d <| Pointer.offset pointer))
+                |> Just
+
+        ( Tool.Outline, _, Pointer.Move, Just ( id, annotation ) ) ->
+            Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
+
+        ( Tool.Scribble, _, Pointer.Down, _ ) ->
+            Maybe.withDefault ( newId, empty "scribble" ) option
+                |> Tuple.mapSecond (initScribble (Point2d <| Pointer.offset pointer))
+                |> Just
+
+        ( Tool.Scribble, _, Pointer.Move, Just ( id, annotation ) ) ->
+            Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
+
+        _ ->
+            option
+
+
+updateRectangle : Pointer -> Pointer -> Int -> Option -> Option
+updateRectangle startPointer endPointer newId option =
+    let
+        startPoint =
+            Point2d (Pointer.offset startPointer)
+
+        endPoint =
+            Point2d (Pointer.offset endPointer)
+    in
+        Maybe.withDefault ( newId, empty "rectangle" ) option
+            |> Tuple.mapSecond (setRectangle startPoint endPoint)
+            |> Just
+
+
 
 -- VIEW ##############################################################
 
@@ -140,6 +201,7 @@ view annotation =
     let
         defaultStyle =
             [ SvgA.stroke "red"
+            , SvgA.fillOpacity "0"
             , SvgA.strokeWidth "2"
             , SvgA.pointerEvents "none"
             ]
