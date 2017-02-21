@@ -73,6 +73,9 @@ type Msg
     | ToolSelected Tool
     | PointerEventViewer Pointer
     | PointerEventAnnotation Pointer
+    | ZoomIn
+    | ZoomOut
+    | FitImage
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -143,6 +146,21 @@ update msg model =
                 , Cmd.none
                 )
 
+        ZoomIn ->
+            ( { model | viewer = Viewer.zoomIn model.viewer }
+            , Cmd.none
+            )
+
+        ZoomOut ->
+            ( { model | viewer = Viewer.zoomOut model.viewer }
+            , Cmd.none
+            )
+
+        FitImage ->
+            ( { model | viewer = Viewer.fitImage 0.8 model.bgImage model.viewer }
+            , Cmd.none
+            )
+
 
 
 -- VIEW ##############################################################
@@ -154,10 +172,8 @@ view model =
         selectAnnotationTag =
             Set.selectTag AnnotationSelected model.currentOption model.annotations
 
-        deleteAnnotationButton =
-            Html.button
-                [ Events.onClick <| DeleteAnnotation model.currentOption ]
-                [ Html.text "Delete" ]
+        button msg text =
+            Html.button [ Events.onClick msg ] [ Html.text text ]
 
         viewerContour =
             Attributes.style [ ( "border", "1px solid black" ) ]
@@ -195,11 +211,14 @@ view model =
             [ Html.p []
                 [ Html.text "Current annotation: "
                 , selectAnnotationTag
-                , deleteAnnotationButton
+                , button (DeleteAnnotation model.currentOption) "Delete"
                 ]
             , Html.p []
                 [ Html.text "Current tool: "
                 , Tool.selectTag ToolSelected model.currentTool
+                , button ZoomIn "Zoom In"
+                , button ZoomOut "Zoom Out"
+                , button FitImage "Fit Image"
                 ]
             , viewer
             , Html.p [] [ Html.text <| toString model ]
