@@ -3,7 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Tools
+module Tool
     exposing
         ( Tool(..)
         , selectTag
@@ -14,19 +14,20 @@ module Tools
 @docs Tool, selectTag
 -}
 
-import Html as H exposing (Html)
-import Helpers.Views as HPV
+import Html exposing (Html)
+import Helpers.Select as Select
 
 
 -- MODEL #############################################################
 
 
-{-| The type of tool that can be used to draw selections.
+{-| The type of tool that can be used to draw inputs.
 -}
 type Tool
     = None
     | Rectangle
     | Outline
+    | Scribble
 
 
 
@@ -35,10 +36,13 @@ type Tool
 
 {-| An html <select> tag enabling the choice of a tool.
 -}
-selectTag : Tool -> (Tool -> msg) -> Html msg
-selectTag =
-    HPV.autoSelectTag
-        [ ( None, "None" )
-        , ( Rectangle, "Rectangle" )
+selectTag : (Tool -> msg) -> Tool -> Html msg
+selectTag tagger current =
+    Select.listTag
+        tagger
+        current
+        ( None, "None" )
+        [ ( Rectangle, "Rectangle" )
         , ( Outline, "Outline" )
+        , ( Scribble, "Scribble" )
         ]

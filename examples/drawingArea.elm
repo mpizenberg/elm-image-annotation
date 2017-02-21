@@ -5,20 +5,23 @@
 
 module Main exposing (..)
 
-import Html as H exposing (Html)
-import Html.Events as HE
-import Html.Attributes as HA
-import Json.Encode as JE
-import DrawingArea as Area exposing (DrawingArea)
-import Annotation as Ann exposing (Annotation)
-import Tools exposing (Tool)
+import Html exposing (Html)
+import Html.Events as Events
+import Helpers.Events as Events
+import Html.Attributes as Attributes
+import Array exposing (Array)
+import Annotation exposing (Annotation)
+import Annotation.Set as Set exposing (Set)
+import DrawingArea.Viewer as Viewer exposing (Viewer)
+import Tool exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
-import Time exposing (Time)
+import OpenSolid.Geometry.Types exposing (Point2d(..), Vector2d(..))
+import Json.Encode as Encode
 
 
 main =
-    H.program
+    Html.program
         { init = init
         , update = update
         , subscriptions = always Sub.none
@@ -30,34 +33,37 @@ main =
 -- MODEL #############################################################
 
 
-type ZoomVariation
-    = ZoomIn
-    | ZoomOut
-
-
 type alias Model =
-    { area : DrawingArea
-    , current : Maybe ( Int, Annotation )
+    { viewer : Viewer
+    , bgImage : Image
+    , annotations : Set
+    , currentOption : Annotation.Option
+    , currentTool : Tool
+    , pointerTrack : Pointer.Track
     , jsonExport : String
-    , pointer : Maybe Pointer
-    , downOrigin : ( Float, Float )
-    , label : String
     }
 
 
-init : ( Model, Cmd msg )
+bgImage : Image
+bgImage =
+    Image "http://lorempixel.com/200/200" 200 200
+
+
+initModel : Model
+initModel =
+    { viewer = Viewer.fitImage 0.8 bgImage Viewer.default
+    , bgImage = bgImage
+    , annotations = Array.empty
+    , currentOption = Nothing
+    , currentTool = Tool.None
+    , pointerTrack = Pointer.None
+    , jsonExport = ""
+    }
+
+
+init : ( Model, Cmd Msg )
 init =
-    Model
-        (Area.default
-            |> Area.changeBgImage (Just (Image "http://lorempixel.com/200/200" 200 200))
-            |> Area.fitImage 0.8
-        )
-        Nothing
-        ""
-        Nothing
-        ( 0, 0 )
-        ""
-        ! []
+    ( initModel, Cmd.none )
 
 
 
@@ -65,136 +71,113 @@ init =
 
 
 type Msg
-    = NewAnnotation
-    | Delete
-    | Select (Maybe ( Int, Annotation ))
-    | SelectTool Tool
-    | ExportAnnotations
-    | PointerEvent Pointer
-    | Zoom ZoomVariation
+    = AnnotationSelected Annotation.Option
+    | DeleteAnnotation Annotation.Option
+    | ExportAnnotation
+    | ToolSelected Tool
+    | PointerEventViewer Pointer
+    | PointerEventAnnotation Pointer
+    | ZoomIn
+    | ZoomOut
     | FitImage
-    | ChangeLabel String
-    | ApplyLabel
-    | StartTime Time
-    | StopTime Time
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NewAnnotation ->
-            let
-                area =
-                    Area.createAnnotation model.area
+        AnnotationSelected option ->
+            ( { model | currentOption = option }
+            , Cmd.none
+            )
 
-                length =
-                    Area.nbAnnotations area
-            in
-                -- Select the newly created annotation as the current one.
-                { model | area = area, current = Area.getAnnotation (length - 1) area }
-                    ! []
-
-        Delete ->
-            case model.current of
+        DeleteAnnotation option ->
+            case option of
                 Nothing ->
-                    model ! []
+                    ( model, Cmd.none )
 
-                Just ( id, annotation ) ->
-                    let
-                        area =
-                            Area.removeAnnotation id model.area
+                Just ( id, _ ) ->
+                    ( { model | annotations = Set.remove id model.annotations }
+                    , Cmd.none
+                    )
 
-                        -- Select the first annotation as the new current annotation.
-                        current =
-                            Area.getAnnotation 0 area
-                    in
-                        { model | area = area, current = current } ! []
-
-        Select maybeItem ->
-            { model | current = maybeItem } ! []
-
-        SelectTool tool ->
-            { model | area = Area.useTool tool model.area } ! []
-
-        ExportAnnotations ->
-            { model
-                | jsonExport =
-                    JE.encode 0 <| Area.exportSelectionsPaths model.area
-            }
-                ! []
-
-        PointerEvent pointer ->
+        ExportAnnotation ->
             let
-                ( downOrigin, timeCmd ) =
-                    case pointer.event of
-                        Pointer.Down ->
-                            ( Pointer.offset pointer
-                            , Pointer.askTime StartTime
-                            )
+                json =
+                    case model.currentOption of
+                        Nothing ->
+                            ""
 
+                        Just ( _, annotation ) ->
+                            Encode.encode 0 (Annotation.encodePath annotation)
+            in
+                ( { model | jsonExport = json }
+                , Cmd.none
+                )
+
+        ToolSelected tool ->
+            ( { model | currentTool = tool }
+            , Cmd.none
+            )
+
+        PointerEventViewer pointer ->
+            let
+                newViewer =
+                    case pointer.event of
                         Pointer.Move ->
-                            ( model.downOrigin, Cmd.none )
+                            model.viewer
+                                |> Viewer.move (Vector2d <| Pointer.movement pointer)
 
                         _ ->
-                            ( model.downOrigin
-                            , Pointer.askTime StopTime
-                            )
-
-                ( newCurrent, newArea ) =
-                    Area.updateArea downOrigin pointer model.current model.area
+                            model.viewer
             in
-                { model
-                    | pointer = updatePointer pointer
-                    , area = newArea
-                    , current = newCurrent
-                    , downOrigin = downOrigin
-                }
-                    ! [ timeCmd ]
+                ( { model
+                    | viewer = newViewer
+                    , pointerTrack = Pointer.updateTrack pointer model.pointerTrack
+                  }
+                , Cmd.none
+                )
 
-        Zoom var ->
-            case var of
-                ZoomIn ->
-                    { model | area = Area.zoomIn model.area } ! []
+        PointerEventAnnotation pointer ->
+            let
+                nbAnnotations =
+                    Array.length model.annotations
 
-                ZoomOut ->
-                    { model | area = Area.zoomOut model.area } ! []
+                newOption =
+                    Annotation.update pointer model.pointerTrack model.currentTool nbAnnotations model.currentOption
+
+                annotations =
+                    case newOption of
+                        Nothing ->
+                            model.annotations
+
+                        Just ( id, annotation ) ->
+                            if id == nbAnnotations then
+                                Array.push annotation model.annotations
+                            else
+                                Array.set id annotation model.annotations
+            in
+                ( { model
+                    | currentOption = newOption
+                    , annotations = annotations
+                    , pointerTrack = Pointer.updateTrack pointer model.pointerTrack
+                  }
+                , Cmd.none
+                )
+
+        ZoomIn ->
+            ( { model | viewer = Viewer.zoomIn model.viewer }
+            , Cmd.none
+            )
+
+        ZoomOut ->
+            ( { model | viewer = Viewer.zoomOut model.viewer }
+            , Cmd.none
+            )
 
         FitImage ->
-            { model | area = Area.fitImage 0.8 model.area } ! []
-
-        ChangeLabel label ->
-            { model | label = label } ! []
-
-        ApplyLabel ->
-            updateCurrentAnnotation (Ann.setLabel model.label) model
-
-        StartTime time ->
-            updateCurrentAnnotation (Ann.setStartTime <| Just time) model
-
-        StopTime time ->
-            updateCurrentAnnotation (Ann.setStopTime <| Just time) model
-
-
-updateCurrentAnnotation : (Annotation -> Annotation) -> Model -> ( Model, Cmd Msg )
-updateCurrentAnnotation modifier model =
-    let
-        ( current, area ) =
-            Area.updateAnnotation modifier model.current model.area
-    in
-        { model | area = area, current = current } ! []
-
-
-updatePointer : Pointer -> Maybe Pointer
-updatePointer pointer =
-    case pointer.event of
-        Pointer.Down ->
-            Just pointer
-
-        Pointer.Move ->
-            Just pointer
-
-        _ ->
-            Nothing
+            ( { model | viewer = Viewer.fitImage 0.8 model.bgImage model.viewer }
+            , Cmd.none
+            )
 
 
 
@@ -203,44 +186,66 @@ updatePointer pointer =
 
 view : Model -> Html Msg
 view model =
-    H.body []
-        [ H.p []
-            [ H.button [ HE.onClick NewAnnotation ] [ H.text "New Annotation" ]
-            , H.text " Annotation: "
-            , Area.selectAnnotationTag model.area model.current Select
-            , H.input [ HA.type_ "text", HA.placeholder "Label", HE.onInput ChangeLabel ] []
-            , H.button [ HE.onClick ApplyLabel ] [ H.text "Apply Label" ]
-            , H.button [ HE.onClick Delete ] [ H.text "Delete" ]
-            ]
-        , H.p []
-            [ H.text " Tool: "
-            , Area.selectToolTag model.area SelectTool
-            ]
-        , H.p []
-            [ H.button [ HE.onClick <| Zoom ZoomIn ] [ H.text "Zoom In" ]
-            , H.button [ HE.onClick <| Zoom ZoomOut ] [ H.text "Zoom Out" ]
-            , H.button [ HE.onClick <| FitImage ] [ H.text "Fit Image" ]
-            ]
-        , H.p [] [ H.button [ HE.onClick ExportAnnotations ] [ H.text "Export" ] ]
-        , let
-            annotation =
-                case model.current of
-                    Nothing ->
-                        Nothing
+    let
+        selectAnnotationTag =
+            Set.selectTag AnnotationSelected model.currentOption model.annotations
 
-                    Just ( id, ann ) ->
-                        Just ann
+        button msg text =
+            Html.button [ Events.onClick msg ] [ Html.text text ]
 
-            attributes =
-                ((Pointer.attributes PointerEvent model.area.currentTool model.pointer)
-                    ++ [ HA.style [ ( "border", "1px solid black" ) ] ]
-                )
-          in
-            Area.view attributes model.area
-          -- Area.viewAnnotation
-          --     attributes
-          --     annotation
-          --     model.area
-        , H.p [] [ H.text model.jsonExport ]
-        , H.p [] [ H.text (toString model) ]
-        ]
+        viewerContour =
+            Attributes.style [ ( "border", "1px solid black" ) ]
+
+        viewerMovementOn eventName event =
+            Pointer.movementOn eventName event PointerEventViewer identity
+
+        annotationOffsetOn eventName event =
+            Pointer.offsetOn eventName event PointerEventAnnotation (Viewer.positionIn model.viewer)
+
+        annotationTouchOffsetOn eventName event =
+            Pointer.touchOffsetOn eventName event PointerEventAnnotation (Viewer.positionIn model.viewer)
+
+        viewerEvents =
+            case model.currentTool of
+                Tool.None ->
+                    [ viewerMovementOn "mousedown" Pointer.Down
+                    , viewerMovementOn "mouseup" Pointer.Up
+                    ]
+                        ++ if model.pointerTrack == Pointer.None then
+                            []
+                           else
+                            [ viewerMovementOn "mousemove" Pointer.Move ]
+
+                _ ->
+                    [ annotationOffsetOn "mousedown" Pointer.Down
+                    , annotationTouchOffsetOn "touchstart" Pointer.Down
+                    , annotationTouchOffsetOn "touchmove" Pointer.Move
+                    , annotationOffsetOn "mouseup" Pointer.Up
+                    , annotationTouchOffsetOn "touchend" Pointer.Up
+                    ]
+                        ++ if model.pointerTrack == Pointer.None then
+                            []
+                           else
+                            [ annotationOffsetOn "mousemove" Pointer.Move ]
+
+        viewer =
+            Viewer.viewSet (viewerContour :: viewerEvents) model.viewer (Just model.bgImage) model.annotations
+    in
+        Html.div []
+            [ Html.p []
+                [ Html.text "Current annotation: "
+                , selectAnnotationTag
+                , button (DeleteAnnotation model.currentOption) "Delete"
+                , button ExportAnnotation "Export Annotation"
+                ]
+            , Html.p []
+                [ Html.text "Current tool: "
+                , Tool.selectTag ToolSelected model.currentTool
+                , button ZoomIn "Zoom In"
+                , button ZoomOut "Zoom Out"
+                , button FitImage "Fit Image"
+                ]
+            , viewer
+            , Html.p [] [ Html.text model.jsonExport ]
+            , Html.p [] [ Html.text <| toString model ]
+            ]

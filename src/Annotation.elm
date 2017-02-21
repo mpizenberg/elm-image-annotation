@@ -5,85 +5,80 @@
 
 module Annotation
     exposing
-        ( Selection(..)
-        , Event(..)
-        , Annotation
-        , default
-          -- UPDATE
-        , setStartTime
-        , setStopTime
+        ( Annotation
+        , Input
+        , empty
+          -- Update
         , setLabel
-        , updateSelection
-          -- VIEW
-        , selectionView
-          -- OUTPUTS
-        , object
-        , pathObject
-          -- OTHERS
-        , hasSelection
+        , setRectangle
+        , initOutline
+        , initScribble
+        , addPoint
+        , update
+          -- View
+        , view
+        , Option
+        , optionDescriber
+          -- Exports
+        , encodePath
+          -- Other
+        , isValid
         )
 
-{-| An annotation is the combination of a selection and a label.
+{-| An annotation can be a selection or a scribble.
 
 # Model
-@docs Selection, Event, Annotation, default
+@docs Annotation, Input, empty
 
 # Update
-@docs setStartTime, setStopTime, setLabel, updateSelection
+@docs setLabel, setRectangle, initOutline, initScribble, addPoint, update
 
 # View
-@docs selectionView
+@docs view, Option, optionDescriber
 
-# Outputs
-@docs object, pathObject
+# Exports
+@docs encodePath
 
-# Others
-@docs hasSelection
+# Other
+@docs isValid
 -}
 
 import Html as H exposing (Html)
-import Html.Attributes as HA
+import Svg.Attributes as SvgA
 import Svg exposing (Svg)
-import Json.Encode as JE
-import Selections.Selection as Sel
-import Selections.Rectangle as SR exposing (Rectangle)
-import Selections.Outline as SO exposing (Outline)
-import Tools exposing (Tool)
-import Time exposing (Time)
+import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
+import OpenSolid.Point2d as Point2d
+import OpenSolid.Svg as Svg
+import Json.Encode as Encode
+import OpenSolid.Geometry.Encode as Encode
+import Pointer exposing (Pointer)
+import Tool exposing (Tool)
 
 
 -- MODEL #############################################################
 
 
-{-| What can be the selection of an annotation.
--}
-type Selection
-    = NoSelection
-    | RSel Rectangle
-    | OSel Outline
-
-
-{-| Event marking the starting of a new selection or just the continuation of the current one.
--}
-type Event
-    = Start
-    | Continue
-
-
-{-| An annotation is composed of a selection and has a label.
+{-| An annotation is a labelled visual input.
 -}
 type alias Annotation =
-    { selection : Selection
-    , label : String
+    { label : String
+    , input : Input
     }
 
 
-{-| Default empty annotation.
+{-| A visual input related to an image.
 -}
-default : Annotation
-default =
-    { selection = NoSelection
-    , label = "No label"
+type Input
+    = Selection Polygon2d
+    | Scribble Polyline2d
+
+
+{-| An empty annotation, only useful as startup.
+-}
+empty : String -> Annotation
+empty label =
+    { label = label
+    , input = Selection <| Polygon2d []
     }
 
 
@@ -91,152 +86,183 @@ default =
 -- UPDATE ############################################################
 
 
-{-| Set the start time of the annotation.
--}
-setStartTime : Maybe Time -> Annotation -> Annotation
-setStartTime maybeTime annotation =
-    case annotation.selection of
-        NoSelection ->
-            annotation
-
-        RSel rect ->
-            { annotation | selection = RSel <| SR.setStartTime maybeTime rect }
-
-        OSel outline ->
-            { annotation | selection = OSel <| SO.setStartTime maybeTime outline }
-
-
-{-| Set the stop time of the annotation.
--}
-setStopTime : Maybe Time -> Annotation -> Annotation
-setStopTime maybeTime annotation =
-    case annotation.selection of
-        NoSelection ->
-            annotation
-
-        RSel rect ->
-            { annotation | selection = RSel <| SR.setStopTime maybeTime rect }
-
-        OSel outline ->
-            { annotation | selection = OSel <| SO.setStopTime maybeTime outline }
-
-
-{-| Set the label of the annotation.
+{-| Set the label of an annotation.
 -}
 setLabel : String -> Annotation -> Annotation
 setLabel label annotation =
     { annotation | label = label }
 
 
-{-| Update the selection of the annotation depending on the type of event,
-the corner positions and the current tool.
+{-| Set the input to be a rectangle selection.
 -}
-updateSelection : Event -> ( Int, Int ) -> ( Int, Int ) -> Tool -> Annotation -> Annotation
-updateSelection event origin newPos tool annotation =
-    case tool of
-        Tools.None ->
-            annotation
+setRectangle : Point2d -> Point2d -> Annotation -> Annotation
+setRectangle p1 p2 annotation =
+    { annotation | input = Selection (rectangle p1 p2) }
 
-        Tools.Rectangle ->
-            let
-                rectangle =
-                    case annotation.selection of
-                        NoSelection ->
-                            SR.defaultRectangle
 
-                        RSel rect ->
-                            rect
+rectangle : Point2d -> Point2d -> Polygon2d
+rectangle p1 p2 =
+    let
+        ( x1, y1 ) =
+            Point2d.coordinates p1
 
-                        OSel outline ->
-                            SR.defaultRectangle |> Sel.changeSel outline.selection
-            in
-                { annotation | selection = RSel <| SR.update origin newPos rectangle }
+        ( x2, y2 ) =
+            Point2d.coordinates p2
+    in
+        Polygon2d [ p1, Point2d ( x1, y2 ), p2, Point2d ( x2, y1 ) ]
 
-        Tools.Outline ->
-            let
-                outline =
-                    case annotation.selection of
-                        NoSelection ->
-                            SO.defaultOutline
 
-                        RSel rect ->
-                            SO.defaultOutline |> Sel.changeSel rect.selection
+{-| Initialize the input with origin point of the outline.
+-}
+initOutline : Point2d -> Annotation -> Annotation
+initOutline origin annotation =
+    { annotation | input = Selection (Polygon2d [ origin ]) }
 
-                        OSel oldOutline ->
-                            case event of
-                                Start ->
-                                    SO.resetPath oldOutline
 
-                                _ ->
-                                    oldOutline
-            in
-                { annotation | selection = OSel <| SO.addPoint newPos outline }
+{-| Initialize the input with origin point of the scribble.
+-}
+initScribble : Point2d -> Annotation -> Annotation
+initScribble origin annotation =
+    { annotation | input = Scribble (Polyline2d [ origin ]) }
+
+
+{-| Add a point to the input
+-}
+addPoint : Point2d -> Annotation -> Annotation
+addPoint point annotation =
+    let
+        input =
+            case annotation.input of
+                Selection (Polygon2d pointsList) ->
+                    Selection (Polygon2d (point :: pointsList))
+
+                Scribble (Polyline2d pointsList) ->
+                    Scribble (Polyline2d (point :: pointsList))
+    in
+        { annotation | input = input }
+
+
+{-| Update an annotation depending on pointer events
+-}
+update : Pointer -> Pointer.Track -> Tool -> Int -> Option -> Option
+update pointer track tool newId option =
+    case ( tool, track, pointer.event, option ) of
+        ( Tool.Rectangle, _, Pointer.Down, _ ) ->
+            option
+
+        ( Tool.Rectangle, Pointer.Started start, Pointer.Move, _ ) ->
+            updateRectangle start pointer newId option
+
+        ( Tool.Rectangle, Pointer.Moved start _, Pointer.Move, _ ) ->
+            updateRectangle start pointer newId option
+
+        ( Tool.Outline, _, Pointer.Down, _ ) ->
+            Maybe.withDefault ( newId, empty "outline" ) option
+                |> Tuple.mapSecond (initOutline (Point2d <| Pointer.offset pointer))
+                |> Just
+
+        ( Tool.Outline, _, Pointer.Move, Just ( id, annotation ) ) ->
+            Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
+
+        ( Tool.Scribble, _, Pointer.Down, _ ) ->
+            Maybe.withDefault ( newId, empty "scribble" ) option
+                |> Tuple.mapSecond (initScribble (Point2d <| Pointer.offset pointer))
+                |> Just
+
+        ( Tool.Scribble, _, Pointer.Move, Just ( id, annotation ) ) ->
+            Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
+
+        _ ->
+            option
+
+
+updateRectangle : Pointer -> Pointer -> Int -> Option -> Option
+updateRectangle startPointer endPointer newId option =
+    let
+        startPoint =
+            Point2d (Pointer.offset startPointer)
+
+        endPoint =
+            Point2d (Pointer.offset endPointer)
+    in
+        Maybe.withDefault ( newId, empty "rectangle" ) option
+            |> Tuple.mapSecond (setRectangle startPoint endPoint)
+            |> Just
 
 
 
 -- VIEW ##############################################################
 
 
-{-| Svg view representing the annotation.
+{-| View an annotation input.
 -}
-selectionView : Annotation -> Svg msg
-selectionView { selection } =
-    case selection of
-        NoSelection ->
-            Svg.text "No Selection"
+view : Annotation -> Svg msg
+view annotation =
+    let
+        defaultStyle =
+            [ SvgA.stroke "red"
+            , SvgA.fillOpacity "0"
+            , SvgA.strokeWidth "2"
+            , SvgA.pointerEvents "none"
+            ]
+    in
+        case annotation.input of
+            Selection polygon ->
+                Svg.polygon2d defaultStyle polygon
 
-        RSel rect ->
-            SR.view rect
-
-        OSel outline ->
-            SO.view outline
+            Scribble polyline ->
+                Svg.polyline2d defaultStyle polyline
 
 
-
--- OUTPUTS ##############################################################
-
-
-{-| Return JS object representing the annotation.
+{-| Option type used for <select> tags
 -}
-object : Annotation -> JE.Value
-object annotation =
-    JE.object
-        [ ( "selection"
-          , case annotation.selection of
-                NoSelection ->
-                    JE.null
-
-                RSel rect ->
-                    JE.object [ ( "Rectangle", SR.object rect ) ]
-
-                OSel outline ->
-                    JE.object [ ( "Outline", SO.object outline ) ]
-          )
-        , ( "label", JE.string annotation.label )
-        ]
+type alias Option =
+    Maybe ( Int, Annotation )
 
 
-{-| Return JS object simplified version of the path only.
+{-| Text of an <option> tag describing an annotation.
 -}
-pathObject : Annotation -> JE.Value
-pathObject annotation =
-    case annotation.selection of
-        NoSelection ->
-            JE.null
+optionDescriber : Option -> String
+optionDescriber option =
+    case option of
+        Nothing ->
+            ""
 
-        RSel rect ->
-            SR.pathObject rect
+        Just ( id, annotation ) ->
+            let
+                inputStr =
+                    case annotation.input of
+                        Selection _ ->
+                            "Selection"
 
-        OSel outline ->
-            SO.pathObject outline
+                        Scribble _ ->
+                            "Scribble"
+            in
+                toString id ++ " : " ++ inputStr ++ " : " ++ annotation.label
+
+
+
+-- EXPORTS ###########################################################
+
+
+{-| Encode the path of an annotation
+-}
+encodePath : Annotation -> Encode.Value
+encodePath annotation =
+    case annotation.input of
+        Selection polygon ->
+            Encode.polygon2d polygon
+
+        Scribble polyline ->
+            Encode.polyline2d polyline
 
 
 
 -- OTHER #############################################################
 
 
-{-| Indicates if the annotation has a selection.
+{-| Indicates if the input of an annotation is valid.
 -}
-hasSelection : Annotation -> Bool
-hasSelection annotation =
-    annotation.selection /= NoSelection
+isValid : Annotation -> Bool
+isValid annotation =
+    False

@@ -19,11 +19,6 @@ import Json.Decode as JD
 import Helpers.DOM as DOM
 
 
-floatToInt : ( Float, Float ) -> ( Int, Int )
-floatToInt ( x, y ) =
-    ( round x, round y )
-
-
 preventAndStop : HE.Options
 preventAndStop =
     { stopPropagation = True
