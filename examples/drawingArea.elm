@@ -202,6 +202,9 @@ view model =
         annotationOffsetOn eventName event =
             Pointer.offsetOn eventName event PointerEventAnnotation (Viewer.positionIn model.viewer)
 
+        annotationTouchOffsetOn eventName event =
+            Pointer.touchOffsetOn eventName event PointerEventAnnotation (Viewer.positionIn model.viewer)
+
         viewerEvents =
             case model.currentTool of
                 Tool.None ->
@@ -215,7 +218,10 @@ view model =
 
                 _ ->
                     [ annotationOffsetOn "mousedown" Pointer.Down
+                    , annotationTouchOffsetOn "touchstart" Pointer.Down
+                    , annotationTouchOffsetOn "touchmove" Pointer.Move
                     , annotationOffsetOn "mouseup" Pointer.Up
+                    , annotationTouchOffsetOn "touchend" Pointer.Up
                     ]
                         ++ if model.pointerTrack == Pointer.None then
                             []

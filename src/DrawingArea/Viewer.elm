@@ -192,9 +192,9 @@ sizeStyleAttribute viewer =
 
 {-| View the svg tag representing the DrawingArea model.
 -}
-viewSet : List (Html.Attribute msg) -> Viewer -> Maybe Image -> Set -> Svg msg
+viewSet : List (Html.Attribute msg) -> Viewer -> Maybe Image -> Set -> Html msg
 viewSet attributes viewer image set =
-    Svg.svg
+    Html.div
         (sizeStyleAttribute viewer :: attributes)
         [ lazy3 innerView viewer image set ]
 
@@ -217,8 +217,11 @@ innerView viewer maybeImage set =
 
                 Just image ->
                     [ Image.viewSvg [] image ]
+
+        innerSvg =
+            (svgImage ++ Set.view set)
+                |> Svg.g []
+                |> Svg.relativeTo viewer.frame
+                |> Svg.scaleAbout Point2d.origin viewer.zoom
     in
-        (svgImage ++ Set.view set)
-            |> Svg.g []
-            |> Svg.relativeTo viewer.frame
-            |> Svg.scaleAbout Point2d.origin viewer.zoom
+        Svg.svg innerStyle [ innerSvg ]

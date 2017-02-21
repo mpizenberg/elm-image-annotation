@@ -10,6 +10,7 @@ module Pointer
         , Track(..)
         , updateTrack
         , offset
+        , touchOffsetOn
         , movement
         , offsetOn
         , movementOn
@@ -22,7 +23,7 @@ module Pointer
 {-| This module aims at giving helper functions to deal with pointer events.
 
 @docs Event, Pointer, Track, updateTrack, offset, movement
-@docs offsetOn, movementOn, attributes, noToolAttributes, toolAttributes
+@docs offsetOn, touchOffsetOn, movementOn, attributes, noToolAttributes, toolAttributes
 @docs askTime
 -}
 
@@ -104,6 +105,14 @@ movement pointer =
 offsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
 offsetOn eventName event tagger transform =
     HPE.offsetOn eventName <| tagger << fromOffset event << transform
+
+
+{-| Returns touchOffsetOn attribute.
+-}
+touchOffsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
+touchOffsetOn eventName event tagger transform =
+    (tagger << fromOffset event << transform)
+        |> HPE.computedTouchOffsetOn eventName
 
 
 {-| Returns movementOn attribute.
