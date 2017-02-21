@@ -7,7 +7,6 @@ module Main exposing (..)
 
 import Html exposing (Html)
 import Html.Events as Events
-import Helpers.Events as Events
 import Html.Attributes as Attributes
 import Array exposing (Array)
 import Annotation exposing (Annotation)
