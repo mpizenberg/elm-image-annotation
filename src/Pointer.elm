@@ -14,16 +14,13 @@ module Pointer
         , movement
         , offsetOn
         , movementOn
-        , attributes
-        , noToolAttributes
-        , toolAttributes
         , askTime
         )
 
 {-| This module aims at giving helper functions to deal with pointer events.
 
 @docs Event, Pointer, Track, updateTrack, offset, movement
-@docs offsetOn, touchOffsetOn, movementOn, attributes, noToolAttributes, toolAttributes
+@docs offsetOn, touchOffsetOn, movementOn
 @docs askTime
 -}
 
@@ -120,48 +117,6 @@ touchOffsetOn eventName event tagger transform =
 movementOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
 movementOn eventName event tagger transform =
     HPE.movementOn eventName <| tagger << fromMovement event << transform
-
-
-{-| Returns a list of attribute messages with useful mouse events listeners.
--}
-attributes : (Pointer -> msg) -> Tool -> Maybe Pointer -> List (H.Attribute msg)
-attributes msgMaker currentTool previousPointer =
-    case currentTool of
-        Tool.None ->
-            noToolAttributes msgMaker previousPointer
-
-        _ ->
-            toolAttributes msgMaker previousPointer
-
-
-{-| Returns a list of attribute messages to detect movement when no tool is used.
--}
-noToolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
-noToolAttributes msgMaker previousPointer =
-    [ HPE.movementOn "mousedown" <| msgMaker << (fromOffset Down)
-    , HPE.movementOn "mouseup" <| msgMaker << (fromOffset Up)
-    ]
-        ++ if previousPointer == Nothing then
-            []
-           else
-            [ HPE.movementOn "mousemove" <| msgMaker << (fromMovement Move) ]
-
-
-{-| Returns a list of attribute messages to detect movement when a tool is used.
--}
-toolAttributes : (Pointer -> msg) -> Maybe Pointer -> List (H.Attribute msg)
-toolAttributes msgMaker previousPointer =
-    [ HPE.offsetOn "mousedown" <| msgMaker << (fromOffset Down)
-    , HPE.computedTouchOffsetOn "touchstart" <| msgMaker << (fromOffset Down)
-    , HPE.computedTouchOffsetOn "touchmove" <| msgMaker << (fromOffset Move)
-    , HPE.offsetOn "mouseup" <| msgMaker << (fromOffset Up)
-    , HPE.computedTouchOffsetOn "touchend" <| msgMaker << (fromOffset Up)
-    ]
-        ++ if previousPointer == Nothing then
-            []
-           else
-            [ HPE.offsetOn "mousemove" <| msgMaker << (fromOffset Move)
-            ]
 
 
 fromOffset : Event -> ( Float, Float ) -> Pointer
