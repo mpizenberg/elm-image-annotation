@@ -17,6 +17,7 @@ import Tool exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
 import OpenSolid.Geometry.Types exposing (Point2d(..), Vector2d(..))
+import Json.Encode as Encode
 
 
 main =
@@ -39,6 +40,7 @@ type alias Model =
     , currentOption : Annotation.Option
     , currentTool : Tool
     , pointerTrack : Pointer.Track
+    , jsonExport : String
     }
 
 
@@ -55,6 +57,7 @@ initModel =
     , currentOption = Nothing
     , currentTool = Tool.None
     , pointerTrack = Pointer.None
+    , jsonExport = ""
     }
 
 
@@ -70,6 +73,7 @@ init =
 type Msg
     = AnnotationSelected Annotation.Option
     | DeleteAnnotation Annotation.Option
+    | ExportAnnotation
     | ToolSelected Tool
     | PointerEventViewer Pointer
     | PointerEventAnnotation Pointer
@@ -95,6 +99,20 @@ update msg model =
                     ( { model | annotations = Set.remove id model.annotations }
                     , Cmd.none
                     )
+
+        ExportAnnotation ->
+            let
+                json =
+                    case model.currentOption of
+                        Nothing ->
+                            ""
+
+                        Just ( _, annotation ) ->
+                            Encode.encode 0 (Annotation.encodePath annotation)
+            in
+                ( { model | jsonExport = json }
+                , Cmd.none
+                )
 
         ToolSelected tool ->
             ( { model | currentTool = tool }
@@ -212,6 +230,7 @@ view model =
                 [ Html.text "Current annotation: "
                 , selectAnnotationTag
                 , button (DeleteAnnotation model.currentOption) "Delete"
+                , button ExportAnnotation "Export Annotation"
                 ]
             , Html.p []
                 [ Html.text "Current tool: "
@@ -221,5 +240,6 @@ view model =
                 , button FitImage "Fit Image"
                 ]
             , viewer
+            , Html.p [] [ Html.text model.jsonExport ]
             , Html.p [] [ Html.text <| toString model ]
             ]
