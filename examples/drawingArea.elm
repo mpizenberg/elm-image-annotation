@@ -16,7 +16,7 @@ import DrawingArea.Viewer as Viewer exposing (Viewer)
 import Tool exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
-import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
+import OpenSolid.Geometry.Types exposing (Point2d(..), Vector2d(..))
 
 
 main =
@@ -98,6 +98,24 @@ update msg model =
             , Cmd.none
             )
 
+        PointerEventViewer pointer ->
+            let
+                newViewer =
+                    case pointer.event of
+                        Pointer.Move ->
+                            model.viewer
+                                |> Viewer.move (Vector2d <| Pointer.movement pointer)
+
+                        _ ->
+                            model.viewer
+            in
+                ( { model
+                    | viewer = newViewer
+                    , pointerTrack = Pointer.updateTrack pointer model.pointerTrack
+                  }
+                , Cmd.none
+                )
+
         PointerEventAnnotation pointer ->
             let
                 nbAnnotations =
@@ -125,9 +143,6 @@ update msg model =
                 , Cmd.none
                 )
 
-        _ ->
-            ( model, Cmd.none )
-
 
 
 -- VIEW ##############################################################
@@ -147,13 +162,22 @@ view model =
         viewerContour =
             Attributes.style [ ( "border", "1px solid black" ) ]
 
+        viewerMovementOn eventName event =
+            Pointer.movementOn eventName event PointerEventViewer identity
+
         annotationOffsetOn eventName event =
             Pointer.offsetOn eventName event PointerEventAnnotation (Viewer.positionIn model.viewer)
 
         viewerEvents =
             case model.currentTool of
                 Tool.None ->
-                    []
+                    [ viewerMovementOn "mousedown" Pointer.Down
+                    , viewerMovementOn "mouseup" Pointer.Up
+                    ]
+                        ++ if model.pointerTrack == Pointer.None then
+                            []
+                           else
+                            [ viewerMovementOn "mousemove" Pointer.Move ]
 
                 _ ->
                     [ annotationOffsetOn "mousedown" Pointer.Down

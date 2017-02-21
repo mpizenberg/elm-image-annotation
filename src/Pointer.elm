@@ -12,6 +12,7 @@ module Pointer
         , offset
         , movement
         , offsetOn
+        , movementOn
         , attributes
         , noToolAttributes
         , toolAttributes
@@ -21,7 +22,7 @@ module Pointer
 {-| This module aims at giving helper functions to deal with pointer events.
 
 @docs Event, Pointer, Track, updateTrack, offset, movement
-@docs offsetOn, attributes, noToolAttributes, toolAttributes
+@docs offsetOn, movementOn, attributes, noToolAttributes, toolAttributes
 @docs askTime
 -}
 
@@ -103,6 +104,13 @@ movement pointer =
 offsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
 offsetOn eventName event tagger transform =
     HPE.offsetOn eventName <| tagger << fromOffset event << transform
+
+
+{-| Returns movementOn attribute.
+-}
+movementOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
+movementOn eventName event tagger transform =
+    HPE.movementOn eventName <| tagger << fromMovement event << transform
 
 
 {-| Returns a list of attribute messages with useful mouse events listeners.
