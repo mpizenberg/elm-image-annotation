@@ -24,10 +24,8 @@ module Pointer
 @docs askTime
 -}
 
-import Html as H exposing (Html)
-import Html.Events as HE
-import Helpers.Events as HPE
-import Tool exposing (Tool)
+import Html exposing (Html)
+import Helpers.Events as Events
 import Time exposing (Time)
 import Task exposing (Task)
 import OpenSolid.Geometry.Types exposing (Point2d(..))
@@ -99,24 +97,24 @@ movement pointer =
 
 {-| Returns offsetOn attribute.
 -}
-offsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
+offsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> Html.Attribute msg
 offsetOn eventName event tagger transform =
-    HPE.offsetOn eventName <| tagger << fromOffset event << transform
+    Events.offsetOn eventName <| tagger << fromOffset event << transform
 
 
 {-| Returns touchOffsetOn attribute.
 -}
-touchOffsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
+touchOffsetOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> Html.Attribute msg
 touchOffsetOn eventName event tagger transform =
     (tagger << fromOffset event << transform)
-        |> HPE.computedTouchOffsetOn eventName
+        |> Events.computedTouchOffsetOn eventName
 
 
 {-| Returns movementOn attribute.
 -}
-movementOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> H.Attribute msg
+movementOn : String -> Event -> (Pointer -> msg) -> (( Float, Float ) -> ( Float, Float )) -> Html.Attribute msg
 movementOn eventName event tagger transform =
-    HPE.movementOn eventName <| tagger << fromMovement event << transform
+    Events.movementOn eventName <| tagger << fromMovement event << transform
 
 
 fromOffset : Event -> ( Float, Float ) -> Pointer
