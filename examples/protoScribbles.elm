@@ -8,6 +8,8 @@ module Main exposing (..)
 import Html exposing (Html)
 import Html.Events as Events
 import Html.Attributes as Attributes
+import Svg exposing (Svg)
+import Svg.Lazy exposing (lazy)
 import Array exposing (Array)
 import Annotation exposing (Annotation)
 import Annotation.Set as Set exposing (Set)
@@ -35,8 +37,9 @@ main =
 type alias Model =
     { viewer : Viewer
     , bgImage : Image
-    , annotations : Set
-    , currentOption : Annotation.Option
+    , visibleAnnotations : List ( Int, Annotation )
+    , deletedAnnotations : List ( Int, Annotation )
+    , nextId : Int
     , currentTool : Tool
     , pointerTrack : Pointer.Track
     , jsonExport : String
@@ -52,8 +55,9 @@ initModel : Model
 initModel =
     { viewer = Viewer.fitImage 0.8 bgImage Viewer.default
     , bgImage = bgImage
-    , annotations = Array.empty
-    , currentOption = Nothing
+    , visibleAnnotations = []
+    , deletedAnnotations = []
+    , nextId = 0
     , currentTool = Tool.None
     , pointerTrack = Pointer.None
     , jsonExport = ""
@@ -81,10 +85,25 @@ update msg model =
     case msg of
         DeleteLast ->
             let
-                nbAnnotations =
-                    Array.length model.annotations
+                head =
+                    List.head model.visibleAnnotations
+
+                tail =
+                    List.tail model.visibleAnnotations
+                        |> Maybe.withDefault []
+
+                deletedAnnotations =
+                    case head of
+                        Nothing ->
+                            model.deletedAnnotations
+
+                        Just del ->
+                            del :: model.deletedAnnotations
             in
-                ( { model | annotations = Set.remove (nbAnnotations - 1) model.annotations }
+                ( { model
+                    | visibleAnnotations = tail
+                    , deletedAnnotations = deletedAnnotations
+                  }
                 , Cmd.none
                 )
 
@@ -100,34 +119,46 @@ update msg model =
 
         PointerEventAnnotation pointer ->
             let
-                nbAnnotations =
-                    Array.length model.annotations
+                headVisible =
+                    List.head model.visibleAnnotations
 
-                newOption =
-                    Annotation.update pointer model.pointerTrack model.currentTool nbAnnotations model.currentOption
+                headDeleted =
+                    List.head model.deletedAnnotations
 
-                annotations =
-                    case newOption of
-                        Nothing ->
-                            model.annotations
+                tailVisible =
+                    List.tail model.visibleAnnotations
+                        |> Maybe.withDefault []
 
-                        Just ( id, annotation ) ->
-                            if id == nbAnnotations then
-                                Array.push annotation model.annotations
-                            else
-                                Array.set id annotation model.annotations
-
-                currentOption =
+                newHeadOption =
                     case pointer.event of
-                        Pointer.Up ->
-                            Nothing
+                        Pointer.Down ->
+                            Annotation.update pointer model.pointerTrack model.currentTool model.nextId Nothing
 
                         _ ->
-                            newOption
+                            Annotation.update pointer model.pointerTrack model.currentTool model.nextId headVisible
+
+                visibleAnnotations =
+                    case ( pointer.event, newHeadOption ) of
+                        ( Pointer.Down, Just ann ) ->
+                            ann :: model.visibleAnnotations
+
+                        ( _, Just ann ) ->
+                            ann :: tailVisible
+
+                        _ ->
+                            model.visibleAnnotations
+
+                nextId =
+                    case pointer.event of
+                        Pointer.Down ->
+                            model.nextId + 1
+
+                        _ ->
+                            model.nextId
             in
                 ( { model
-                    | currentOption = currentOption
-                    , annotations = annotations
+                    | visibleAnnotations = visibleAnnotations
+                    , nextId = nextId
                     , pointerTrack = Pointer.updateTrack pointer model.pointerTrack
                   }
                 , Cmd.none
@@ -136,6 +167,12 @@ update msg model =
 
 
 -- VIEW ##############################################################
+
+
+viewScribbles : List ( Int, Annotation ) -> List (Svg Msg)
+viewScribbles scribbles =
+    scribbles
+        |> List.map (lazy (Tuple.second >> Annotation.view))
 
 
 view : Model -> Html Msg
@@ -171,7 +208,10 @@ view model =
                             [ annotationOffsetOn "mousemove" Pointer.Move ]
 
         viewer =
-            Viewer.viewSet (viewerContour :: viewerEvents) model.viewer (Just model.bgImage) model.annotations
+            viewScribbles model.visibleAnnotations
+                |> Svg.g []
+                |> Viewer.innerView model.viewer (Just model.bgImage)
+                |> Viewer.view (viewerContour :: viewerEvents) model.viewer
     in
         Html.div []
             [ Html.p []

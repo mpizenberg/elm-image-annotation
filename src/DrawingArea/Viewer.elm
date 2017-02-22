@@ -15,7 +15,8 @@ module DrawingArea.Viewer
         , positionIn
         , sizeIn
           -- VIEW
-        , viewSet
+        , view
+        , innerView
         )
 
 {-| This module provides functions to manage the viewing of the drawing area.
@@ -30,7 +31,7 @@ module DrawingArea.Viewer
 @docs move, positionIn, sizeIn
 
 # View
-@docs viewSet
+@docs view, innerView
 -}
 
 import OpenSolid.Geometry.Types exposing (Frame2d, Point2d(..), Vector2d(..))
@@ -39,7 +40,7 @@ import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
 import OpenSolid.Svg as Svg
 import Svg exposing (Svg)
-import Svg.Lazy exposing (lazy3)
+import Svg.Lazy exposing (lazy)
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Image exposing (Image)
@@ -192,15 +193,17 @@ sizeStyleAttribute viewer =
 
 {-| View the svg tag representing the DrawingArea model.
 -}
-viewSet : List (Html.Attribute msg) -> Viewer -> Maybe Image -> Set -> Html msg
-viewSet attributes viewer image set =
+view : List (Html.Attribute msg) -> Viewer -> Svg msg -> Html msg
+view attributes viewer svg =
     Html.div
         (sizeStyleAttribute viewer :: attributes)
-        [ lazy3 innerView viewer image set ]
+        [ svg ]
 
 
-innerView : Viewer -> Maybe Image -> Set -> Svg msg
-innerView viewer maybeImage set =
+{-| Inner Svg tag representing the annotations.
+-}
+innerView : Viewer -> Maybe Image -> Svg msg -> Svg msg
+innerView viewer maybeImage svg =
     let
         innerStyle =
             [ Attributes.style
@@ -210,17 +213,16 @@ innerView viewer maybeImage set =
                 ]
             ]
 
-        svgImage =
+        withImage =
             case maybeImage of
                 Nothing ->
-                    []
+                    svg
 
                 Just image ->
-                    [ Image.viewSvg [] image ]
+                    Svg.g [] [ Image.viewSvg [] image, svg ]
 
         innerSvg =
-            (svgImage ++ Set.view set)
-                |> Svg.g []
+            withImage
                 |> Svg.relativeTo viewer.frame
                 |> Svg.scaleAbout Point2d.origin viewer.zoom
     in

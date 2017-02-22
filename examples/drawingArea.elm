@@ -8,6 +8,7 @@ module Main exposing (..)
 import Html exposing (Html)
 import Html.Events as Events
 import Html.Attributes as Attributes
+import Svg exposing (Svg)
 import Array exposing (Array)
 import Annotation exposing (Annotation)
 import Annotation.Set as Set exposing (Set)
@@ -228,7 +229,10 @@ view model =
                             [ annotationOffsetOn "mousemove" Pointer.Move ]
 
         viewer =
-            Viewer.viewSet (viewerContour :: viewerEvents) model.viewer (Just model.bgImage) model.annotations
+            Set.view model.annotations
+                |> Svg.g []
+                |> Viewer.innerView model.viewer (Just model.bgImage)
+                |> Viewer.view (viewerContour :: viewerEvents) model.viewer
     in
         Html.div []
             [ Html.p []
