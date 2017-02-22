@@ -7,6 +7,7 @@ module Annotation
     exposing
         ( Annotation
         , Input
+        , ScribbleType
         , empty
           -- Update
         , setLabel
@@ -28,7 +29,7 @@ module Annotation
 {-| An annotation can be a selection or a scribble.
 
 # Model
-@docs Annotation, Input, empty
+@docs Annotation, Input, ScribbleType, empty
 
 # Update
 @docs setLabel, setRectangle, initOutline, initScribble, addPoint, update
@@ -43,9 +44,8 @@ module Annotation
 @docs isValid
 -}
 
-import Html as H exposing (Html)
-import Svg.Attributes as SvgA
 import Svg exposing (Svg)
+import Svg.Attributes as Attributes
 import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Svg as Svg
@@ -70,7 +70,14 @@ type alias Annotation =
 -}
 type Input
     = Selection Polygon2d
-    | Scribble Polyline2d
+    | Scribble ScribbleType Polyline2d
+
+
+{-| The type of scribble (FG is ForeGround, BG is BackGround).
+-}
+type ScribbleType
+    = FG
+    | BG
 
 
 {-| An empty annotation, only useful as startup.
@@ -121,9 +128,9 @@ initOutline origin annotation =
 
 {-| Initialize the input with origin point of the scribble.
 -}
-initScribble : Point2d -> Annotation -> Annotation
-initScribble origin annotation =
-    { annotation | input = Scribble (Polyline2d [ origin ]) }
+initScribble : ScribbleType -> Point2d -> Annotation -> Annotation
+initScribble type_ origin annotation =
+    { annotation | input = Scribble type_ (Polyline2d [ origin ]) }
 
 
 {-| Add a point to the input
@@ -136,8 +143,8 @@ addPoint point annotation =
                 Selection (Polygon2d pointsList) ->
                     Selection (Polygon2d (point :: pointsList))
 
-                Scribble (Polyline2d pointsList) ->
-                    Scribble (Polyline2d (point :: pointsList))
+                Scribble type_ (Polyline2d pointsList) ->
+                    Scribble type_ (Polyline2d (point :: pointsList))
     in
         { annotation | input = input }
 
@@ -164,12 +171,20 @@ update pointer track tool newId option =
         ( Tool.Outline, _, Pointer.Move, Just ( id, annotation ) ) ->
             Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
 
-        ( Tool.Scribble, _, Pointer.Down, _ ) ->
+        ( Tool.ScribbleFG, _, Pointer.Down, _ ) ->
             Maybe.withDefault ( newId, empty "scribble" ) option
-                |> Tuple.mapSecond (initScribble (Point2d <| Pointer.offset pointer))
+                |> Tuple.mapSecond (initScribble FG (Point2d <| Pointer.offset pointer))
                 |> Just
 
-        ( Tool.Scribble, _, Pointer.Move, Just ( id, annotation ) ) ->
+        ( Tool.ScribbleBG, _, Pointer.Down, _ ) ->
+            Maybe.withDefault ( newId, empty "scribble" ) option
+                |> Tuple.mapSecond (initScribble BG (Point2d <| Pointer.offset pointer))
+                |> Just
+
+        ( Tool.ScribbleFG, _, Pointer.Move, Just ( id, annotation ) ) ->
+            Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
+
+        ( Tool.ScribbleBG, _, Pointer.Move, Just ( id, annotation ) ) ->
             Just ( id, addPoint (Point2d <| Pointer.offset pointer) annotation )
 
         _ ->
@@ -197,21 +212,28 @@ updateRectangle startPointer endPointer newId option =
 {-| View an annotation input.
 -}
 view : Annotation -> Svg msg
-view annotation =
+view =
     let
         defaultStyle =
-            [ SvgA.stroke "red"
-            , SvgA.fillOpacity "0"
-            , SvgA.strokeWidth "2"
-            , SvgA.pointerEvents "none"
+            [ Attributes.stroke "red"
+            , Attributes.fillOpacity "0"
+            , Attributes.strokeWidth "2"
+            , Attributes.pointerEvents "none"
             ]
     in
-        case annotation.input of
-            Selection polygon ->
-                Svg.polygon2d defaultStyle polygon
+        viewWithStyle defaultStyle
 
-            Scribble polyline ->
-                Svg.polyline2d defaultStyle polyline
+
+{-| View an annotation input with a specific style.
+-}
+viewWithStyle : List (Svg.Attribute msg) -> Annotation -> Svg msg
+viewWithStyle attributes annotation =
+    case annotation.input of
+        Selection polygon ->
+            Svg.polygon2d attributes polygon
+
+        Scribble type_ polyline ->
+            Svg.polyline2d attributes polyline
 
 
 {-| Option type used for <select> tags
@@ -235,8 +257,11 @@ optionDescriber option =
                         Selection _ ->
                             "Selection"
 
-                        Scribble _ ->
-                            "Scribble"
+                        Scribble FG _ ->
+                            "FG Scribble"
+
+                        Scribble BG _ ->
+                            "BG Scribble"
             in
                 toString id ++ " : " ++ inputStr ++ " : " ++ annotation.label
 
@@ -253,7 +278,7 @@ encodePath annotation =
         Selection polygon ->
             Encode.polygon2d polygon
 
-        Scribble polyline ->
+        Scribble _ polyline ->
             Encode.polyline2d polyline
 
 

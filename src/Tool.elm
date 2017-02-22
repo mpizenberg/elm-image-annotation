@@ -27,7 +27,8 @@ type Tool
     = None
     | Rectangle
     | Outline
-    | Scribble
+    | ScribbleFG
+    | ScribbleBG
 
 
 
@@ -44,5 +45,6 @@ selectTag tagger current =
         ( None, "None" )
         [ ( Rectangle, "Rectangle" )
         , ( Outline, "Outline" )
-        , ( Scribble, "Scribble" )
+        , ( ScribbleFG, "FG Scribble" )
+        , ( ScribbleBG, "BG Scribble" )
         ]
