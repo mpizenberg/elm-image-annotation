@@ -212,16 +212,26 @@ updateRectangle startPointer endPointer newId option =
 {-| View an annotation input.
 -}
 view : Annotation -> Svg msg
-view =
+view annotation =
     let
+        red =
+            Attributes.stroke "red"
+
+        green =
+            Attributes.stroke "green"
+
         defaultStyle =
-            [ Attributes.stroke "red"
-            , Attributes.fillOpacity "0"
+            [ Attributes.fillOpacity "0"
             , Attributes.strokeWidth "2"
             , Attributes.pointerEvents "none"
             ]
     in
-        viewWithStyle defaultStyle
+        case annotation.input of
+            Scribble FG _ ->
+                viewWithStyle (green :: defaultStyle) annotation
+
+            _ ->
+                viewWithStyle (red :: defaultStyle) annotation
 
 
 {-| View an annotation input with a specific style.
