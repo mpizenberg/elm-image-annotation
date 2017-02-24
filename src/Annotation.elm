@@ -48,6 +48,7 @@ import Svg exposing (Svg)
 import Svg.Attributes as Attributes
 import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
 import OpenSolid.Point2d as Point2d
+import OpenSolid.Polygon2d as Polygon2d
 import OpenSolid.Svg as Svg
 import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
@@ -300,4 +301,9 @@ encodePath annotation =
 -}
 isValid : Annotation -> Bool
 isValid annotation =
-    False
+    case annotation.input of
+        Selection polygon ->
+            Polygon2d.area polygon > 5000
+
+        _ ->
+            False
