@@ -8,6 +8,7 @@ module Annotation
         ( Annotation
         , Input
         , ScribbleType
+        , Check(..)
         , empty
           -- Update
         , setLabel
@@ -29,7 +30,7 @@ module Annotation
 {-| An annotation can be a selection or a scribble.
 
 # Model
-@docs Annotation, Input, ScribbleType, empty
+@docs Annotation, Input, ScribbleType, Check, empty
 
 # Update
 @docs setLabel, setRectangle, initOutline, initScribble, addPoint, update
@@ -79,6 +80,15 @@ type Input
 type ScribbleType
     = FG
     | BG
+
+
+{-| Indicate if an annotation is valid.
+-}
+type Check
+    = Valid
+    | AreaUnderLimit Float
+    | SegmentsCrossing
+    | CrossingGT
 
 
 {-| An empty annotation, only useful as startup.

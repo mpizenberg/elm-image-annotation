@@ -33,18 +33,11 @@ main =
 -- MODEL #############################################################
 
 
-type Check
-    = Valid
-    | AreaUnderLimit Float
-    | SegmentsCrossing
-    | CrossingGT
-
-
 type alias Model =
     { viewer : Viewer
     , bgImage : Image
     , annotation : Maybe Annotation
-    , checked : Maybe Check
+    , checked : Maybe Annotation.Check
     , pointerTrack : Pointer.Track
     }
 
@@ -85,7 +78,7 @@ update msg model =
                 annotation =
                     model.annotation
                         |> Maybe.map (\ann -> ( 0, ann ))
-                        |> Annotation.update pointer model.pointerTrack Tool.Rectangle 0
+                        |> Annotation.update pointer model.pointerTrack Tool.Outline 0
                         |> Maybe.map Tuple.second
 
                 checked =
@@ -93,10 +86,10 @@ update msg model =
                         ( Pointer.Up, Just ann ) ->
                             case Annotation.isValid ann of
                                 False ->
-                                    Just (AreaUnderLimit 0)
+                                    Just (Annotation.AreaUnderLimit 0)
 
                                 True ->
-                                    Just Valid
+                                    Just Annotation.Valid
 
                         ( Pointer.Down, _ ) ->
                             Nothing
@@ -117,10 +110,10 @@ update msg model =
 -- VIEW ##############################################################
 
 
-toFeedback : Check -> Html msg
+toFeedback : Annotation.Check -> Html msg
 toFeedback check =
     case check of
-        Valid ->
+        Annotation.Valid ->
             Html.p [ Attributes.class "valid" ] [ Html.text "Valid annotation" ]
 
         _ ->
