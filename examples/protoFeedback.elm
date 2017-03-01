@@ -8,7 +8,9 @@ module Main exposing (..)
 import Html exposing (Html)
 import Html.Events as Events
 import Html.Attributes as Attributes
+import Svg.Attributes as SvgAttributes
 import Svg exposing (Svg)
+import OpenSolid.Svg as Svg
 import Array exposing (Array)
 import Annotation exposing (Annotation)
 import Annotation.Set as Set exposing (Set)
@@ -16,7 +18,7 @@ import DrawingArea.Viewer as Viewer exposing (Viewer)
 import Tool exposing (Tool)
 import Pointer exposing (Pointer)
 import Image exposing (Image)
-import OpenSolid.Geometry.Types exposing (Point2d(..), Vector2d(..))
+import OpenSolid.Geometry.Types exposing (Point2d(..), Vector2d(..), Circle2d(..))
 import Json.Encode as Encode
 
 
@@ -84,12 +86,7 @@ update msg model =
                 checked =
                     case ( pointer.event, annotation ) of
                         ( Pointer.Up, Just ann ) ->
-                            case Annotation.isValid ann of
-                                False ->
-                                    Just (Annotation.AreaUnderLimit 0)
-
-                                True ->
-                                    Just Annotation.Valid
+                            Just (Annotation.isValid ann)
 
                         ( Pointer.Down, _ ) ->
                             Nothing
@@ -116,8 +113,14 @@ toFeedback check =
         Annotation.Valid ->
             Html.p [ Attributes.class "valid" ] [ Html.text "Valid annotation" ]
 
+        Annotation.SegmentsCrossing point ->
+            Html.p [ Attributes.class "invalid" ] [ Html.text ("Intersection at " ++ toString point) ]
+
+        Annotation.AreaUnderLimit limit ->
+            Html.p [ Attributes.class "invalid" ] [ Html.text ("Area under limit " ++ toString limit) ]
+
         _ ->
-            Html.p [ Attributes.class "invalid" ] [ Html.text "Invalid annotation" ]
+            Html.p [ Attributes.class "invalid" ] [ Html.text ("Invalid") ]
 
 
 view : Model -> Html Msg
@@ -144,20 +147,35 @@ view model =
                    else
                     [ annotationOffsetOn "mousemove" Pointer.Move ]
 
+        visualFeedback =
+            case model.checked of
+                Just (Annotation.SegmentsCrossing point) ->
+                    Circle2d { centerPoint = point, radius = 10 }
+                        |> Svg.circle2d
+                            [ SvgAttributes.stroke "blue"
+                            , SvgAttributes.strokeWidth "3"
+                            , SvgAttributes.fillOpacity "0"
+                            ]
+
+                _ ->
+                    Svg.text "No feedback"
+
         viewer =
             model.annotation
                 |> Maybe.map Annotation.view
                 |> Maybe.withDefault (Svg.text "No annotation yet")
+                |> flip (::) [ visualFeedback ]
+                |> Svg.g []
                 |> Viewer.innerView model.viewer (Just model.bgImage)
                 |> Viewer.view (viewerContour :: viewerEvents) model.viewer
 
-        feedback =
+        feedbackText =
             model.checked
                 |> Maybe.map toFeedback
                 |> Maybe.withDefault (Html.div [ Attributes.hidden True ] [])
     in
         Html.div []
             [ viewer
-            , feedback
+            , feedbackText
             , Html.p [] [ Html.text <| toString model ]
             ]

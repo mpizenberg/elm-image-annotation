@@ -8,7 +8,6 @@ module Annotation
         ( Annotation
         , Input
         , ScribbleType
-        , Check(..)
         , empty
           -- Update
         , setLabel
@@ -24,13 +23,14 @@ module Annotation
           -- Exports
         , encodePath
           -- Other
+        , Check(..)
         , isValid
         )
 
 {-| An annotation can be a selection or a scribble.
 
 # Model
-@docs Annotation, Input, ScribbleType, Check, empty
+@docs Annotation, Input, ScribbleType, empty
 
 # Update
 @docs setLabel, setRectangle, initOutline, initScribble, addPoint, update
@@ -42,7 +42,7 @@ module Annotation
 @docs encodePath
 
 # Other
-@docs isValid
+@docs Check, isValid
 -}
 
 import Svg exposing (Svg)
@@ -50,6 +50,7 @@ import Svg.Attributes as Attributes
 import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Polygon2d as Polygon2d
+import Helpers.Polygon2d as Polygon2d
 import OpenSolid.Svg as Svg
 import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
@@ -80,15 +81,6 @@ type Input
 type ScribbleType
     = FG
     | BG
-
-
-{-| Indicate if an annotation is valid.
--}
-type Check
-    = Valid
-    | AreaUnderLimit Float
-    | SegmentsCrossing
-    | CrossingGT
 
 
 {-| An empty annotation, only useful as startup.
@@ -307,13 +299,49 @@ encodePath annotation =
 -- OTHER #############################################################
 
 
+{-| Indicate if an annotation is valid.
+-}
+type Check
+    = Valid
+    | SegmentsCrossing Point2d
+    | AreaUnderLimit Float
+    | CrossingGT
+
+
+andCheck : (a -> Check) -> a -> Check -> Check
+andCheck checker data check =
+    if check == Valid then
+        checker data
+    else
+        check
+
+
+checkIntersection : Polygon2d -> Check
+checkIntersection polygon =
+    case Polygon2d.intersection polygon of
+        Nothing ->
+            Valid
+
+        Just point ->
+            SegmentsCrossing point
+
+
+checkAreaOver : Float -> Polygon2d -> Check
+checkAreaOver limit polygon =
+    if Polygon2d.area polygon >= limit then
+        Valid
+    else
+        AreaUnderLimit limit
+
+
 {-| Indicates if the input of an annotation is valid.
 -}
-isValid : Annotation -> Bool
+isValid : Annotation -> Check
 isValid annotation =
     case annotation.input of
         Selection polygon ->
-            Polygon2d.area polygon > 5000
+            checkIntersection polygon
+                |> andCheck (checkAreaOver 500) polygon
 
         _ ->
-            False
+            Valid

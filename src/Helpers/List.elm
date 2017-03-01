@@ -26,3 +26,14 @@ find predicate list =
                 Just first
             else
                 find predicate rest
+
+
+{-| Variant of `foldr` that passes the index of the current element to the step function. `indexedFoldr` is to `List.foldr` as `List.indexedMap` is to `List.map`.
+-}
+indexedFoldr : (Int -> a -> b -> b) -> b -> List a -> b
+indexedFoldr func acc list =
+    let
+        step x ( i, acc ) =
+            ( i - 1, func i x acc )
+    in
+        Tuple.second (List.foldr step ( List.length list - 1, acc ) list)
