@@ -7,6 +7,7 @@ module Helpers.LineSegment2d
     exposing
         ( Relationship(..)
         , relationshipWith
+        , toStr
         )
 
 import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..))
@@ -66,3 +67,21 @@ relationshipWith segment1 segment2 =
                         Intersection intersection
                     else
                         NonIntersection intersection
+
+
+
+-- Debug
+
+
+pointToStr : Point2d -> String
+pointToStr point =
+    toString (Point2d.coordinates point)
+
+
+toStr : LineSegment2d -> String
+toStr segment =
+    let
+        ( start, end ) =
+            LineSegment2d.endpoints segment
+    in
+        "[ " ++ pointToStr start ++ " -> " ++ pointToStr end ++ " ]"

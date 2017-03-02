@@ -6,6 +6,7 @@
 module Helpers.Polygon2d
     exposing
         ( intersection
+        , toStr
         )
 
 import OpenSolid.Geometry.Types exposing (Polygon2d(..), Point2d(..), LineSegment2d(..))
@@ -191,5 +192,38 @@ intersection polygon =
                 ( Nothing, maybePoint )
     in
         eventList
-            |> List.foldr handleEvent ( sweepLine, Nothing )
+            |> List.foldl handleEvent ( sweepLine, Nothing )
             |> Tuple.second
+
+
+
+-- Debug
+
+
+toStr : Polygon2d -> String
+toStr polygon =
+    Polygon2d.edges polygon
+        |> List.foldr (\seg str -> LineSegment2d.toStr seg ++ str) ""
+
+
+eventToStr : Event -> String
+eventToStr ( id, side, segment ) =
+    let
+        idStr =
+            toString id
+
+        sideStr =
+            case side of
+                Start ->
+                    "S"
+
+                End ->
+                    "E"
+    in
+        "(" ++ idStr ++ "," ++ sideStr ++ ")"
+
+
+eventListToStr : List Event -> String
+eventListToStr events =
+    events
+        |> List.foldr (\event str -> eventToStr event ++ str) ""
