@@ -8,12 +8,17 @@ module RLE
         ( RLE
         , toMatrix
         , fromMatrix
+        , scanIntersections
         , encodeLine
         )
 
 import Array exposing (Array)
 import Array.Extra as Array
 import Matrix exposing (Matrix)
+import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..))
+import OpenSolid.LineSegment2d as LineSegment2d
+import Helpers.LineSegment2d as LineSegment2d
+import OpenSolid.Point2d as Point2d
 
 
 type alias RLE =
@@ -73,6 +78,31 @@ fromMatrix { size, data } =
 -- POLYGON FILLING
 
 
+{-| Compute the intersection of the lines given by provided segments and the given x coordinate.
+-}
+scanIntersections : Float -> List LineSegment2d -> List Float
+scanIntersections x segments =
+    let
+        getPoint relationship =
+            case relationship of
+                LineSegment2d.Intersection point ->
+                    Just point
+
+                LineSegment2d.NonIntersection point ->
+                    Just point
+
+                _ ->
+                    Nothing
+
+        xLine =
+            LineSegment2d ( Point2d ( x, 0 ), Point2d ( x, 1 ) )
+    in
+        segments
+            |> List.map (LineSegment2d.relationshipWith xLine >> getPoint >> Maybe.map Point2d.yCoordinate)
+            |> List.filterMap identity
+            |> List.sort
+
+
 {-| Same as round but halfs are rounded to the lower integer
 -}
 roundLow : Float -> Int
@@ -80,6 +110,10 @@ roundLow =
     negate >> round >> negate
 
 
+{-| Encode a line provided the ordered intersections coordinates and min-max window.
+Carefull since the generated RLE count lists are in reverse order
+(from right to left) for efficiency matter.
+-}
 encodeLine : ( Float, Float ) -> List Float -> ( List Int, List Int )
 encodeLine ( yMin, yMax ) scanIntersections =
     let
