@@ -3,7 +3,13 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module RLE exposing (RLE, toMatrix, fromMatrix)
+module RLE
+    exposing
+        ( RLE
+        , toMatrix
+        , fromMatrix
+        , encodeLine
+        )
 
 import Array exposing (Array)
 import Array.Extra as Array
@@ -61,3 +67,57 @@ fromMatrix { size, data } =
         , bg_counts = Array.fromList (bg_count :: bg_counts)
         , fg_counts = Array.fromList fg_counts
         }
+
+
+
+-- POLYGON FILLING
+
+
+{-| Same as round but halfs are rounded to the lower integer
+-}
+roundLow : Float -> Int
+roundLow =
+    negate >> round >> negate
+
+
+encodeLine : ( Float, Float ) -> List Float -> ( List Int, List Int )
+encodeLine ( yMin, yMax ) scanIntersections =
+    let
+        ( bg_counts, fg_counts ) =
+            encodeLineBG ( yMin, yMax ) scanIntersections ( [], [] )
+    in
+        if List.length bg_counts == List.length fg_counts then
+            ( bg_counts, fg_counts )
+        else
+            -- bg_counts has one more element than fg_counts
+            ( bg_counts, 0 :: fg_counts )
+
+
+encodeLineBG : ( Float, Float ) -> List Float -> ( List Int, List Int ) -> ( List Int, List Int )
+encodeLineBG ( start, end ) scanIntersections ( bg_counts, fg_counts ) =
+    case scanIntersections of
+        [] ->
+            ( roundLow (end - start) :: bg_counts, fg_counts )
+
+        y :: otherIntersections ->
+            if y > end then
+                ( roundLow (end - start) :: bg_counts, fg_counts )
+            else if y > start then
+                encodeLineFG ( y, end ) otherIntersections ( roundLow (y - start) :: bg_counts, fg_counts )
+            else
+                encodeLineFG ( start, end ) otherIntersections ( 0 :: bg_counts, fg_counts )
+
+
+encodeLineFG : ( Float, Float ) -> List Float -> ( List Int, List Int ) -> ( List Int, List Int )
+encodeLineFG ( start, end ) scanIntersections ( bg_counts, fg_counts ) =
+    case scanIntersections of
+        [] ->
+            ( bg_counts, round (end - start) :: fg_counts )
+
+        y :: otherIntersections ->
+            if y > end then
+                ( bg_counts, round (end - start) :: fg_counts )
+            else if y > start then
+                encodeLineBG ( y, end ) otherIntersections ( bg_counts, round (y - start) :: fg_counts )
+            else
+                encodeLineBG ( start, end ) otherIntersections ( bg_counts, 0 :: fg_counts )
