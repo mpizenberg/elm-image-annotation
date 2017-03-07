@@ -103,13 +103,6 @@ scanIntersections x segments =
             |> List.sort
 
 
-{-| Same as round but halfs are rounded to the lower integer
--}
-roundLow : Float -> Int
-roundLow =
-    negate >> round >> negate
-
-
 {-| Encode a line provided the ordered intersections coordinates and min-max window.
 Carefull since the generated RLE count lists are in reverse order
 (from right to left) for efficiency matter.
@@ -131,15 +124,21 @@ encodeLineBG : ( Float, Float ) -> List Float -> ( List Int, List Int ) -> ( Lis
 encodeLineBG ( start, end ) scanIntersections ( bg_counts, fg_counts ) =
     case scanIntersections of
         [] ->
-            ( roundLow (end - start) :: bg_counts, fg_counts )
+            ( round (end - start) :: bg_counts, fg_counts )
 
         y :: otherIntersections ->
             if y > end then
-                ( roundLow (end - start) :: bg_counts, fg_counts )
+                ( round (end - start) :: bg_counts, fg_counts )
             else if y > start then
-                encodeLineFG ( y, end ) otherIntersections ( roundLow (y - start) :: bg_counts, fg_counts )
+                encodeLineFG
+                    ( start + toFloat (round (y - start)), end )
+                    otherIntersections
+                    ( round (y - start) :: bg_counts, fg_counts )
             else
-                encodeLineFG ( start, end ) otherIntersections ( 0 :: bg_counts, fg_counts )
+                encodeLineFG
+                    ( start, end )
+                    otherIntersections
+                    ( 0 :: bg_counts, fg_counts )
 
 
 encodeLineFG : ( Float, Float ) -> List Float -> ( List Int, List Int ) -> ( List Int, List Int )
@@ -152,6 +151,12 @@ encodeLineFG ( start, end ) scanIntersections ( bg_counts, fg_counts ) =
             if y > end then
                 ( bg_counts, round (end - start) :: fg_counts )
             else if y > start then
-                encodeLineBG ( y, end ) otherIntersections ( bg_counts, round (y - start) :: fg_counts )
+                encodeLineBG
+                    ( start + toFloat (round (y - start)), end )
+                    otherIntersections
+                    ( bg_counts, round (y - start) :: fg_counts )
             else
-                encodeLineBG ( start, end ) otherIntersections ( bg_counts, 0 :: fg_counts )
+                encodeLineBG
+                    ( start, end )
+                    otherIntersections
+                    ( bg_counts, 0 :: fg_counts )
