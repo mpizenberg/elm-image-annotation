@@ -37,3 +37,53 @@ indexedFoldr func acc list =
             ( i - 1, func i x acc )
     in
         Tuple.second (List.foldr step ( List.length list - 1, acc ) list)
+
+
+foldlUntil : (a -> Bool) -> (a -> b -> b) -> b -> List a -> ( b, List a )
+foldlUntil predicate func acc list =
+    case list of
+        [] ->
+            ( acc, [] )
+
+        x :: xs ->
+            if predicate x then
+                ( acc, xs )
+            else
+                foldlUntil predicate func (func x acc) xs
+
+
+insertSortedWith : (a -> a -> Order) -> a -> List a -> List a
+insertSortedWith compare a list =
+    case list of
+        x :: xs ->
+            if compare a x == GT then
+                x :: insertSortedWith compare a xs
+            else
+                a :: list
+
+        [] ->
+            [ a ]
+
+
+insertSortedBy : (a -> comparable) -> a -> List a -> List a
+insertSortedBy f =
+    insertSortedWith (\a b -> compare (f a) (f b))
+
+
+removeSortedBy : (a -> comparable) -> a -> List a -> List a
+removeSortedBy f a list =
+    case list of
+        [] ->
+            []
+
+        x :: xs ->
+            let
+                ( fa, fx ) =
+                    ( f a, f x )
+            in
+                if fa > fx then
+                    x :: removeSortedBy f a xs
+                else if fa == fx then
+                    xs
+                else
+                    list

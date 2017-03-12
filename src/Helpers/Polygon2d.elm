@@ -3,11 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Helpers.Polygon2d
-    exposing
-        ( intersection
-        , toStr
-        )
+module Helpers.Polygon2d exposing (..)
 
 import OpenSolid.Geometry.Types exposing (Polygon2d(..), Point2d(..), LineSegment2d(..))
 import OpenSolid.Polygon2d as Polygon2d

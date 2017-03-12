@@ -10,15 +10,19 @@ module RLE
         , fromMatrix
         , scanIntersections
         , encodeLine
+        , fromPolygon
         )
 
 import Array exposing (Array)
 import Array.Extra as Array
 import Matrix exposing (Matrix)
-import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..))
+import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..), Polygon2d(..))
 import OpenSolid.LineSegment2d as LineSegment2d
 import Helpers.LineSegment2d as LineSegment2d
 import OpenSolid.Point2d as Point2d
+import OpenSolid.Polygon2d as Polygon2d
+import Helpers.Polygon2d as Polygon2d exposing (Event)
+import Helpers.List as List
 
 
 type alias RLE =
@@ -78,10 +82,126 @@ fromMatrix { size, data } =
 -- POLYGON FILLING
 
 
+type alias EventAccumulator =
+    ( List LineSegment2d, List Event )
+
+
+type alias LineAccumulator =
+    ( List Event, List LineSegment2d, List Int, List Int )
+
+
+eventY : Event -> Float
+eventY ( id, side, segment ) =
+    case side of
+        Polygon2d.Start ->
+            LineSegment2d.startPoint segment
+                |> Point2d.coordinates
+                |> Tuple.second
+
+        Polygon2d.End ->
+            LineSegment2d.endPoint segment
+                |> Point2d.coordinates
+                |> Tuple.second
+
+
+fromPolygon : Int -> Int -> Int -> Int -> Polygon2d -> RLE
+fromPolygon left top right bottom polygon =
+    let
+        ( width, height ) =
+            ( right - left
+            , bottom - top
+            )
+
+        insertSegment : Int -> LineSegment2d -> List Event -> List Event
+        insertSegment id seg list =
+            ( id, Polygon2d.Start, seg ) :: ( id, Polygon2d.End, seg ) :: list
+
+        edges : List LineSegment2d
+        edges =
+            Polygon2d.edges polygon
+
+        eventList : List Event
+        eventList =
+            edges
+                |> List.map Polygon2d.reorient
+                |> List.indexedFoldr insertSegment []
+                |> List.sortBy eventY
+
+        lines : List Float
+        lines =
+            List.range top (bottom - 1)
+                |> List.map toFloat
+
+        processLine : Float -> LineAccumulator -> LineAccumulator
+        processLine y ( events, segments, bg_counts, fg_counts ) =
+            let
+                ( crossingSegments, followingEvents ) =
+                    updateSegments y ( segments, events )
+
+                lineIntersections =
+                    scanIntersections y crossingSegments
+
+                ( line_bg_counts, line_fg_counts ) =
+                    encodeLine ( toFloat left, toFloat right ) lineIntersections
+
+                _ =
+                    ( Debug.log "y" y
+                    , Debug.log "crossingSegments" crossingSegments
+                    , Debug.log "followingEvents" followingEvents
+                    , Debug.log "lineIntersections" lineIntersections
+                    , Debug.log "line_bg_counts" line_bg_counts
+                    , Debug.log "line_fg_counts" line_fg_counts
+                    )
+            in
+                ( followingEvents
+                , crossingSegments
+                , line_bg_counts ++ bg_counts
+                , line_fg_counts ++ fg_counts
+                )
+
+        ( _, _, bg_counts, fg_counts ) =
+            List.foldl processLine ( eventList, [], [], [] ) lines
+    in
+        { width = width
+        , height = height
+        , bg_counts = Array.fromList (List.reverse bg_counts)
+        , fg_counts = Array.fromList (List.reverse fg_counts)
+        }
+
+
+{-| !!! NON TESTE
+-}
+updateSegments : Float -> EventAccumulator -> EventAccumulator
+updateSegments y ( segments, events ) =
+    let
+        segmentCoordinates segment =
+            ( Point2d.coordinates <| LineSegment2d.startPoint segment
+            , Point2d.coordinates <| LineSegment2d.endPoint segment
+            )
+
+        processEvent : Event -> List LineSegment2d -> List LineSegment2d
+        processEvent ( id, side, segment ) crossingSegments =
+            case side of
+                Polygon2d.Start ->
+                    crossingSegments
+                        |> List.insertSortedBy segmentCoordinates segment
+
+                -- PB: NOT ALWAYS REMOVED
+                Polygon2d.End ->
+                    crossingSegments
+                        |> List.removeSortedBy segmentCoordinates segment
+
+        over yLine event =
+            yLine < eventY event
+    in
+        events
+            |> List.foldlUntil (over y) processEvent segments
+
+
 {-| Compute the intersection of the lines given by provided segments and the given x coordinate.
 -}
 scanIntersections : Float -> List LineSegment2d -> List Float
-scanIntersections x segments =
+scanIntersections y segments =
     let
         getPoint relationship =
             case relationship of
@@ -94,11 +214,11 @@ scanIntersections x segments =
                 _ ->
                     Nothing
 
-        xLine =
-            LineSegment2d ( Point2d ( x, 0 ), Point2d ( x, 1 ) )
+        yLine =
+            LineSegment2d ( Point2d ( 0, y ), Point2d ( 1, y ) )
     in
         segments
-            |> List.map (LineSegment2d.relationshipWith xLine >> getPoint >> Maybe.map Point2d.yCoordinate)
+            |> List.map (LineSegment2d.relationshipWith yLine >> getPoint >> Maybe.map Point2d.xCoordinate)
             |> List.filterMap identity
             |> List.sort
 
