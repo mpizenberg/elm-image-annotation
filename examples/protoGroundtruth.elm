@@ -8,15 +8,11 @@ port module Main exposing (..)
 import Html exposing (Html)
 import Html.Events as Events
 import Html.Attributes as Attributes
-import Svg.Attributes as SvgAttributes
 import Svg exposing (Svg)
-import OpenSolid.Svg as Svg
-import Array exposing (Array)
-import Annotation exposing (Annotation)
-import Annotation.Set as Set exposing (Set)
 import DrawingArea.Viewer as Viewer exposing (Viewer)
 import Image exposing (Image)
 import Json.Encode as Encode
+import Json.Decode as Decode exposing (Decoder)
 import RLE exposing (RLE)
 
 
@@ -67,6 +63,7 @@ init =
 type Msg
     = ChooseImage String
     | ImageFetched ( String, String, ( Int, Int ) )
+    | GroundtruthFetched Encode.Value
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -84,6 +81,19 @@ update msg model =
                     Viewer.fitImage 0.8 image model.viewer
             in
                 ( { model | image = Just image, viewer = viewer }
+                , fetchGroundtruth name
+                )
+
+        GroundtruthFetched rleValue ->
+            let
+                groundtruth =
+                    Decode.decodeValue RLE.decode rleValue
+                        |> Result.toMaybe
+
+                _ =
+                    Debug.log "groundtruth" rleValue
+            in
+                ( { model | groundtruth = groundtruth }
                 , Cmd.none
                 )
 
@@ -136,10 +146,19 @@ port chooseImage : String -> Cmd msg
 port imageFetched : (( String, String, ( Int, Int ) ) -> msg) -> Sub msg
 
 
+port fetchGroundtruth : String -> Cmd msg
+
+
+port groundtruthFetched : (Encode.Value -> msg) -> Sub msg
+
+
 
 -- SUBS #############################################################
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    imageFetched ImageFetched
+    Sub.batch
+        [ imageFetched ImageFetched
+        , groundtruthFetched GroundtruthFetched
+        ]

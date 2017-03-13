@@ -13,4 +13,9 @@
 		}
 		image.src = src
 	})
+
+	app.ports.fetchGroundtruth.subscribe( (name) => {
+		const src = name + ".png"
+		app.ports.groundtruthFetched.send({src: src})
+	})
 </script>
