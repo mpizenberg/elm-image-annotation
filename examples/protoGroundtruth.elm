@@ -3,7 +3,7 @@
 -- file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 
-module Main exposing (..)
+port module Main exposing (..)
 
 import Html exposing (Html)
 import Html.Events as Events
@@ -24,7 +24,7 @@ main =
     Html.program
         { init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         , view = view
         }
 
@@ -34,9 +34,9 @@ main =
 
 
 images =
-    [ "/img/taj_mahal_01.jpg"
-    , "/img/taj_mahal_07.jpg"
-    , "/img/taj_mahal_10.jpg"
+    [ "/img/taj_mahal_01"
+    , "/img/taj_mahal_07"
+    , "/img/taj_mahal_10"
     ]
 
 
@@ -66,17 +66,26 @@ init =
 
 type Msg
     = ChooseImage String
-    | ImageFetched ( Image, RLE )
+    | ImageFetched ( String, String, ( Int, Int ) )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChooseImage url ->
-            ( model, Cmd.none )
+        ChooseImage name ->
+            ( model, chooseImage name )
 
-        ImageFetched ( image, rle ) ->
-            ( model, Cmd.none )
+        ImageFetched ( name, url, ( width, height ) ) ->
+            let
+                image =
+                    Image url width height
+
+                viewer =
+                    Viewer.fitImage 0.8 image model.viewer
+            in
+                ( { model | image = Just image, viewer = viewer }
+                , Cmd.none
+                )
 
 
 
@@ -86,10 +95,10 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        imageButton url =
+        imageButton name =
             Html.button
-                [ Events.onClick <| ChooseImage url ]
-                [ Html.text url ]
+                [ Events.onClick <| ChooseImage name ]
+                [ Html.text name ]
 
         imagesButtons =
             List.map imageButton images
@@ -115,3 +124,22 @@ view model =
             , viewer
             , Html.p [] [ Html.text <| toString model ]
             ]
+
+
+
+-- PORTS #############################################################
+
+
+port chooseImage : String -> Cmd msg
+
+
+port imageFetched : (( String, String, ( Int, Int ) ) -> msg) -> Sub msg
+
+
+
+-- SUBS #############################################################
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    imageFetched ImageFetched

@@ -1,0 +1,16 @@
+<div id="main"></div>
+<script src="main.js"></script>
+<script>
+	const app = Elm.Main.fullscreen();
+
+	app.ports.chooseImage.subscribe( (name) => {
+		const src = name + ".jpg"
+		const image = new Image()
+		image.onload = () => {
+			const width = image.naturalWidth
+			const height = image.naturalHeight
+			app.ports.imageFetched.send([name, src, [width, height]])
+		}
+		image.src = src
+	})
+</script>
