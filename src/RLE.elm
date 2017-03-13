@@ -8,14 +8,18 @@ module RLE
         ( RLE
         , toMatrix
         , fromMatrix
-        , scanIntersections
-        , encodeLine
         , fromPolygon
+          -- CODEC
+        , encode
+        , decode
+        , encodeMatrix
+        , decodeMatrix
         )
 
 import Array exposing (Array)
 import Array.Extra as Array
 import Matrix exposing (Matrix)
+import Helpers.Matrix as Matrix
 import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..), Polygon2d(..))
 import OpenSolid.LineSegment2d as LineSegment2d
 import Helpers.LineSegment2d as LineSegment2d
@@ -23,6 +27,8 @@ import OpenSolid.Point2d as Point2d
 import OpenSolid.Polygon2d as Polygon2d
 import Helpers.Polygon2d as Polygon2d exposing (Event)
 import Helpers.List as List
+import Json.Encode as Encode
+import Json.Decode as Decode exposing (Decoder)
 
 
 type alias RLE =
@@ -76,6 +82,39 @@ fromMatrix { size, data } =
         , bg_counts = Array.fromList (bg_count :: bg_counts)
         , fg_counts = Array.fromList fg_counts
         }
+
+
+
+-- JSON CODEC
+
+
+encode : RLE -> Encode.Value
+encode { width, height, bg_counts, fg_counts } =
+    Encode.object
+        [ ( "width", Encode.int width )
+        , ( "height", Encode.int height )
+        , ( "bg_counts", bg_counts |> Array.map Encode.int |> Encode.array )
+        , ( "fg_counts", fg_counts |> Array.map Encode.int |> Encode.array )
+        ]
+
+
+decode : Decoder RLE
+decode =
+    Decode.map4 RLE
+        (Decode.field "width" Decode.int)
+        (Decode.field "height" Decode.int)
+        (Decode.field "bg_counts" <| Decode.array Decode.int)
+        (Decode.field "fg_counts" <| Decode.array Decode.int)
+
+
+encodeMatrix : Matrix Bool -> Encode.Value
+encodeMatrix =
+    Matrix.encode
+
+
+decodeMatrix : Decoder (Matrix Bool)
+decodeMatrix =
+    Matrix.decode
 
 
 
