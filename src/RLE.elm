@@ -16,8 +16,15 @@ module RLE
         , decodeMatrix
         )
 
+{-| Manipulate images in an RLE (Run-Length Encoding) format.
+
+@docs RLE, toMatrix, fromMatrix, fromPolygon
+@docs encode, decode, encodeMatrix, decodeMatrix
+-}
+
 import Array exposing (Array)
 import Array.Extra as Array
+import Helpers.Array as Array
 import Matrix exposing (Matrix)
 import Helpers.Matrix as Matrix
 import OpenSolid.Geometry.Types exposing (Point2d(..), LineSegment2d(..), Polygon2d(..))
@@ -31,6 +38,8 @@ import Json.Encode as Encode
 import Json.Decode as Decode exposing (Decoder)
 
 
+{-| RLE image type.
+-}
 type alias RLE =
     { width : Int
     , height : Int
@@ -39,11 +48,8 @@ type alias RLE =
     }
 
 
-arrayConcat : Array (Array a) -> Array a
-arrayConcat =
-    Array.foldr Array.append Array.empty
-
-
+{-| Convert a RLE image to a Matrix.
+-}
 toMatrix : RLE -> Matrix Bool
 toMatrix rle =
     { size = ( rle.width, rle.height )
@@ -52,10 +58,12 @@ toMatrix rle =
             (\bg fg -> Array.append (Array.repeat bg False) (Array.repeat fg True))
             (rle.bg_counts)
             (rle.fg_counts)
-            |> arrayConcat
+            |> Array.concat
     }
 
 
+{-| Convert a Matrix to a RLE image.
+-}
 fromMatrix : Matrix Bool -> RLE
 fromMatrix { size, data } =
     let
@@ -88,6 +96,8 @@ fromMatrix { size, data } =
 -- JSON CODEC
 
 
+{-| Encode a RLE image.
+-}
 encode : RLE -> Encode.Value
 encode { width, height, bg_counts, fg_counts } =
     Encode.object
@@ -98,6 +108,8 @@ encode { width, height, bg_counts, fg_counts } =
         ]
 
 
+{-| Decode a RLE image.
+-}
 decode : Decoder RLE
 decode =
     Decode.map4 RLE
@@ -107,11 +119,15 @@ decode =
         (Decode.field "fg_counts" <| Decode.array Decode.int)
 
 
+{-| Encode a Matrix
+-}
 encodeMatrix : Matrix Bool -> Encode.Value
 encodeMatrix =
     Matrix.encode
 
 
+{-| Decode a Matrix.
+-}
 decodeMatrix : Decoder (Matrix Bool)
 decodeMatrix =
     Matrix.decode
@@ -163,6 +179,9 @@ reorient segment =
             LineSegment2d ( end, start )
 
 
+{-| Create a RLE from a polygon.
+Int parameters correspond to left, top, right and bottom.
+-}
 fromPolygon : Int -> Int -> Int -> Int -> Polygon2d -> RLE
 fromPolygon left top right bottom polygon =
     let

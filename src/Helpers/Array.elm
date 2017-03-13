@@ -22,3 +22,8 @@ removeAt id array =
                 (Array.slice (id + 1) length array)
         else
             array
+
+
+concat : Array (Array a) -> Array a
+concat =
+    Array.foldr Array.append Array.empty
