@@ -104,6 +104,26 @@ eventY ( id, side, segment ) =
                 |> Tuple.second
 
 
+{-| Reorient a segment by proritizing y coordinate
+-}
+reorient : LineSegment2d -> LineSegment2d
+reorient segment =
+    let
+        ( start, end ) =
+            LineSegment2d.endpoints segment
+
+        ( ( xStart, yStart ), ( xEnd, yEnd ) ) =
+            ( Point2d.coordinates start
+            , Point2d.coordinates end
+            )
+    in
+        -- switch x and y
+        if ( yStart, xStart ) <= ( yEnd, xEnd ) then
+            LineSegment2d ( start, end )
+        else
+            LineSegment2d ( end, start )
+
+
 fromPolygon : Int -> Int -> Int -> Int -> Polygon2d -> RLE
 fromPolygon left top right bottom polygon =
     let
@@ -123,7 +143,7 @@ fromPolygon left top right bottom polygon =
         eventList : List Event
         eventList =
             edges
-                |> List.map Polygon2d.reorient
+                |> List.map reorient
                 |> List.indexedFoldr insertSegment []
                 |> List.sortBy eventY
 
@@ -143,15 +163,6 @@ fromPolygon left top right bottom polygon =
 
                 ( line_bg_counts, line_fg_counts ) =
                     encodeLine ( toFloat left, toFloat right ) lineIntersections
-
-                _ =
-                    ( Debug.log "y" y
-                    , Debug.log "crossingSegments" crossingSegments
-                    , Debug.log "followingEvents" followingEvents
-                    , Debug.log "lineIntersections" lineIntersections
-                    , Debug.log "line_bg_counts" line_bg_counts
-                    , Debug.log "line_fg_counts" line_fg_counts
-                    )
             in
                 ( followingEvents
                 , crossingSegments
@@ -159,18 +170,37 @@ fromPolygon left top right bottom polygon =
                 , line_fg_counts ++ fg_counts
                 )
 
-        ( _, _, bg_counts, fg_counts ) =
+        ( _, _, bg_counts_per_line, fg_counts_per_line ) =
             List.foldl processLine ( eventList, [], [], [] ) lines
+
+        stick : ( Int, Int ) -> ( List Int, List Int ) -> ( List Int, List Int )
+        stick ( bg, fg ) ( bg_acc, fg_acc ) =
+            case ( bg_acc, fg_acc ) of
+                ( [], _ ) ->
+                    ( [ bg ], [ fg ] )
+
+                ( _, [] ) ->
+                    ( [ bg ], [ fg ] )
+
+                ( b :: xb, f :: xf ) ->
+                    if bg == 0 then
+                        ( bg_acc, fg + f :: xf )
+                    else if f == 0 then
+                        ( bg + b :: xb, fg :: xf )
+                    else
+                        ( bg :: bg_acc, fg :: fg_acc )
+
+        ( bg_counts, fg_counts ) =
+            ( bg_counts_per_line, fg_counts_per_line )
+                |> List.foldrPair stick ( [], [] )
     in
         { width = width
         , height = height
-        , bg_counts = Array.fromList (List.reverse bg_counts)
-        , fg_counts = Array.fromList (List.reverse fg_counts)
+        , bg_counts = Array.fromList <| List.reverse bg_counts
+        , fg_counts = Array.fromList <| List.reverse fg_counts
         }
 
 
-{-| !!! NON TESTE
--}
 updateSegments : Float -> EventAccumulator -> EventAccumulator
 updateSegments y ( segments, events ) =
     let
@@ -186,7 +216,6 @@ updateSegments y ( segments, events ) =
                     crossingSegments
                         |> List.insertSortedBy segmentCoordinates segment
 
-                -- PB: NOT ALWAYS REMOVED
                 Polygon2d.End ->
                     crossingSegments
                         |> List.removeSortedBy segmentCoordinates segment

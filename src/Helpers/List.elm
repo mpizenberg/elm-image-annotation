@@ -47,9 +47,28 @@ foldlUntil predicate func acc list =
 
         x :: xs ->
             if predicate x then
-                ( acc, xs )
+                ( acc, list )
             else
                 foldlUntil predicate func (func x acc) xs
+
+
+foldlPair : (( a, b ) -> c -> c) -> c -> ( List a, List b ) -> c
+foldlPair func acc ( listA, listB ) =
+    case ( listA, listB ) of
+        ( [], _ ) ->
+            acc
+
+        ( _, [] ) ->
+            acc
+
+        ( a :: xa, b :: xb ) ->
+            foldlPair func (func ( a, b ) acc) ( xa, xb )
+
+
+foldrPair : (( a, b ) -> c -> c) -> c -> ( List a, List b ) -> c
+foldrPair func acc ( listA, listB ) =
+    zip listA listB
+        |> List.foldr func acc
 
 
 insertSortedWith : (a -> a -> Order) -> a -> List a -> List a
