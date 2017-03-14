@@ -15,7 +15,12 @@
 	})
 
 	app.ports.fetchGroundtruth.subscribe( (name) => {
-		const src = name + ".png"
-		app.ports.groundtruthFetched.send({src: src})
+		const src = name + ".json"
+		const request = new XMLHttpRequest()
+		request.onload = () => {
+			app.ports.groundtruthFetched.send(request.response)
+		}
+		request.open("GET", src)
+		request.send(null)
 	})
 </script>

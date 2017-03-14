@@ -63,7 +63,7 @@ init =
 type Msg
     = ChooseImage String
     | ImageFetched ( String, String, ( Int, Int ) )
-    | GroundtruthFetched Encode.Value
+    | GroundtruthFetched String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,18 +80,19 @@ update msg model =
                 viewer =
                     Viewer.fitImage 0.8 image model.viewer
             in
-                ( { model | image = Just image, viewer = viewer }
+                ( { model
+                    | image = Just image
+                    , groundtruth = Nothing
+                    , viewer = viewer
+                  }
                 , fetchGroundtruth name
                 )
 
-        GroundtruthFetched rleValue ->
+        GroundtruthFetched rleString ->
             let
                 groundtruth =
-                    Decode.decodeValue RLE.decode rleValue
+                    Decode.decodeString RLE.decode rleString
                         |> Result.toMaybe
-
-                _ =
-                    Debug.log "groundtruth" rleValue
             in
                 ( { model | groundtruth = groundtruth }
                 , Cmd.none
@@ -119,7 +120,9 @@ view model =
         visualGroundtruth =
             case model.groundtruth of
                 Just rle ->
-                    Svg.text "Groundtruth visible"
+                    Svg.image
+                        [ Attributes.id "groundtruth" ]
+                        [ Svg.text "Groundtruth visible" ]
 
                 Nothing ->
                     Svg.text "No groundtruth"
@@ -149,7 +152,10 @@ port imageFetched : (( String, String, ( Int, Int ) ) -> msg) -> Sub msg
 port fetchGroundtruth : String -> Cmd msg
 
 
-port groundtruthFetched : (Encode.Value -> msg) -> Sub msg
+port groundtruthFetched : (String -> msg) -> Sub msg
+
+
+port displayGroundtruth : ( String, Encode.Value ) -> Cmd msg
 
 
 
