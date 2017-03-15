@@ -35,9 +35,9 @@
 			const url = canvas.toDataURL()
 			const svgImg = document.getElementById(id)
 			svgImg.textContent = "Bouya!"
-			const SVG_NS = 'http://www.w3.org/2000/svg';
-			const XLink_NS = 'http://www.w3.org/1999/xlink';
-			svgImg.setAttributeNS(XLink_NS, 'xlink:href', url)
+			const SVG_NS = 'http://www.w3.org/2000/svg'
+			const XLink_NS = 'http://www.w3.org/1999/xlink'
+			svgImg.setAttributeNS(XLink_NS, 'href', url)
 		})})
 
 	function dataFromBoolArray(width, height, gtData) {
