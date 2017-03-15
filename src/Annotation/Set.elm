@@ -26,7 +26,7 @@ So anything that can be done on arrays can be done on an Annotation.Set.
 -}
 
 import Html exposing (Html)
-import Array exposing (Array)
+import Array.Hamt as Array exposing (Array)
 import Helpers.Array as Array
 import Annotation exposing (Annotation, Option)
 import Svg exposing (Svg)

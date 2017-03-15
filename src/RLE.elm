@@ -22,8 +22,7 @@ module RLE
 @docs encode, decode, encodeMatrix, decodeMatrix
 -}
 
-import Array exposing (Array)
-import Array.Extra as Array
+import Array.Hamt as Array exposing (Array)
 import Helpers.Array as Array
 import Matrix exposing (Matrix)
 import Helpers.Matrix as Matrix
@@ -103,8 +102,8 @@ encode { width, height, bg_counts, fg_counts } =
     Encode.object
         [ ( "width", Encode.int width )
         , ( "height", Encode.int height )
-        , ( "bg_counts", bg_counts |> Array.map Encode.int |> Encode.array )
-        , ( "fg_counts", fg_counts |> Array.map Encode.int |> Encode.array )
+        , ( "bg_counts", bg_counts |> Array.map Encode.int |> Array.encode )
+        , ( "fg_counts", fg_counts |> Array.map Encode.int |> Array.encode )
         ]
 
 
@@ -115,8 +114,8 @@ decode =
     Decode.map4 RLE
         (Decode.field "width" Decode.int)
         (Decode.field "height" Decode.int)
-        (Decode.field "bg_counts" <| Decode.array Decode.int)
-        (Decode.field "fg_counts" <| Decode.array Decode.int)
+        (Decode.field "bg_counts" <| Array.decode Decode.int)
+        (Decode.field "fg_counts" <| Array.decode Decode.int)
 
 
 {-| Encode a Matrix

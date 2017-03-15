@@ -20,7 +20,7 @@ import Html exposing (Html)
 import Html.Attributes as Attributes
 import Helpers.Events as Events
 import Helpers.List as List
-import Array exposing (Array)
+import Array.Hamt as Array exposing (Array)
 
 
 type alias Config option =

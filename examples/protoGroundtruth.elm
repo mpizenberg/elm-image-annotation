@@ -14,6 +14,7 @@ import Image exposing (Image)
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (Decoder)
 import RLE exposing (RLE)
+import Matrix exposing (Matrix)
 
 
 main =
@@ -63,7 +64,7 @@ init =
 type Msg
     = ChooseImage String
     | ImageFetched ( String, String, ( Int, Int ) )
-    | GroundtruthFetched String
+    | GroundtruthFetched ( String, String )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -88,14 +89,29 @@ update msg model =
                 , fetchGroundtruth name
                 )
 
-        GroundtruthFetched rleString ->
+        GroundtruthFetched ( name, rleString ) ->
             let
+                groundtruth : Maybe RLE
                 groundtruth =
                     Decode.decodeString RLE.decode rleString
                         |> Result.toMaybe
+
+                groundtruthMatrixValue : Maybe Encode.Value
+                groundtruthMatrixValue =
+                    groundtruth
+                        |> Maybe.map RLE.toMatrix
+                        |> Maybe.map RLE.encodeMatrix
+
+                displayCmd =
+                    case groundtruthMatrixValue of
+                        Nothing ->
+                            Cmd.none
+
+                        Just value ->
+                            displayGroundtruth ( "groundtruth", value )
             in
                 ( { model | groundtruth = groundtruth }
-                , Cmd.none
+                , displayCmd
                 )
 
 
@@ -135,7 +151,7 @@ view model =
         Html.div []
             [ Html.div [] imagesButtons
             , viewer
-            , Html.p [] [ Html.text <| toString model ]
+              --, Html.p [] [ Html.text <| toString model ]
             ]
 
 
@@ -152,7 +168,7 @@ port imageFetched : (( String, String, ( Int, Int ) ) -> msg) -> Sub msg
 port fetchGroundtruth : String -> Cmd msg
 
 
-port groundtruthFetched : (String -> msg) -> Sub msg
+port groundtruthFetched : (( String, String ) -> msg) -> Sub msg
 
 
 port displayGroundtruth : ( String, Encode.Value ) -> Cmd msg

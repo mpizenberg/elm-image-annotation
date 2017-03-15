@@ -18,9 +18,16 @@
 		const src = name + ".json"
 		const request = new XMLHttpRequest()
 		request.onload = () => {
-			app.ports.groundtruthFetched.send(request.response)
+			app.ports.groundtruthFetched.send([name, request.response])
 		}
 		request.open("GET", src)
 		request.send(null)
 	})
+
+	app.ports.displayGroundtruth.subscribe( ([id, gt]) => {
+		window.requestAnimationFrame( () => {
+			console.log(id)
+			const svgImg = document.getElementById(id)
+			svgImg.textContent = "Bouya!"
+		})})
 </script>

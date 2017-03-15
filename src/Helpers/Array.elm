@@ -5,7 +5,9 @@
 
 module Helpers.Array exposing (..)
 
-import Array exposing (Array)
+import Array.Hamt as Array exposing (Array)
+import Json.Encode as Encode
+import Json.Decode as Decode exposing (Decoder)
 
 
 {-| Remove the element at the given index.
@@ -27,3 +29,45 @@ removeAt id array =
 concat : Array (Array a) -> Array a
 concat =
     Array.foldr Array.append Array.empty
+
+
+decode : Decoder a -> Decoder (Array a)
+decode =
+    Decode.list >> Decode.map Array.fromList
+
+
+encode : Array Encode.Value -> Encode.Value
+encode array =
+    Array.toList array
+        |> Encode.list
+
+
+
+-- EXTRA
+
+
+apply : Array (a -> b) -> Array a -> Array b
+apply fs xs =
+    let
+        l =
+            min (Array.length fs) (Array.length xs)
+
+        fs_ =
+            Array.slice 0 l fs
+    in
+        Array.indexedMap (\n f -> f (getUnsafe n xs)) fs_
+
+
+map2 : (a -> b -> result) -> Array a -> Array b -> Array result
+map2 f ws =
+    apply (Array.map f ws)
+
+
+getUnsafe : Int -> Array a -> a
+getUnsafe n xs =
+    case Array.get n xs of
+        Just x ->
+            x
+
+        Nothing ->
+            Debug.crash ("Index " ++ toString n ++ " of Array with length " ++ toString (Array.length xs) ++ " is not reachable.")
