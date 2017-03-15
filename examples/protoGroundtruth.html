@@ -26,8 +26,30 @@
 
 	app.ports.displayGroundtruth.subscribe( ([id, gt]) => {
 		window.requestAnimationFrame( () => {
-			console.log(id)
+			const canvas = document.createElement('canvas')
+			canvas.width = gt.width
+			canvas.height = gt.height
+			const ctx = canvas.getContext('2d')
+			const imageData = dataFromBoolArray(gt.width, gt.height, gt.data)
+			ctx.putImageData(imageData, 0, 0)
+			const url = canvas.toDataURL()
 			const svgImg = document.getElementById(id)
 			svgImg.textContent = "Bouya!"
+			const SVG_NS = 'http://www.w3.org/2000/svg';
+			const XLink_NS = 'http://www.w3.org/1999/xlink';
+			svgImg.setAttributeNS(XLink_NS, 'xlink:href', url)
 		})})
+
+	function dataFromBoolArray(width, height, gtData) {
+		const length = width * height
+		const dataArray = new Uint8ClampedArray(4*length)
+		for (i = 0; i < length; i++) {
+			const visible = gtData[i] ? 255 : 0
+			dataArray[4*i] = visible // RED
+			dataArray[4*i + 1] = 0
+			dataArray[4*i + 2] = 0
+			dataArray[4*i + 3] = visible // ALPHA
+		}
+		return new ImageData(dataArray, width, height);
+	}
 </script>

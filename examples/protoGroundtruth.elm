@@ -9,6 +9,7 @@ import Html exposing (Html)
 import Html.Events as Events
 import Html.Attributes as Attributes
 import Svg exposing (Svg)
+import Svg.Attributes as SvgA
 import DrawingArea.Viewer as Viewer exposing (Viewer)
 import Image exposing (Image)
 import Json.Encode as Encode
@@ -104,11 +105,11 @@ update msg model =
 
                 displayCmd =
                     case groundtruthMatrixValue of
-                        Nothing ->
-                            Cmd.none
-
                         Just value ->
                             displayGroundtruth ( "groundtruth", value )
+
+                        _ ->
+                            Cmd.none
             in
                 ( { model | groundtruth = groundtruth }
                 , displayCmd
@@ -137,7 +138,12 @@ view model =
             case model.groundtruth of
                 Just rle ->
                     Svg.image
-                        [ Attributes.id "groundtruth" ]
+                        [ Attributes.id "groundtruth"
+                        , SvgA.x "0"
+                        , SvgA.y "0"
+                        , SvgA.width <| toString rle.width
+                        , SvgA.height <| toString rle.height
+                        ]
                         [ Svg.text "Groundtruth visible" ]
 
                 Nothing ->
