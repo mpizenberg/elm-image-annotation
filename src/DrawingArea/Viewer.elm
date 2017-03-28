@@ -179,25 +179,11 @@ sizeIn viewer ( w, h ) =
 -- VIEW ##############################################################
 
 
-sizeStyleAttribute : Viewer -> Svg.Attribute msg
-sizeStyleAttribute viewer =
-    let
-        ( width, height ) =
-            Vector2d.components viewer.size
-    in
-        Attributes.style
-            [ ( "width", toString width ++ "px" )
-            , ( "height", toString height ++ "px" )
-            ]
-
-
 {-| View the svg tag representing the DrawingArea model.
 -}
 view : List (Html.Attribute msg) -> Viewer -> Svg msg -> Html msg
 view attributes viewer svg =
-    Html.div
-        (sizeStyleAttribute viewer :: attributes)
-        [ svg ]
+    Html.div attributes [ svg ]
 
 
 {-| Inner Svg tag representing the annotations.
