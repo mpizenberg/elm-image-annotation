@@ -25,6 +25,7 @@ module Annotation
           -- Other
         , Check(..)
         , isValid
+        , areValidScribbles
         )
 
 {-| An annotation can be a selection or a scribble.
@@ -42,7 +43,7 @@ module Annotation
 @docs encodePath
 
 # Other
-@docs Check, isValid
+@docs Check, isValid, areValidScribbles
 -}
 
 import Svg exposing (Svg)
