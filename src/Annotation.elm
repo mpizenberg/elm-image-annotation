@@ -160,7 +160,7 @@ update : Pointer -> Pointer.Track -> Tool -> Int -> Option -> Option
 update pointer track tool newId option =
     case ( tool, track, pointer.event, option ) of
         ( Tool.Rectangle, _, Pointer.Down, _ ) ->
-            option
+            updateRectangle pointer pointer newId option
 
         ( Tool.Rectangle, Pointer.Started start, Pointer.Move, _ ) ->
             updateRectangle start pointer newId option
