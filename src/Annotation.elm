@@ -353,8 +353,8 @@ isValid annotation =
 
 {-| Indicates if a list of scribbles is valid.
 -}
-areValidScribbles : List Annotation -> Check
-areValidScribbles annotations =
+areValidScribbles : Float -> Float -> List Annotation -> Check
+areValidScribbles fgLimit bgLimit annotations =
     let
         ( bgScribbles, fgScribbles ) =
             ( List.filterMap whenScribbleBG annotations
@@ -366,9 +366,9 @@ areValidScribbles annotations =
             , List.sum (List.map Polyline2d.length fgScribbles)
             )
     in
-        if fgLength < 10 then
+        if fgLength < fgLimit then
             FGLengthToShort
-        else if bgLength < 10 then
+        else if bgLength < bgLimit then
             BGLengthToShort
         else
             Valid
