@@ -51,6 +51,7 @@ import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Polygon2d as Polygon2d
 import Helpers.Polygon2d as Polygon2d
+import OpenSolid.Polyline2d as Polyline2d
 import OpenSolid.Svg as Svg
 import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
@@ -306,6 +307,8 @@ type Check
     | SegmentsCrossing Point2d
     | AreaUnderLimit Float
     | CrossingGT
+    | FGLengthToShort
+    | BGLengthToShort
 
 
 andCheck : (a -> Check) -> a -> Check -> Check
@@ -345,3 +348,50 @@ isValid annotation =
 
         _ ->
             Valid
+
+
+{-| Indicates if a list of scribbles is valid.
+-}
+areValidScribbles : List Annotation -> Check
+areValidScribbles annotations =
+    let
+        ( bgScribbles, fgScribbles ) =
+            ( List.filterMap whenScribbleBG annotations
+            , List.filterMap whenScribbleFG annotations
+            )
+
+        ( bgLength, fgLength ) =
+            ( List.sum (List.map Polyline2d.length bgScribbles)
+            , List.sum (List.map Polyline2d.length fgScribbles)
+            )
+    in
+        if fgLength < 10 then
+            FGLengthToShort
+        else if bgLength < 10 then
+            BGLengthToShort
+        else
+            Valid
+
+
+
+-- HELPERS ###########################################################
+
+
+whenScribbleBG : Annotation -> Maybe Polyline2d
+whenScribbleBG ann =
+    case ann.input of
+        Scribble BG polyline ->
+            Just polyline
+
+        _ ->
+            Nothing
+
+
+whenScribbleFG : Annotation -> Maybe Polyline2d
+whenScribbleFG ann =
+    case ann.input of
+        Scribble FG polyline ->
+            Just polyline
+
+        _ ->
+            Nothing
