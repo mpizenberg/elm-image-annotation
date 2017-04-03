@@ -349,14 +349,10 @@ checkCrossing groundtruth polygon =
             RLE.fromPolygon 0 0 groundtruth.width groundtruth.height polygon
                 |> RLE.toMatrix
                 |> Matrix.map2 (\gt poly -> gt && (not poly)) (RLE.toMatrix groundtruth)
-
-        rleIntersection =
-            matrixIntersection
-                |> Maybe.map RLE.fromMatrix
     in
-        case ( matrixIntersection, rleIntersection ) of
-            ( Just matrix, Just rle ) ->
-                if Array.foldl (+) 0 rle.fg_counts > 0 then
+        case matrixIntersection of
+            Just matrix ->
+                if Array.foldr (||) False matrix.data then
                     CrossingGT matrix
                 else
                     Valid
