@@ -372,7 +372,7 @@ isValid annotation =
     case annotation.input of
         Selection polygon ->
             checkIntersection polygon
-                |> andCheck (always <| checkAreaOver 500 polygon)
+                |> andCheck (\() -> checkAreaOver 500 polygon)
 
         _ ->
             Valid
@@ -385,7 +385,7 @@ isValidWithGT groundtruth annotation =
     case annotation.input of
         Selection polygon ->
             isValid annotation
-                |> andCheck (always <| checkCrossing groundtruth polygon)
+                |> andCheck (\() -> checkCrossing groundtruth polygon)
 
         _ ->
             Valid
