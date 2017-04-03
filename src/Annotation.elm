@@ -25,6 +25,7 @@ module Annotation
           -- Other
         , Check(..)
         , isValid
+        , isValidWithGT
         , areValidScribbles
         )
 
@@ -43,7 +44,7 @@ module Annotation
 @docs encodePath
 
 # Other
-@docs Check, isValid, areValidScribbles
+@docs Check, isValid, isValidWithGT, areValidScribbles
 -}
 
 import Svg exposing (Svg)
@@ -58,6 +59,9 @@ import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
 import Pointer exposing (Pointer)
 import Tool exposing (Tool)
+import RLE exposing (RLE)
+import Matrix exposing (Matrix)
+import Array.Hamt as Array exposing (Array)
 
 
 -- MODEL #############################################################
@@ -307,17 +311,17 @@ type Check
     = Valid
     | SegmentsCrossing Point2d
     | AreaUnderLimit Float
-    | CrossingGT
+    | CrossingGT (Matrix Bool)
     | FGLengthToShort
     | BGLengthToShort
 
 
-andCheck : (a -> Check) -> a -> Check -> Check
-andCheck checker data check =
-    if check == Valid then
-        checker data
+andCheck : (() -> Check) -> Check -> Check
+andCheck newCheck previousCheck =
+    if previousCheck == Valid then
+        newCheck ()
     else
-        check
+        previousCheck
 
 
 checkIntersection : Polygon2d -> Check
@@ -338,6 +342,29 @@ checkAreaOver limit polygon =
         AreaUnderLimit limit
 
 
+checkCrossing : RLE -> Polygon2d -> Check
+checkCrossing groundtruth polygon =
+    let
+        matrixIntersection =
+            RLE.fromPolygon 0 0 groundtruth.width groundtruth.height polygon
+                |> RLE.toMatrix
+                |> Matrix.map2 (&&) (RLE.toMatrix groundtruth)
+
+        rleIntersection =
+            matrixIntersection
+                |> Maybe.map RLE.fromMatrix
+    in
+        case ( matrixIntersection, rleIntersection ) of
+            ( Just matrix, Just rle ) ->
+                if Array.foldl (+) 0 rle.fg_counts > 0 then
+                    CrossingGT matrix
+                else
+                    Valid
+
+            _ ->
+                Valid
+
+
 {-| Indicates if the input of an annotation is valid.
 -}
 isValid : Annotation -> Check
@@ -345,7 +372,20 @@ isValid annotation =
     case annotation.input of
         Selection polygon ->
             checkIntersection polygon
-                |> andCheck (checkAreaOver 500) polygon
+                |> andCheck (always <| checkAreaOver 500 polygon)
+
+        _ ->
+            Valid
+
+
+{-| Indicates if the input of an annotation is valid using a groundtruth RLE.
+-}
+isValidWithGT : RLE -> Annotation -> Check
+isValidWithGT groundtruth annotation =
+    case annotation.input of
+        Selection polygon ->
+            isValid annotation
+                |> andCheck (always <| checkCrossing groundtruth polygon)
 
         _ ->
             Valid
