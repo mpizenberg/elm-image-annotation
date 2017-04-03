@@ -348,7 +348,7 @@ checkCrossing groundtruth polygon =
         matrixIntersection =
             RLE.fromPolygon 0 0 groundtruth.width groundtruth.height polygon
                 |> RLE.toMatrix
-                |> Matrix.map2 (&&) (RLE.toMatrix groundtruth)
+                |> Matrix.map2 (\gt poly -> gt && (not poly)) (RLE.toMatrix groundtruth)
 
         rleIntersection =
             matrixIntersection
