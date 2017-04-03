@@ -6,6 +6,7 @@
 module RLE
     exposing
         ( RLE
+        , empty
         , toMatrix
         , fromMatrix
         , fromPolygon
@@ -18,7 +19,7 @@ module RLE
 
 {-| Manipulate images in an RLE (Run-Length Encoding) format.
 
-@docs RLE, toMatrix, fromMatrix, fromPolygon
+@docs RLE, empty, toMatrix, fromMatrix, fromPolygon
 @docs encode, decode, encodeMatrix, decodeMatrix
 -}
 
@@ -44,6 +45,17 @@ type alias RLE =
     , height : Int
     , bg_counts : Array Int
     , fg_counts : Array Int
+    }
+
+
+{-| An empty RLE image.
+-}
+empty : RLE
+empty =
+    { width = 0
+    , height = 0
+    , bg_counts = Array.empty
+    , fg_counts = Array.empty
     }
 
 
