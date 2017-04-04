@@ -49,11 +49,12 @@ module Annotation
 
 import Svg exposing (Svg)
 import Svg.Attributes as Attributes
-import OpenSolid.Geometry.Types exposing (Polygon2d(..), Polyline2d(..), Point2d(..))
+import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Polygon2d as Polygon2d
 import Helpers.Polygon2d as Polygon2d
 import OpenSolid.Polyline2d as Polyline2d
+import OpenSolid.BoundingBox2d as BoundingBox2d
 import OpenSolid.Svg as Svg
 import Json.Encode as Encode
 import OpenSolid.Geometry.Encode as Encode
@@ -314,6 +315,8 @@ type Check
     | CrossingGT (Matrix Bool)
     | FGLengthToShort
     | BGLengthToShort
+    | FGScribbleOutsideGT BoundingBox2d
+    | BGScribbleInsideGT BoundingBox2d
 
 
 andCheck : (() -> Check) -> Check -> Check
@@ -410,6 +413,42 @@ areValidScribbles fgLimit bgLimit annotations =
             Valid
 
 
+areValidScribblesWithGT : RLE -> Float -> Float -> List Annotation -> Check
+areValidScribblesWithGT groundtruth fgLimit bgLimit annotations =
+    let
+        ( bgLines, fgLines ) =
+            ( List.filterMap whenScribbleBG annotations
+            , List.filterMap whenScribbleFG annotations
+            )
+
+        gtMatrix =
+            RLE.toMatrix groundtruth
+    in
+        checkBGScribbleInsideGT gtMatrix bgLines
+            |> andCheck (\() -> checkFGScribbleOutsideGT gtMatrix fgLines)
+            |> andCheck (\() -> areValidScribbles fgLimit bgLimit annotations)
+
+
+checkBGScribbleInsideGT : Matrix Bool -> List Polyline2d -> Check
+checkBGScribbleInsideGT groundtruth bgLines =
+    List.map Polyline2d.vertices bgLines
+        |> List.concat
+        |> insidePoints groundtruth
+        |> BoundingBox2d.containing
+        |> Maybe.map BGScribbleInsideGT
+        |> Maybe.withDefault Valid
+
+
+checkFGScribbleOutsideGT : Matrix Bool -> List Polyline2d -> Check
+checkFGScribbleOutsideGT groundtruth fgLines =
+    List.map Polyline2d.vertices fgLines
+        |> List.concat
+        |> outsidePoints groundtruth
+        |> BoundingBox2d.containing
+        |> Maybe.map FGScribbleOutsideGT
+        |> Maybe.withDefault Valid
+
+
 
 -- HELPERS ###########################################################
 
@@ -432,3 +471,43 @@ whenScribbleFG ann =
 
         _ ->
             Nothing
+
+
+insidePoints : Matrix Bool -> List Point2d -> List Point2d
+insidePoints gt points =
+    let
+        consIfInsideGT : Point2d -> List Point2d -> List Point2d
+        consIfInsideGT point accumulator =
+            case getAt (Point2d.coordinates point |> mapBoth round) gt of
+                Just True ->
+                    point :: accumulator
+
+                _ ->
+                    accumulator
+    in
+        List.foldl consIfInsideGT [] points
+
+
+outsidePoints : Matrix Bool -> List Point2d -> List Point2d
+outsidePoints gt points =
+    let
+        consIfOutsideGT : Point2d -> List Point2d -> List Point2d
+        consIfOutsideGT point accumulator =
+            case getAt (Point2d.coordinates point |> mapBoth round) gt of
+                Just True ->
+                    accumulator
+
+                _ ->
+                    point :: accumulator
+    in
+        List.foldl consIfOutsideGT [] points
+
+
+getAt : ( Int, Int ) -> Matrix a -> Maybe a
+getAt =
+    uncurry Matrix.get
+
+
+mapBoth : (a -> b) -> ( a, a ) -> ( b, b )
+mapBoth f ( x, y ) =
+    ( f x, f y )
