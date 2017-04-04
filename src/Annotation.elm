@@ -27,6 +27,7 @@ module Annotation
         , isValid
         , isValidWithGT
         , areValidScribbles
+        , areValidScribblesWithGT
         )
 
 {-| An annotation can be a selection or a scribble.
@@ -44,7 +45,7 @@ module Annotation
 @docs encodePath
 
 # Other
-@docs Check, isValid, isValidWithGT, areValidScribbles
+@docs Check, isValid, isValidWithGT, areValidScribbles, areValidScribblesWithGT
 -}
 
 import Svg exposing (Svg)
@@ -413,6 +414,8 @@ areValidScribbles fgLimit bgLimit annotations =
             Valid
 
 
+{-| Indicates if a list of scribbles is valid (check groundtruth).
+-}
 areValidScribblesWithGT : RLE -> Float -> Float -> List Annotation -> Check
 areValidScribblesWithGT groundtruth fgLimit bgLimit annotations =
     let
