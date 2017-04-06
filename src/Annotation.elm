@@ -299,8 +299,17 @@ encodePath annotation =
         Selection polygon ->
             Encode.polygon2d polygon
 
-        Scribble _ polyline ->
-            Encode.polyline2d polyline
+        Scribble FG polyline ->
+            Encode.object
+                [ ( "type", Encode.string "FG" )
+                , ( "path", Encode.polyline2d polyline )
+                ]
+
+        Scribble BG polyline ->
+            Encode.object
+                [ ( "type", Encode.string "BG" )
+                , ( "path", Encode.polyline2d polyline )
+                ]
 
 
 
