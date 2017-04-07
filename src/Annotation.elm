@@ -339,7 +339,7 @@ andCheck newCheck previousCheck =
 
 checkIntersection : Polygon2d -> Check
 checkIntersection polygon =
-    case Polygon2d.intersection polygon of
+    case Polygon2d.intersectionWithCyclicThreshold 4 polygon of
         Nothing ->
             Valid
 

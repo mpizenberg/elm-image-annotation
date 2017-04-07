@@ -83,7 +83,16 @@ Returns Nothing if no intersection is found,
 otherwise returns the first intersection encountered.
 -}
 intersection : Polygon2d -> Maybe Point2d
-intersection polygon =
+intersection =
+    intersectionWithCyclicThreshold 1
+
+
+{-| Check if a polygon intersects itself (in which case it is not "simple").
+Returns Nothing if no intersection is found,
+otherwise returns the first intersection encountered.
+-}
+intersectionWithCyclicThreshold : Int -> Polygon2d -> Maybe Point2d
+intersectionWithCyclicThreshold threshold polygon =
     let
         insertSegment : Int -> LineSegment2d -> List Event -> List Event
         insertSegment id seg list =
@@ -118,7 +127,7 @@ intersection polygon =
 
         eventIntersection : Event -> Event -> Maybe Point2d
         eventIntersection ( id1, _, seg1 ) ( id2, _, seg2 ) =
-            if cyclicDistance id1 id2 <= 1 then
+            if cyclicDistance id1 id2 <= threshold then
                 Nothing
             else
                 case LineSegment2d.relationshipWith seg1 seg2 of
