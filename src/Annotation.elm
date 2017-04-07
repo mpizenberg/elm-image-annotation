@@ -25,6 +25,7 @@ module Annotation
           -- Other
         , Check(..)
         , isValid
+        , isValidStrict
         , isValidWithGT
         , areValidScribbles
         , areValidScribblesWithGT
@@ -45,7 +46,7 @@ module Annotation
 @docs encodePath
 
 # Other
-@docs Check, isValid, isValidWithGT, areValidScribbles, areValidScribblesWithGT
+@docs Check, isValid, isValidStrict, isValidWithGT, areValidScribbles, areValidScribblesWithGT
 -}
 
 import Svg exposing (Svg)
@@ -378,6 +379,18 @@ checkCrossing groundtruth polygon =
 -}
 isValid : Annotation -> Check
 isValid annotation =
+    case annotation.input of
+        Selection polygon ->
+            checkAreaOver 500 polygon
+
+        _ ->
+            Valid
+
+
+{-| Indicates if the input of an annotation is valid.
+-}
+isValidStrict : Annotation -> Check
+isValidStrict annotation =
     case annotation.input of
         Selection polygon ->
             checkIntersection polygon
