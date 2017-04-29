@@ -8,6 +8,7 @@
     ],
     "exposed-modules": [
         "Annotation.Types",
+        "Annotation.Point",
         "Annotation.BoundingBox"
     ],
     "dependencies": {
