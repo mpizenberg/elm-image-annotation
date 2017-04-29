@@ -10,7 +10,8 @@
         "Annotation.Types",
         "Annotation.Point",
         "Annotation.BoundingBox",
-        "Annotation.Contour"
+        "Annotation.Contour",
+        "Annotation.Outline"
     ],
     "dependencies": {
         "elm-lang/core": "5.1.1 <= v < 6.0.0",
