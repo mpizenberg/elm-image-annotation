@@ -1,44 +1,18 @@
 module Annotation.Style
     exposing
-        ( Color
-        , palette
-        , Point
-        , Line
-        , Fill
+        ( Point(..)
+        , pointDefault
+        , Line(..)
+        , Fill(..)
         )
 
 {-| Styling the annotations.
 
-@docs Color, palette
-
-@docs Point, Line, Fill
+@docs Point, pointDefault, Line, Fill
 
 -}
 
-
-{-| A color type.
--}
-type alias Color =
-    { r : Int
-    , g : Int
-    , b : Int
-    , a : Int
-    }
-
-
-{-| A color palette print and color-blind friendly.
-
-( beige, green, turquoise, blue, dark blue )
-
--}
-palette : ( Color, Color, Color, Color, Color )
-palette =
-    ( Color 255 255 204 255
-    , Color 161 218 180 255
-    , Color 65 182 196 255
-    , Color 44 127 184 255
-    , Color 37 52 148 255
-    )
+import Annotation.Color as Color exposing (Color)
 
 
 {-| Styling of a point.
@@ -50,6 +24,13 @@ or displayed as a colored disk of a given radius.
 type Point
     = NoPoint
     | Disk Float Color
+
+
+{-| Default style of a point.
+-}
+pointDefault : Point
+pointDefault =
+    Disk 1 Color.red
 
 
 {-| Styling of a line.
