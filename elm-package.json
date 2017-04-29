@@ -11,7 +11,8 @@
         "Annotation.Point",
         "Annotation.BoundingBox",
         "Annotation.Contour",
-        "Annotation.Outline"
+        "Annotation.Outline",
+        "Annotation.Scribble"
     ],
     "dependencies": {
         "elm-lang/core": "5.1.1 <= v < 6.0.0",
