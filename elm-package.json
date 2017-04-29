@@ -9,7 +9,8 @@
     "exposed-modules": [
         "Annotation.Types",
         "Annotation.Point",
-        "Annotation.BoundingBox"
+        "Annotation.BoundingBox",
+        "Annotation.Contour"
     ],
     "dependencies": {
         "elm-lang/core": "5.1.1 <= v < 6.0.0",
