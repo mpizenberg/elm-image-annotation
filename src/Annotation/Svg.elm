@@ -11,7 +11,7 @@ module Annotation.Svg
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
 import Annotation.Style as Style
 import Annotation.Color as Color exposing (Color)

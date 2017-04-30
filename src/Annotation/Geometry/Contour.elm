@@ -1,4 +1,4 @@
-module Annotation.Contour
+module Annotation.Geometry.Contour
     exposing
         ( empty
         , addPoint
@@ -10,7 +10,7 @@ module Annotation.Contour
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
 
 

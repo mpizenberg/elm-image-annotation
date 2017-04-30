@@ -1,4 +1,4 @@
-module Annotation.Outline
+module Annotation.Geometry.Outline
     exposing
         ( empty
         , addPoint
@@ -10,7 +10,7 @@ module Annotation.Outline
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
 
 

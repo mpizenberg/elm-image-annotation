@@ -1,4 +1,4 @@
-module Annotation.Point
+module Annotation.Geometry.Point
     exposing
         ( fromCoordinates
         )
@@ -9,7 +9,7 @@ module Annotation.Point
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
 
 

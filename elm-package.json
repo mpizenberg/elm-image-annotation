@@ -7,12 +7,12 @@
         "src"
     ],
     "exposed-modules": [
-        "Annotation.Types",
-        "Annotation.Point",
-        "Annotation.BoundingBox",
-        "Annotation.Contour",
-        "Annotation.Outline",
-        "Annotation.Scribble",
+        "Annotation.Geometry.Types",
+        "Annotation.Geometry.Point",
+        "Annotation.Geometry.BoundingBox",
+        "Annotation.Geometry.Contour",
+        "Annotation.Geometry.Outline",
+        "Annotation.Geometry.Scribble",
         "Annotation.Color",
         "Annotation.Style",
         "Annotation.Svg"

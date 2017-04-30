@@ -1,4 +1,4 @@
-module Annotation.Scribble
+module Annotation.Geometry.Scribble
     exposing
         ( empty
         , addPoint
@@ -10,7 +10,7 @@ module Annotation.Scribble
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
 
 

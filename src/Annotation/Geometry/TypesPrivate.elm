@@ -1,4 +1,4 @@
-module Annotation.TypesPrivate exposing (..)
+module Annotation.Geometry.TypesPrivate exposing (..)
 
 import OpenSolid.Geometry.Types exposing (..)
 

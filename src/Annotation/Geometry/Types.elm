@@ -1,4 +1,4 @@
-module Annotation.Types
+module Annotation.Geometry.Types
     exposing
         ( Point
         , BoundingBox
@@ -18,7 +18,7 @@ you will use the `Point.fromCoordinates` function from the `Point` module.
 
 -}
 
-import Annotation.TypesPrivate as Private
+import Annotation.Geometry.TypesPrivate as Private
 
 
 {-| A point.

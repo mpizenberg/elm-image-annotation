@@ -1,4 +1,4 @@
-module Annotation.BoundingBox
+module Annotation.Geometry.BoundingBox
     exposing
         ( fromPair
         )
@@ -9,7 +9,7 @@ module Annotation.BoundingBox
 
 -}
 
-import Annotation.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Point2d as Point2d
 
 
