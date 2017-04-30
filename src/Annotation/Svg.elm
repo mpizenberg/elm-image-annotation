@@ -1,23 +1,32 @@
 module Annotation.Svg
     exposing
         ( pointWithDetails
-        , pointWithStyle
+        , pointStyled
         , point
+        , boundingBoxWithDetails
+        , boundingBoxStyled
+        , boundingBox
         )
 
 {-| View the annotations as Svg.
 
-@docs pointWithDetails, pointWithStyle, point
+@docs point, pointStyled, pointWithDetails
+
+@docs boundingBox, boundingBoxStyled, boundingBoxWithDetails
 
 -}
 
-import Annotation.Geometry.Types exposing (..)
 import OpenSolid.Geometry.Types exposing (..)
+import Annotation.Geometry.Types exposing (..)
+import Annotation.Geometry.BoundingBox as BoundingBox
 import Annotation.Style as Style
 import Annotation.Color as Color exposing (Color)
 import Svg exposing (Svg, Attribute)
 import OpenSolid.Svg as Svg
 import Svg.Attributes as SvgA
+
+
+-- POINT #############################################################
 
 
 {-| Svg detailed view of a point.
@@ -36,8 +45,8 @@ pointWithDetails attributes (Point2d ( x, y )) =
 
 {-| Svg view of a point with given style.
 -}
-pointWithStyle : Style.Point -> Point -> Svg msg
-pointWithStyle style point =
+pointStyled : Style.Point -> Point -> Svg msg
+pointStyled style point =
     case style of
         Style.NoPoint ->
             Svg.text "Hidden point"
@@ -51,4 +60,38 @@ pointWithStyle style point =
 -}
 point : Point -> Svg msg
 point =
-    pointWithStyle Style.pointDefault
+    pointStyled Style.pointDefault
+
+
+
+-- BOUNDING BOX ######################################################
+
+
+{-| Svg detailed view of a bounding box.
+
+Specify in the attributes the style of the bounding box.
+Alternatively put a class attribute and set those in a style sheet (CSS).
+
+-}
+boundingBoxWithDetails : List (Attribute msg) -> BoundingBox -> Svg msg
+boundingBoxWithDetails attributes bbox =
+    BoundingBox.attributes bbox
+        ++ attributes
+        |> flip Svg.rect []
+
+
+{-| Svg view of a bounding box with given style.
+-}
+boundingBoxStyled : Style.Line -> Style.Fill -> BoundingBox -> Svg msg
+boundingBoxStyled lineStyle fillStyle bbox =
+    BoundingBox.attributes bbox
+        ++ Style.strokeAttributes lineStyle
+        ++ Style.fillAttributes fillStyle
+        |> flip Svg.rect []
+
+
+{-| Svg view of a bounding box with default style.
+-}
+boundingBox : BoundingBox -> Svg msg
+boundingBox =
+    boundingBoxStyled Style.strokeDefault Style.NoFill
