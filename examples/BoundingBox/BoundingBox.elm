@@ -9,7 +9,7 @@ import Annotation.Geometry.Types exposing (BoundingBox)
 import Annotation.Geometry.BoundingBox as BoundingBox
 import Annotation.Geometry.Point as Point
 import Annotation.Svg as Svg
-import Json.Decode as Decode exposing (Decoder)
+import Mouse
 
 
 main : Program Never Model Msg
@@ -23,17 +23,13 @@ main =
 
 type alias Model =
     { bbox : Maybe BoundingBox
-    , pointer : Pointer
+    , dragState : DragState
     }
 
 
-type Pointer
+type DragState
     = Up
-    | DraggingFrom Position
-
-
-type alias Position =
-    ( Float, Float )
+    | DraggingFrom Mouse.Coordinates
 
 
 model : Model
@@ -42,38 +38,38 @@ model =
 
 
 type Msg
-    = MouseDown Position
-    | MouseMove Position
+    = MouseDown Mouse.Coordinates
+    | MouseMove Mouse.Coordinates
     | MouseUp
 
 
 update : Msg -> Model -> Model
 update msg model =
-    case ( msg, model.pointer ) of
-        ( MouseDown pos, _ ) ->
+    case ( msg, model.dragState ) of
+        ( MouseDown coordinates, _ ) ->
             let
                 point =
-                    Point.fromCoordinates pos
+                    Point.fromCoordinates coordinates
 
                 bbox =
                     BoundingBox.fromPair ( point, point )
             in
-                Model (Just bbox) (DraggingFrom pos)
+                Model (Just bbox) (DraggingFrom coordinates)
 
-        ( MouseMove pos, DraggingFrom startPos ) ->
+        ( MouseMove coordinates, DraggingFrom startCoordinates ) ->
             let
                 ( startPoint, point ) =
-                    ( Point.fromCoordinates startPos
-                    , Point.fromCoordinates pos
+                    ( Point.fromCoordinates startCoordinates
+                    , Point.fromCoordinates coordinates
                     )
 
                 bbox =
                     BoundingBox.fromPair ( startPoint, point )
             in
-                Model (Just bbox) (DraggingFrom startPos)
+                Model (Just bbox) (DraggingFrom startCoordinates)
 
         ( MouseUp, _ ) ->
-            { model | pointer = Up }
+            { model | dragState = Up }
 
         _ ->
             model
@@ -81,7 +77,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div (HtmlA.style [ ( "height", "98%" ) ] :: mouseEvents model.pointer)
+    div (HtmlA.style [ ( "height", "98%" ) ] :: mouseEvents model.dragState)
         [ svg [ SvgA.style "width: 100%; height: 100%;" ]
             [ viewBBox model.bbox ]
         ]
@@ -94,36 +90,16 @@ viewBBox maybeBBox =
         |> Maybe.withDefault (Svg.text "No bounding box")
 
 
-mouseEvents : Pointer -> List (Html.Attribute Msg)
-mouseEvents pointer =
-    case pointer of
+mouseEvents : DragState -> List (Html.Attribute Msg)
+mouseEvents dragState =
+    case dragState of
         Up ->
-            [ positionOn "mousedown" MouseDown
+            [ Mouse.onDown (.clientPos >> MouseDown)
             , onMouseUp MouseUp
             ]
 
         _ ->
-            [ positionOn "mousedown" MouseDown
-            , positionOn "mousemove" MouseMove
+            [ Mouse.onDown (.clientPos >> MouseDown)
+            , Mouse.onMove (.clientPos >> MouseMove)
             , onMouseUp MouseUp
             ]
-
-
-positionOn : String -> (Position -> Msg) -> Html.Attribute Msg
-positionOn mouseEvent tagger =
-    onWithOptions mouseEvent stop decoderPos
-        |> HtmlA.map tagger
-
-
-decoderPos : Decoder Position
-decoderPos =
-    Decode.map2 (,)
-        (Decode.field "clientX" Decode.float)
-        (Decode.field "clientY" Decode.float)
-
-
-stop : { preventDefault : Bool, stopPropagation : Bool }
-stop =
-    { stopPropagation = True
-    , preventDefault = True
-    }
