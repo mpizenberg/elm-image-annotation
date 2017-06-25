@@ -2,7 +2,7 @@ module Annotation.Viewer exposing (..)
 
 {-| This module provides functions to manage the viewing area.
 
-@docs Size, Viewer, default
+@docs Size, Viewer, default, setSize
 
 -}
 
@@ -33,3 +33,10 @@ default =
     , size = ( 800, 400 )
     , zoom = 1
     }
+
+
+{-| Reset size of the viewer.
+-}
+setSize : ( Float, Float ) -> Viewer -> Viewer
+setSize size viewer =
+    { viewer | size = size }
