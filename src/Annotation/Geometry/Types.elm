@@ -4,7 +4,7 @@ module Annotation.Geometry.Types
         , BoundingBox
         , Contour
         , Outline
-        , Scribble
+        , Stroke
         )
 
 {-| Types of the different elements usable for annotations.
@@ -18,7 +18,7 @@ Rmq: *All those types are aliases of other types
 from the [OpenSolid](http://package.elm-lang.org/packages/opensolid/geometry/latest) package.
 So you can easily extend functionalities based on the Opensolid functions.*
 
-@docs Point, BoundingBox, Contour, Outline, Scribble
+@docs Point, BoundingBox, Contour, Outline, Stroke
 
 -}
 
@@ -49,7 +49,7 @@ type alias Outline =
     Polygon2d
 
 
-{-| A scribble.
+{-| A stroke.
 -}
-type alias Scribble =
+type alias Stroke =
     Polyline2d

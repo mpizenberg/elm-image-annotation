@@ -12,7 +12,7 @@
         "Annotation.Geometry.BoundingBox",
         "Annotation.Geometry.Contour",
         "Annotation.Geometry.Outline",
-        "Annotation.Geometry.Scribble",
+        "Annotation.Geometry.Stroke",
         "Annotation.Color",
         "Annotation.Style",
         "Annotation.Svg"
