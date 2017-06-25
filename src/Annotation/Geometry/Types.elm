@@ -14,38 +14,42 @@ look into the corresponding module.
 For example, to initialize a `Point`,
 you will use the `Point.fromCoordinates` function from the `Point` module.
 
+Rmq: *All those types are aliases of other types
+from the [OpenSolid](http://package.elm-lang.org/packages/opensolid/geometry/latest) package.
+So you can easily extend functionalities based on the Opensolid functions.*
+
 @docs Point, BoundingBox, Contour, Outline, Scribble
 
 -}
 
-import Annotation.Geometry.TypesPrivate as Private
+import OpenSolid.Geometry.Types exposing (..)
 
 
 {-| A point.
 -}
 type alias Point =
-    Private.Point
+    Point2d
 
 
 {-| A bounding box.
 -}
 type alias BoundingBox =
-    Private.BoundingBox
+    BoundingBox2d
 
 
 {-| A contour.
 -}
 type alias Contour =
-    Private.Contour
+    Polygon2d
 
 
 {-| An outline.
 -}
 type alias Outline =
-    Private.Outline
+    Polygon2d
 
 
 {-| A scribble.
 -}
 type alias Scribble =
-    Private.Scribble
+    Polyline2d
