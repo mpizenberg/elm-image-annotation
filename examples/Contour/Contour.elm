@@ -4,9 +4,10 @@ import Html exposing (..)
 import Html.Attributes as HtmlA exposing (..)
 import Svg exposing (..)
 import Svg.Attributes as SvgA
-import Annotation.Geometry.Types exposing (Contour, Point)
+import Annotation.Geometry.Types exposing (Contour, Point, Stroke)
 import Annotation.Geometry.Contour as Contour
 import Annotation.Geometry.Point as Point
+import Annotation.Geometry.Stroke as Stroke
 import Annotation.Svg as Svg
 import Mouse
 import Keyboard
@@ -23,25 +24,20 @@ main =
 
 
 type alias Model =
-    { contour : Maybe Contour
-    , nextPoint : Maybe Point
-    , contourState : ContourState
+    { contourState : ContourState
     }
 
 
 type ContourState
-    = NotBuilding
-    | Building
-
-
-model : Model
-model =
-    Model Nothing Nothing NotBuilding
+    = None
+    | AddingPoint Stroke Point
+    | Building Stroke
+    | Built Contour
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( model, Cmd.none )
+    ( Model None, Cmd.none )
 
 
 type Msg
@@ -58,18 +54,24 @@ update msg model =
 
 updateModel : Msg -> Model -> Model
 updateModel msg model =
-    case ( msg, model.contourState, model.contour ) of
-        ( MouseDown nextPoint, NotBuilding, _ ) ->
-            Model (Just Contour.empty) (Just nextPoint) Building
+    case ( msg, model.contourState ) of
+        ( MouseDown nextPoint, None ) ->
+            Model (AddingPoint Stroke.empty nextPoint)
 
-        ( MouseMove nextPoint, Building, _ ) ->
-            { model | nextPoint = Just nextPoint }
+        ( MouseMove nextPoint, AddingPoint stroke _ ) ->
+            Model (AddingPoint stroke nextPoint)
 
-        ( MouseUp nextPoint, Building, Just contour ) ->
-            { model | contour = Just <| Contour.addPoint nextPoint contour }
+        ( MouseUp nextPoint, AddingPoint stroke _ ) ->
+            Model <| Building (Stroke.addPoint nextPoint stroke)
 
-        ( KeyUp 13, Building, _ ) ->
-            { model | contourState = NotBuilding }
+        ( MouseDown nextPoint, Building stroke ) ->
+            Model (AddingPoint stroke nextPoint)
+
+        ( KeyUp 13, Building stroke ) ->
+            Model <| Built (Stroke.close stroke)
+
+        ( MouseDown nextPoint, Built _ ) ->
+            updateModel (MouseDown nextPoint) (Model None)
 
         _ ->
             model
@@ -79,39 +81,42 @@ view : Model -> Html Msg
 view model =
     div (HtmlA.style [ ( "height", "98%" ) ] :: mouseEvents model.contourState)
         [ svg [ SvgA.style "width: 100%; height: 100%;" ]
-            [ viewContour model.contourState model.nextPoint model.contour ]
+            [ viewContour model.contourState ]
         , p [ HtmlA.style [ ( "position", "fixed" ), ( "top", "0px" ) ] ]
             [ Html.text "Start contour by clicking somewhere. Hit enter to close it" ]
         ]
 
 
-viewContour : ContourState -> Maybe Point -> Maybe Contour -> Svg msg
-viewContour state maybePoint maybeContour =
-    case ( state, maybeContour, maybePoint ) of
-        ( _, Nothing, _ ) ->
+viewContour : ContourState -> Svg msg
+viewContour contourState =
+    case contourState of
+        None ->
             Svg.text "No contour started"
 
-        ( NotBuilding, Just contour, _ ) ->
+        AddingPoint stroke point ->
+            Svg.g []
+                [ Svg.stroke (Stroke.addPoint point stroke)
+                , Svg.point point
+                ]
+
+        Building stroke ->
+            Svg.stroke stroke
+
+        Built contour ->
             Svg.contour contour
-
-        ( Building, Just contour, Just nextPoint ) ->
-            Svg.contourBuilding nextPoint contour
-
-        _ ->
-            Svg.text "Incorrect state"
 
 
 mouseEvents : ContourState -> List (Html.Attribute Msg)
 mouseEvents contourState =
     case contourState of
-        NotBuilding ->
+        AddingPoint _ _ ->
             [ Mouse.onDown (.clientPos >> Point.fromCoordinates >> MouseDown)
+            , Mouse.onMove (.clientPos >> Point.fromCoordinates >> MouseMove)
             , Mouse.onUp (.clientPos >> Point.fromCoordinates >> MouseUp)
             ]
 
-        Building ->
+        _ ->
             [ Mouse.onDown (.clientPos >> Point.fromCoordinates >> MouseDown)
-            , Mouse.onMove (.clientPos >> Point.fromCoordinates >> MouseMove)
             , Mouse.onUp (.clientPos >> Point.fromCoordinates >> MouseUp)
             ]
 

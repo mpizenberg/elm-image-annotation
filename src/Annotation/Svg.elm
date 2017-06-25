@@ -6,12 +6,12 @@ module Annotation.Svg
         , boundingBoxWithDetails
         , boundingBoxStyled
         , boundingBox
+        , strokeWithDetails
+        , strokeStyled
+        , stroke
         , contourWithDetails
         , contourStyled
         , contour
-        , contourBuildingWithDetails
-        , contourBuildingStyled
-        , contourBuilding
         )
 
 {-| View the annotations as Svg.
@@ -20,15 +20,15 @@ module Annotation.Svg
 
 @docs boundingBox, boundingBoxStyled, boundingBoxWithDetails
 
+@docs stroke, strokeStyled, strokeWithDetails
+
 @docs contour, contourStyled, contourWithDetails
-@docs contourBuilding, contourBuildingStyled, contourBuildingWithDetails
 
 -}
 
 import OpenSolid.Geometry.Types exposing (..)
 import Annotation.Geometry.Types exposing (..)
 import Annotation.Geometry.BoundingBox as BoundingBox
-import OpenSolid.Polygon2d as Polygon2d
 import Annotation.Style as Style
 import Annotation.Color as Color exposing (Color)
 import Svg exposing (Svg, Attribute)
@@ -108,6 +108,35 @@ boundingBox =
 
 
 
+-- STROKE ############################################################
+
+
+{-| Svg detailed view of a stroke.
+
+Specify in the attributes the style of the stroke.
+Alternatively put a class attribute and set those in a style sheet (CSS).
+
+-}
+strokeWithDetails : List (Attribute msg) -> Stroke -> Svg msg
+strokeWithDetails =
+    Svg.polyline2d
+
+
+{-| Svg view of a stroke with given style.
+-}
+strokeStyled : Style.Line -> Stroke -> Svg msg
+strokeStyled lineStyle =
+    Svg.polyline2d (Style.strokeAttributes lineStyle ++ Style.fillAttributes Style.NoFill)
+
+
+{-| Svg view of a stroke with default style.
+-}
+stroke : Stroke -> Svg msg
+stroke =
+    strokeStyled Style.strokeDefault
+
+
+
 -- CONTOUR ###########################################################
 
 
@@ -138,36 +167,3 @@ contourStyled lineStyle fillStyle contour =
 contour : Contour -> Svg msg
 contour =
     contourStyled Style.strokeDefault Style.NoFill
-
-
-{-| Svg detailed view of a contour being built with a temporary new point.
-
-Specify in the attributes the style of the contour.
-Alternatively put a class attribute and set those in a style sheet (CSS).
-
--}
-contourBuildingWithDetails : List (Attribute msg) -> Point -> Contour -> Svg msg
-contourBuildingWithDetails attributes newPoint contour =
-    Polyline2d (newPoint :: Polygon2d.vertices contour)
-        |> Svg.polyline2d attributes
-
-
-{-| Svg view of a contour with a temporary new point with given style.
--}
-contourBuildingStyled : Style.Line -> Style.Fill -> Point -> Contour -> Svg msg
-contourBuildingStyled lineStyle fillStyle newPoint contour =
-    let
-        styleAttributes =
-            Style.strokeAttributes lineStyle ++ Style.fillAttributes fillStyle
-
-        polyline2d =
-            Polyline2d (newPoint :: Polygon2d.vertices contour)
-    in
-        Svg.polyline2d styleAttributes polyline2d
-
-
-{-| Svg view of a contour with a temporary new point with default style.
--}
-contourBuilding : Point -> Contour -> Svg msg
-contourBuilding =
-    contourBuildingStyled Style.strokeDefault Style.NoFill
