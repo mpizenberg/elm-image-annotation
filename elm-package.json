@@ -13,6 +13,7 @@
         "Annotation.Geometry.Contour",
         "Annotation.Geometry.Outline",
         "Annotation.Geometry.Stroke",
+        "Annotation.Viewer",
         "Annotation.Color",
         "Annotation.Style",
         "Annotation.Svg"
