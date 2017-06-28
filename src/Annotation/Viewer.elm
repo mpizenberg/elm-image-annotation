@@ -50,20 +50,15 @@ import OpenSolid.Geometry.Types exposing (..)
 import OpenSolid.Frame2d as Frame2d
 import OpenSolid.Point2d as Point2d
 import OpenSolid.Vector2d as Vector2d
+import Annotation.Geometry.Types exposing (..)
 import Image exposing (Image)
-
-
-{-| Size is a type alias for a pair of floats ( width, height ).
--}
-type alias Size =
-    ( Float, Float )
 
 
 {-| Parameters of the viewer.
 -}
 type alias Viewer =
     { frame : Frame2d
-    , size : Size
+    , size : ( Float, Float )
     , zoom : Float
     }
 
@@ -87,7 +82,7 @@ setSize size viewer =
 
 {-| Compute the center point of the viewer.
 -}
-getCenter : Viewer -> Point2d
+getCenter : Viewer -> Point
 getCenter viewer =
     Frame2d.originPoint viewer.frame
         |> Point2d.translateBy (Vector2d.scaleBy (0.5 / viewer.zoom) <| Vector2d viewer.size)
@@ -161,14 +156,13 @@ fitImage ratio image viewer =
 
 {-| Translate the viewer frame opposite to the vector (used for "grab and move").
 -}
-grabMove : Vector2d -> Viewer -> Viewer
-grabMove vector viewer =
+grabMove : ( Float, Float ) -> Viewer -> Viewer
+grabMove movement viewer =
     let
-        translatedFrame =
-            viewer.frame
-                |> Frame2d.translateBy (Vector2d.scaleBy (-1 / viewer.zoom) vector)
+        translationVector =
+            Vector2d.scaleBy (-1 / viewer.zoom) (Vector2d movement)
     in
-        { viewer | frame = translatedFrame }
+        { viewer | frame = Frame2d.translateBy translationVector viewer.frame }
 
 
 {-| Transform coordinates of a point in the frame to their actual image coordinates.

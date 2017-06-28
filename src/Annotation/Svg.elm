@@ -48,7 +48,7 @@ and set those in a style sheet (CSS).
 -}
 pointWithDetails : List (Attribute msg) -> Point -> Svg msg
 pointWithDetails attributes (Point2d ( x, y )) =
-    [ SvgA.cx (toString x), SvgA.cy (toString y) ]
+    [ SvgA.cx (toString x), SvgA.cy (toString y), SvgA.pointerEvents "none" ]
         |> List.append attributes
         |> flip Svg.circle []
 
@@ -63,7 +63,7 @@ pointStyled style point =
 
         Style.Disk radius color ->
             Circle2d { centerPoint = point, radius = radius }
-                |> Svg.circle2d [ SvgA.fill (Color.toStr color) ]
+                |> Svg.circle2d [ SvgA.fill (Color.toStr color), SvgA.pointerEvents "none" ]
 
 
 {-| Svg view of a point with default style.
@@ -85,7 +85,8 @@ Alternatively put a class attribute and set those in a style sheet (CSS).
 -}
 boundingBoxWithDetails : List (Attribute msg) -> BoundingBox -> Svg msg
 boundingBoxWithDetails attributes bbox =
-    BoundingBox.attributes bbox
+    SvgA.pointerEvents "none"
+        :: BoundingBox.attributes bbox
         ++ attributes
         |> flip Svg.rect []
 
@@ -94,7 +95,8 @@ boundingBoxWithDetails attributes bbox =
 -}
 boundingBoxStyled : Style.Line -> Style.Fill -> BoundingBox -> Svg msg
 boundingBoxStyled lineStyle fillStyle bbox =
-    BoundingBox.attributes bbox
+    SvgA.pointerEvents "none"
+        :: BoundingBox.attributes bbox
         ++ Style.strokeAttributes lineStyle
         ++ Style.fillAttributes fillStyle
         |> flip Svg.rect []
@@ -118,15 +120,18 @@ Alternatively put a class attribute and set those in a style sheet (CSS).
 
 -}
 strokeWithDetails : List (Attribute msg) -> Stroke -> Svg msg
-strokeWithDetails =
-    Svg.polyline2d
+strokeWithDetails attributes =
+    Svg.polyline2d (SvgA.pointerEvents "none" :: attributes)
 
 
 {-| Svg view of a stroke with given style.
 -}
 strokeStyled : Style.Line -> Stroke -> Svg msg
 strokeStyled lineStyle =
-    Svg.polyline2d (Style.strokeAttributes lineStyle ++ Style.fillAttributes Style.NoFill)
+    SvgA.pointerEvents "none"
+        :: Style.strokeAttributes lineStyle
+        ++ Style.fillAttributes Style.NoFill
+        |> Svg.polyline2d
 
 
 {-| Svg view of a stroke with default style.
@@ -147,19 +152,18 @@ Alternatively put a class attribute and set those in a style sheet (CSS).
 
 -}
 contourWithDetails : List (Attribute msg) -> Contour -> Svg msg
-contourWithDetails =
-    Svg.polygon2d
+contourWithDetails attributes =
+    Svg.polygon2d (SvgA.pointerEvents "none" :: attributes)
 
 
 {-| Svg view of a contour with given style.
 -}
 contourStyled : Style.Line -> Style.Fill -> Contour -> Svg msg
-contourStyled lineStyle fillStyle contour =
-    let
-        styleAttributes =
-            Style.strokeAttributes lineStyle ++ Style.fillAttributes fillStyle
-    in
-        Svg.polygon2d styleAttributes contour
+contourStyled lineStyle fillStyle =
+    SvgA.pointerEvents "none"
+        :: Style.strokeAttributes lineStyle
+        ++ Style.fillAttributes fillStyle
+        |> Svg.polygon2d
 
 
 {-| Svg view of a contour with default style.

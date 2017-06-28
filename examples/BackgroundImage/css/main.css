@@ -26,6 +26,10 @@ html, body { width: 100%; height: 100% }
 
 /* TOOLBAR ############################ */
 
+.selected {
+	box-shadow: inset 0 0 0.3rem #000000;
+}
+
 .btn-tool {
 	width: 3rem;
 	height: 3rem;
