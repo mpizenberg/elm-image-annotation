@@ -13,6 +13,8 @@ import Svg
 import Svg.Lazy
 import Annotation.Svg as Svg
 import Window
+import Json.Encode as Encode
+import OpenSolid.Geometry.Encode as Encode
 
 
 main : Program Never Model Msg
@@ -164,7 +166,7 @@ update msg model =
             ( resizeViewer model.viewer.size initialModel, Cmd.none )
 
         ExportAnnotations ->
-            ( model, Cmd.none )
+            ( model, exportAnnotations <| serializeAnnotations model.boundingBoxes )
 
         WindowResizes ->
             ( model, askViewerSize () )
@@ -176,6 +178,13 @@ update msg model =
 resizeViewer : ( Float, Float ) -> Model -> Model
 resizeViewer size model =
     { model | viewer = Viewer.setSize size model.viewer |> Viewer.fitImage 0.8 model.bgImage }
+
+
+serializeAnnotations : List BoundingBox -> String
+serializeAnnotations bboxes =
+    List.map Encode.boundingBox2d bboxes
+        |> Encode.list
+        |> Encode.encode 2
 
 
 mouseUpdate : MouseMsg -> Model -> Model
@@ -224,6 +233,9 @@ mouseUpdate msg model =
 
 
 -- SUBSCRIPTIONS #####################################################
+
+
+port exportAnnotations : String -> Cmd msg
 
 
 port askViewerSize : () -> Cmd msg
