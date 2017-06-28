@@ -184,7 +184,7 @@ serializeAnnotations : List BoundingBox -> String
 serializeAnnotations bboxes =
     List.map Encode.boundingBox2d bboxes
         |> Encode.list
-        |> Encode.encode 2
+        |> Encode.encode 0
 
 
 mouseUpdate : MouseMsg -> Model -> Model
