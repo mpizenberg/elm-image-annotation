@@ -54,7 +54,7 @@ type DragState
 
 initialModel : Model
 initialModel =
-    { bgImage = Image "/img/droppable.svg" 300 200
+    { bgImage = Image "/public/img/droppable.svg" 300 200
     , boundingBoxes = []
     , viewer = Viewer.default
     , currentTool = GrabMove
