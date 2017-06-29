@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": " elm-make Main.elm --output public/js/Main.js && node server.js"
   },
   "dependencies": {
     "compression": "^1.6.2",
