@@ -2,11 +2,12 @@ module Annotation.Geometry.Contour
     exposing
         ( empty
         , addPoint
+        , fromPoints
         )
 
 {-| Create and manipulate polygonal contours.
 
-@docs empty, addPoint
+@docs empty, addPoint, fromPoints
 
 -}
 
@@ -28,3 +29,10 @@ addPoint point contour =
     case contour of
         Polygon2d contourPoints ->
             Polygon2d (point :: contourPoints)
+
+
+{-| Create a contour from a list of points.
+-}
+fromPoints : List Point -> Contour
+fromPoints =
+    Polygon2d

@@ -2,12 +2,13 @@ module Annotation.Geometry.Stroke
     exposing
         ( empty
         , addPoint
+        , fromPoints
         , close
         )
 
 {-| Create and manipulate freeline strokes.
 
-@docs empty, addPoint, close
+@docs empty, addPoint, fromPoints, close
 
 -}
 
@@ -30,6 +31,13 @@ addPoint point stroke =
     case stroke of
         Polyline2d strokePoints ->
             Polyline2d (point :: strokePoints)
+
+
+{-| Create a stroke from a list of points
+-}
+fromPoints : List Point -> Stroke
+fromPoints points =
+    Polyline2d points
 
 
 {-| Close a stroke (polyline) into a polygon.

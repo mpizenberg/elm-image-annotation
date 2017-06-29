@@ -3,19 +3,22 @@ port module Main exposing (..)
 import Html exposing (..)
 import Html.Attributes as HtmlA exposing (..)
 import Html.Events exposing (..)
-import Annotation.Geometry.Types exposing (BoundingBox)
+import Annotation.Geometry.Types exposing (BoundingBox, Contour, Point)
 import Annotation.Geometry.BoundingBox as BoundingBox
+import Annotation.Geometry.Stroke as Stroke
+import Annotation.Geometry.Contour as Contour
 import Annotation.Geometry.Point as Point
 import Annotation.Viewer as Viewer exposing (Viewer)
 import Image exposing (Image)
 import Mouse
-import Svg
+import Svg exposing (Svg)
 import Svg.Lazy
 import Annotation.Svg as Svg
 import Window
 import Json.Encode as Encode
 import Json.Decode as Decode
 import OpenSolid.Geometry.Encode as Encode
+import Keyboard
 
 
 main : Program Never Model Msg
@@ -35,6 +38,8 @@ main =
 type alias Model =
     { bgImage : Image
     , boundingBoxes : List BoundingBox
+    , contours : List Contour
+    , tempContour : List Point
     , viewer : Viewer
     , currentTool : Tool
     , dragState : DragState
@@ -44,18 +49,22 @@ type alias Model =
 type Tool
     = GrabMove
     | BoundingBox
+    | Contour
 
 
 type DragState
     = Up
     | DragMove
     | DragBBoxFrom Mouse.Coordinates
+    | DragContour
 
 
 initialModel : Model
 initialModel =
     { bgImage = Image "/public/img/droppable.svg" 300 200
     , boundingBoxes = []
+    , contours = []
+    , tempContour = []
     , viewer = Viewer.default
     , currentTool = GrabMove
     , dragState = Up
@@ -81,6 +90,7 @@ toolbar currentTool =
     div [ id "toolbar" ]
         [ toolButton "tool-grab-move" GrabMove currentTool
         , toolButton "tool-bbox" BoundingBox currentTool
+        , toolButton "tool-polygon" Contour currentTool
         , controlButton "control-zoom-in" ZoomIn
         , controlButton "control-zoom-out" ZoomOut
         , textButton "reset" Reset
@@ -108,11 +118,34 @@ textButton displayText msg =
 
 viewer : Model -> Html Msg
 viewer model =
+    let
+        svgBBoxes =
+            model.boundingBoxes
+                |> List.map (Svg.Lazy.lazy Svg.boundingBox)
+                |> Svg.g []
+
+        svgContours =
+            model.contours
+                |> List.map (Svg.Lazy.lazy Svg.contour)
+                |> Svg.g []
+
+        svgTempContour =
+            Stroke.fromPoints model.tempContour
+                |> Svg.stroke
+
+        bgImage =
+            Image.viewSvg [] model.bgImage
+    in
+        [ bgImage, svgBBoxes, svgContours, svgTempContour ]
+            |> Svg.g []
+            |> Viewer.viewInWithDetails (id "viewer" :: mouseEvents ++ dropEvents) model.viewer
+
+
+svgBBoxes : Model -> Svg Msg
+svgBBoxes model =
     model.boundingBoxes
         |> List.map (Svg.Lazy.lazy Svg.boundingBox)
-        |> (::) (Image.viewSvg [] model.bgImage)
         |> Svg.g []
-        |> Viewer.viewInWithDetails (id "viewer" :: mouseEvents ++ dropEvents) model.viewer
 
 
 mouseEvents : List (Attribute Msg)
@@ -148,6 +181,7 @@ type Msg
     | LoadImageFile Encode.Value
     | ImageLoaded ( String, Int, Int )
     | MouseMsg MouseMsg
+    | KeyUp Keyboard.KeyCode
     | Select Tool
     | ZoomIn
     | ZoomOut
@@ -178,6 +212,12 @@ update msg model =
         MouseMsg mouseMsg ->
             ( mouseUpdate mouseMsg model, Cmd.none )
 
+        KeyUp keycode ->
+            if (keycode == 13 && model.currentTool == Contour && not (List.isEmpty model.tempContour)) then
+                ( closeTempContour model, Cmd.none )
+            else
+                ( model, Cmd.none )
+
         Select tool ->
             ( { model | currentTool = tool }, Cmd.none )
 
@@ -195,13 +235,21 @@ update msg model =
             ( resizeViewer model.viewer.size initialModel, Cmd.none )
 
         ExportAnnotations ->
-            ( model, exportAnnotations <| serializeAnnotations model.boundingBoxes )
+            ( model, exportAnnotations <| serializeAnnotations model )
 
         WindowResizes ->
             ( model, askViewerSize () )
 
         ViewerSize size ->
             ( resizeViewer size model, Cmd.none )
+
+
+closeTempContour : Model -> Model
+closeTempContour model =
+    { model
+        | tempContour = []
+        , contours = Contour.fromPoints model.tempContour :: model.contours
+    }
 
 
 resetImage : Image -> Model -> Model
@@ -215,17 +263,29 @@ resizeViewer size model =
     { model | viewer = Viewer.setSize size model.viewer |> Viewer.fitImage 0.8 model.bgImage }
 
 
-serializeAnnotations : List BoundingBox -> String
-serializeAnnotations bboxes =
-    List.map Encode.boundingBox2d bboxes
-        |> Encode.list
-        |> Encode.encode 0
+serializeAnnotations : Model -> String
+serializeAnnotations model =
+    let
+        bboxes =
+            List.map Encode.boundingBox2d model.boundingBoxes
+                |> Encode.list
+
+        contours =
+            List.map Encode.polygon2d model.contours
+                |> Encode.list
+    in
+        Encode.object
+            [ ( "boundingBoxes", bboxes )
+            , ( "contours", contours )
+            ]
+            |> Encode.encode 0
 
 
 mouseUpdate : MouseMsg -> Model -> Model
 mouseUpdate msg model =
-    case ( msg, model.dragState, model.currentTool, model.boundingBoxes ) of
-        ( MouseDown event, _, BoundingBox, bboxes ) ->
+    case ( msg, model.dragState, model.currentTool, model.boundingBoxes, model.tempContour ) of
+        -- BoundingBox
+        ( MouseDown event, _, BoundingBox, bboxes, _ ) ->
             let
                 position =
                     Viewer.positionIn model.viewer event.offsetPos
@@ -241,7 +301,7 @@ mouseUpdate msg model =
                     , boundingBoxes = bbox :: bboxes
                 }
 
-        ( MouseMove event, DragBBoxFrom startCoord, BoundingBox, _ :: bboxes ) ->
+        ( MouseMove event, DragBBoxFrom startCoord, BoundingBox, _ :: bboxes, _ ) ->
             let
                 ( startPoint, point ) =
                     ( Point.fromCoordinates startCoord
@@ -253,13 +313,36 @@ mouseUpdate msg model =
             in
                 { model | boundingBoxes = bbox :: bboxes }
 
-        ( MouseDown event, _, GrabMove, _ ) ->
+        -- GrabMove
+        ( MouseDown event, _, GrabMove, _, _ ) ->
             { model | dragState = DragMove }
 
-        ( MouseMove event, DragMove, GrabMove, _ ) ->
+        ( MouseMove event, DragMove, GrabMove, _, _ ) ->
             { model | viewer = Viewer.grabMove event.movement model.viewer }
 
-        ( MouseUp, _, _, _ ) ->
+        -- Contour
+        ( MouseDown event, _, Contour, _, stroke ) ->
+            let
+                position =
+                    Viewer.positionIn model.viewer event.offsetPos
+
+                point =
+                    Point.fromCoordinates position
+            in
+                { model | tempContour = point :: stroke, dragState = DragContour }
+
+        ( MouseMove event, DragContour, Contour, _, oldPoint :: stroke ) ->
+            let
+                position =
+                    Viewer.positionIn model.viewer event.offsetPos
+
+                point =
+                    Point.fromCoordinates position
+            in
+                { model | tempContour = point :: stroke }
+
+        -- Up
+        ( MouseUp, _, _, _, _ ) ->
             { model | dragState = Up }
 
         _ ->
@@ -291,4 +374,5 @@ subscriptions model =
         [ Window.resizes (always WindowResizes)
         , imageLoaded ImageLoaded
         , viewerSize ViewerSize
+        , Keyboard.ups KeyUp
         ]
