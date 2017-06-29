@@ -14,6 +14,7 @@ import Svg.Lazy
 import Annotation.Svg as Svg
 import Window
 import Json.Encode as Encode
+import Json.Decode as Decode
 import OpenSolid.Geometry.Encode as Encode
 
 
@@ -111,10 +112,10 @@ viewer model =
         |> List.map (Svg.Lazy.lazy Svg.boundingBox)
         |> (::) (Image.viewSvg [] model.bgImage)
         |> Svg.g []
-        |> Viewer.viewInWithDetails (id "viewer" :: mouseEvents) model.viewer
+        |> Viewer.viewInWithDetails (id "viewer" :: mouseEvents ++ dropEvents) model.viewer
 
 
-mouseEvents : List (Html.Attribute Msg)
+mouseEvents : List (Attribute Msg)
 mouseEvents =
     [ Mouse.onDown (MouseMsg << MouseDown)
     , Mouse.onMove (MouseMsg << MouseMove)
@@ -122,12 +123,31 @@ mouseEvents =
     ]
 
 
+dropEvents : List (Attribute Msg)
+dropEvents =
+    [ onWithOptions "dragover" stopAndPrevent (Decode.succeed DoNothing)
+    , Decode.at [ "dataTransfer", "files", "0" ] Decode.value
+        |> Decode.map LoadImageFile
+        |> onWithOptions "drop" stopAndPrevent
+    ]
+
+
+stopAndPrevent : Html.Events.Options
+stopAndPrevent =
+    { stopPropagation = True
+    , preventDefault = True
+    }
+
+
 
 -- UPDATE ############################################################
 
 
 type Msg
-    = MouseMsg MouseMsg
+    = DoNothing
+    | LoadImageFile Encode.Value
+    | ImageLoaded ( String, Int, Int )
+    | MouseMsg MouseMsg
     | Select Tool
     | ZoomIn
     | ZoomOut
@@ -146,6 +166,15 @@ type MouseMsg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        DoNothing ->
+            ( model, Cmd.none )
+
+        LoadImageFile jsValue ->
+            ( model, loadImageFile jsValue )
+
+        ImageLoaded ( src, width, height ) ->
+            ( resetImage (Image src width height) model, Cmd.none )
+
         MouseMsg mouseMsg ->
             ( mouseUpdate mouseMsg model, Cmd.none )
 
@@ -173,6 +202,12 @@ update msg model =
 
         ViewerSize size ->
             ( resizeViewer size model, Cmd.none )
+
+
+resetImage : Image -> Model -> Model
+resetImage image model =
+    { initialModel | bgImage = image }
+        |> resizeViewer model.viewer.size
 
 
 resizeViewer : ( Float, Float ) -> Model -> Model
@@ -235,6 +270,12 @@ mouseUpdate msg model =
 -- SUBSCRIPTIONS #####################################################
 
 
+port loadImageFile : Encode.Value -> Cmd msg
+
+
+port imageLoaded : (( String, Int, Int ) -> msg) -> Sub msg
+
+
 port exportAnnotations : String -> Cmd msg
 
 
@@ -248,5 +289,6 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Window.resizes (always WindowResizes)
+        , imageLoaded ImageLoaded
         , viewerSize ViewerSize
         ]

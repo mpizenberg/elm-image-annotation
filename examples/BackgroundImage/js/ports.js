@@ -5,6 +5,13 @@ app.ports.askViewerSize.subscribe( () => {
 })
 
 
+app.ports.loadImageFile.subscribe( (file) => {
+	if ( file.type.match( /image.*/ ) ) {
+		sendLoadedImage( file, app.ports.imageLoaded )
+	}
+})
+
+
 app.ports.exportAnnotations.subscribe( (strAnnotations) => {
 	download( strAnnotations, "annotations.json", "text/plain" )
 })
@@ -13,6 +20,13 @@ app.ports.exportAnnotations.subscribe( (strAnnotations) => {
 function askClientSize( tagId, outPort ) {
 	const tag = document.getElementById(tagId)
 	outPort.send([tag.clientWidth, tag.clientHeight])
+}
+
+
+function sendLoadedImage( imageFile, outPort ) {
+	const img = document.createElement( "img" )
+	img.onload = () => outPort.send( [img.src, img.width, img.height] )
+	img.src = window.URL.createObjectURL( imageFile )
 }
 
 
@@ -30,7 +44,7 @@ function download( data, name, data_type ) {
 		a.download = name
 	})
 	const click = (node) => {
-		var event = new MouseEvent( "click" )
+		const event = new MouseEvent( "click" )
 		node.dispatchEvent( event )
 	}
 	click( a )
