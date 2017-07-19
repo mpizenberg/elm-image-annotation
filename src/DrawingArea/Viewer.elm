@@ -21,17 +21,24 @@ module DrawingArea.Viewer
 
 {-| This module provides functions to manage the viewing of the drawing area.
 
+
 # Model
+
 @docs Viewer, default
 
+
 # Update
+
 @docs setSize, center, centerAt
 @docs setZoom, setZoomCentered, zoomIn, zoomOut
 @docs fitImage
 @docs move, positionIn, sizeIn
 
+
 # View
+
 @docs view, innerView
+
 -}
 
 import OpenSolid.Geometry.Types exposing (Frame2d, Point2d(..), Vector2d(..))
@@ -183,7 +190,9 @@ sizeIn viewer ( w, h ) =
 -}
 view : List (Html.Attribute msg) -> Viewer -> Svg msg -> Html msg
 view attributes viewer svg =
-    Html.div attributes [ svg ]
+    Html.div
+        (Attributes.style [ ( "position", "relative" ) ] :: attributes)
+        [ svg ]
 
 
 {-| Inner Svg tag representing the annotations.
@@ -195,7 +204,7 @@ innerView viewer maybeImage svg =
             [ Attributes.style
                 [ ( "width", "100%" )
                 , ( "height", "100%" )
-                , ( "display", "block" )
+                , ( "position", "absolute" )
                 ]
             ]
 
