@@ -191,7 +191,7 @@ sizeIn viewer ( w, h ) =
 view : List (Html.Attribute msg) -> Viewer -> Svg msg -> Html msg
 view attributes viewer svg =
     Html.div
-        (Attributes.style [ ( "position", "relative" ) ] :: attributes)
+        (Attributes.style [ ( "display", "flex" ) ] :: attributes)
         [ svg ]
 
 
@@ -202,9 +202,7 @@ innerView viewer maybeImage svg =
     let
         innerStyle =
             [ Attributes.style
-                [ ( "width", "100%" )
-                , ( "height", "100%" )
-                , ( "position", "absolute" )
+                [ ( "flex", "1" )
                 ]
             ]
 
