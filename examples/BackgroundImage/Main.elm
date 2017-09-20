@@ -12,7 +12,6 @@ import Annotation.Viewer as Viewer exposing (Viewer)
 import Image exposing (Image)
 import Mouse
 import Svg exposing (Svg)
-import Svg.Lazy
 import Annotation.Svg as Svg
 import Window
 import Json.Encode as Encode
@@ -121,12 +120,12 @@ viewer model =
     let
         svgBBoxes =
             model.boundingBoxes
-                |> List.map (Svg.Lazy.lazy Svg.boundingBox)
+                |> List.map Svg.boundingBox
                 |> Svg.g []
 
         svgContours =
             model.contours
-                |> List.map (Svg.Lazy.lazy Svg.contour)
+                |> List.map Svg.contour
                 |> Svg.g []
 
         svgTempContour =
@@ -139,13 +138,6 @@ viewer model =
         [ bgImage, svgBBoxes, svgContours, svgTempContour ]
             |> Svg.g []
             |> Viewer.viewInWithDetails (id "viewer" :: mouseEvents ++ dropEvents) model.viewer
-
-
-svgBBoxes : Model -> Svg Msg
-svgBBoxes model =
-    model.boundingBoxes
-        |> List.map (Svg.Lazy.lazy Svg.boundingBox)
-        |> Svg.g []
 
 
 mouseEvents : List (Attribute Msg)
