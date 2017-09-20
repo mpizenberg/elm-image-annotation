@@ -224,29 +224,13 @@ For finer-grained control, prefer using `placeIn`.
 
 -}
 viewIn : Viewer -> Svg msg -> Html msg
-viewIn viewer svg =
-    [ Svg.svg [ fillDivAttribute ] [ placeIn viewer svg ] ]
-        |> Html.div [ HtmlA.style [ ( "position", "relative" ) ] ]
+viewIn =
+    viewInWithDetails []
 
 
 {-| Same as `viewIn` but html attributes can be added (like class, ...).
 -}
 viewInWithDetails : List (Html.Attribute msg) -> Viewer -> Svg msg -> Html msg
 viewInWithDetails htmlAttributes viewer svg =
-    [ Svg.svg [ fillDivAttribute ] [ placeIn viewer svg ] ]
-        |> Html.div (HtmlA.style [ ( "position", "relative" ) ] :: htmlAttributes)
-
-
-{-| The attributes so that the inner svg occupies 100% of the outer div.
-
-For an explanation of the `position` absolute in svg and relative outside in div,
-see [this link](https://stackoverflow.com/questions/33636796/chrome-safari-not-filling-100-height-of-flex-parent#answer-33644245)
-
--}
-fillDivAttribute : Html.Attribute msg
-fillDivAttribute =
-    HtmlA.style
-        [ ( "width", "100%" )
-        , ( "height", "100%" )
-        , ( "position", "absolute" )
-        ]
+    [ Svg.svg [ HtmlA.style [ ( "flex", "1" ) ] ] [ placeIn viewer svg ] ]
+        |> Html.div (HtmlA.style [ ( "display", "flex" ) ] :: htmlAttributes)
