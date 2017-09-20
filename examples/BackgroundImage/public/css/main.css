@@ -1,23 +1,22 @@
-html, body { width: 100%; height: 100% }
+
+html, body, #annotation-app { width: 100%; height: 100% }
 
 #annotation-app {
-	width: 100%;
-	height: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
 }
 
 #toolbar {
+	--toolbar-height: 3rem;
+	/* as a flex child item */
+	flex: 0 0 var(--toolbar-height);
+	border-bottom: solid 2px black;
 	/* as a flex container */
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
-	align-items: center;
-	align-content: center;
-	/* as a flex child item */
-	flex: 0 0 auto;
-	border-bottom: solid 1px black;
+	align-items: stretch;
 }
 
 #viewer {
@@ -31,8 +30,8 @@ html, body { width: 100%; height: 100% }
 }
 
 .btn-tool {
-	width: 3rem;
-	height: 3rem;
+	width: var(--toolbar-height);
+	height: var(--toolbar-height);
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: 80%;
@@ -40,8 +39,11 @@ html, body { width: 100%; height: 100% }
 }
 
 .text-tool {
-	font-size: 1rem;
-	padding: 1rem 1rem;
+	--toolbar-text: 1rem;
+	--vertical-padding: calc( (var(--toolbar-height) - var(--toolbar-text)) / 2 );
+	font-size: var(--toolbar-text);
+	line-height: var(--toolbar-text);
+	padding: var(--vertical-padding) var(--toolbar-text);
 	cursor: pointer;
 }
 
