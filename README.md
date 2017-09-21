@@ -10,6 +10,9 @@
 This package aims at easing the annotation of datasets of images.
 An [online demo][demo] is available on my cloud.
 This code of this demo is available in the directory `examples/BackgroundImage`.
+Below is a screenshot of this demo.
+
+[![][resources/img/rosa_annotated.jpg]][demo]
 
 [demo]: http://elm-image-annotation.pizenberg.fr
 
