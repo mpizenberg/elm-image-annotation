@@ -15,7 +15,7 @@ Below is a screenshot of this demo.
 [![][demo-image]][demo]
 
 [demo]: http://elm-image-annotation.pizenberg.fr
-[demo-image]: https://github.com/mpizenberg/elm-image-annotation/blob/master/resources/img/rosa_annotated.jpg
+[demo-image]: https://mpizenberg.github.io/resources/elm-image-annotations/images/rosa_annotated.jpg
 
 ## Motivation
 
