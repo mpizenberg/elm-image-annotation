@@ -1,85 +1,49 @@
 module Annotation.Color
     exposing
-        ( Color(..)
+        ( palette
         , toStr
-        , white
-        , black
-        , red
-        , green
-        , blue
         , turquoise
-        , palette
         )
 
 {-| Color management.
 
-@docs Color, toStr
-
-@docs white, black, red, green, blue, turquoise
-
-@docs palette
+@docs toStr, turquoise, palette
 
 -}
 
-
-{-| A color type.
--}
-type Color
-    = RGB Int Int Int
+import Color exposing (Color)
 
 
-{-| Get a string describing the color like `rgb(255,0,0)`.
+{-| Get a string describing the color like `rgba(255,0,0,1)`.
 -}
 toStr : Color -> String
-toStr (RGB r g b) =
-    [ "rgb(", toString r, ",", toString g, ",", toString b, ")" ]
-        |> String.concat
+toStr color =
+    let
+        rgba =
+            Color.toRgb color
+    in
+    String.concat
+        [ "rgb("
+        , toString rgba.red
+        , ","
+        , toString rgba.green
+        , ","
+        , toString rgba.blue
+        , ","
+        , toString rgba.alpha
+        , ")"
+        ]
 
 
 
 -- PREDEFINED COLORS #################################################
 
 
-{-| White.
--}
-white : Color
-white =
-    RGB 255 255 255
-
-
-{-| Black.
--}
-black : Color
-black =
-    RGB 0 0 0
-
-
-{-| Red.
--}
-red : Color
-red =
-    RGB 255 0 0
-
-
-{-| Green.
--}
-green : Color
-green =
-    RGB 0 255 0
-
-
-{-| Blue.
--}
-blue : Color
-blue =
-    RGB 0 0 255
-
-
 {-| Turquoise.
 -}
 turquoise : Color
 turquoise =
-    RGB 65 182 196
+    Color.rgb 65 182 196
 
 
 
@@ -93,9 +57,9 @@ turquoise =
 -}
 palette : ( Color, Color, Color, Color, Color )
 palette =
-    ( RGB 255 255 204
-    , RGB 161 218 180
+    ( Color.rgb 255 255 204
+    , Color.rgb 161 218 180
     , turquoise
-    , RGB 44 127 184
-    , RGB 37 52 148
+    , Color.rgb 44 127 184
+    , Color.rgb 37 52 148
     )
