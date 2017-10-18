@@ -1,49 +1,55 @@
 module Annotation.Geometry.Stroke
     exposing
-        ( empty
-        , addPoint
-        , fromPoints
+        ( addPoint
         , close
+        , empty
+        , fromPoints
         )
 
-{-| Create and manipulate freeline strokes.
+{-| Create and manipulate free line strokes.
+
+The stroke type is an alias for the [OpenSolid Geometry Polyline2d][polyline2d]
+type so if a functionality is not provided by this module,
+you can easily extend it with functions from the OpenSolid/Geometry package.
+
+[polyline2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polyline2d#Polyline2d
 
 @docs empty, addPoint, fromPoints, close
 
 -}
 
+import Annotation.Geometry.Contour as Contour
 import Annotation.Geometry.Types exposing (..)
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Polyline2d as Polyline2d
+import OpenSolid.Polyline2d as Polyline2d exposing (Polyline2d)
 
 
 {-| Create an empty stroke.
 -}
 empty : Stroke
 empty =
-    Polyline2d []
+    fromPoints []
 
 
 {-| Add a point to an unfinished stroke.
 -}
 addPoint : Point -> Stroke -> Stroke
 addPoint point stroke =
-    case stroke of
-        Polyline2d strokePoints ->
-            Polyline2d (point :: strokePoints)
+    fromPoints (point :: Polyline2d.vertices stroke)
 
 
 {-| Create a stroke from a list of points
 -}
 fromPoints : List Point -> Stroke
-fromPoints points =
-    Polyline2d points
+fromPoints =
+    Polyline2d.fromVertices
 
 
 {-| Close a stroke (polyline) into a polygon.
-The output can be interpreted as a `Contour` or `Outline`
-since both are polygons.
+
+The output can be interpreted as a either a `Contour` or an `Outline`
+since both are OpenSolid polygons type aliases.
+
 -}
-close : Stroke -> Polygon2d
+close : Stroke -> Contour
 close stroke =
-    Polygon2d (Polyline2d.vertices stroke)
+    Contour.fromPoints (Polyline2d.vertices stroke)
