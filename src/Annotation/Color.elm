@@ -23,7 +23,7 @@ toStr color =
             Color.toRgb color
     in
     String.concat
-        [ "rgb("
+        [ "rgba("
         , toString rgba.red
         , ","
         , toString rgba.green
