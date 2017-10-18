@@ -1,9 +1,9 @@
 module Annotation.Geometry.Types
     exposing
-        ( Point
-        , BoundingBox
+        ( BoundingBox
         , Contour
         , Outline
+        , Point
         , Stroke
         )
 
@@ -14,18 +14,23 @@ look into the corresponding module.
 For example, to initialize a `Point`,
 you will use the `Point.fromCoordinates` function from the `Point` module.
 
-Rmq: *All those types are aliases of other types
-from the [OpenSolid](http://package.elm-lang.org/packages/opensolid/geometry/latest) package.
-So you can easily extend functionalities based on the Opensolid functions.*
+Rmq: _All those types are aliases of other types
+from the [OpenSolid Geometry][OpenSolid] package.
+So you can easily extend functionalities based on the Opensolid functions._
+
+[OpenSolid]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1
 
 @docs Point, BoundingBox, Contour, Outline, Stroke
 
 -}
 
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.BoundingBox2d exposing (BoundingBox2d)
+import OpenSolid.Point2d exposing (Point2d)
+import OpenSolid.Polygon2d exposing (Polygon2d)
+import OpenSolid.Polyline2d exposing (Polyline2d)
 
 
-{-| A point.
+{-| A 2D point.
 -}
 type alias Point =
     Point2d
@@ -44,6 +49,11 @@ type alias Contour =
 
 
 {-| An outline.
+
+The main difference with a contour is the context of usage.
+A contour is more likely to have few identified nodes,
+while an outline is more like a continuous line.
+
 -}
 type alias Outline =
     Polygon2d
