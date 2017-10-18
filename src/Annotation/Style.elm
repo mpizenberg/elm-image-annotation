@@ -1,25 +1,36 @@
 module Annotation.Style
     exposing
-        ( Point(..)
-        , pointDefault
+        ( Fill(..)
         , Line(..)
-        , strokeDefault
-        , strokeAttributes
-        , Fill(..)
+        , Point(..)
         , fillAttributes
+        , fillDefault
+        , pointDefault
+        , strokeAttributes
+        , strokeDefault
         )
 
 {-| Styling the annotations.
 
+
+# Styling points
+
 @docs Point, pointDefault
+
+
+# Styling lines
 
 @docs Line, strokeDefault, strokeAttributes
 
-@docs Fill, fillAttributes
+
+# Styling contents (fill)
+
+@docs Fill, fillDefault, fillAttributes
 
 -}
 
-import Annotation.Color as Color exposing (Color)
+import Annotation.Color as Color
+import Color exposing (Color)
 import Svg
 import Svg.Attributes as SvgA
 
@@ -36,10 +47,13 @@ type Point
 
 
 {-| Default style of a point.
+
+An orange disk of radius 3 px.
+
 -}
 pointDefault : Point
 pointDefault =
-    Disk 1 Color.red
+    Disk 3 Color.orange
 
 
 {-| Styling of a line.
@@ -54,13 +68,16 @@ type Line
 
 
 {-| Default style of a line.
+
+A red stroke of width 2 px.
+
 -}
 strokeDefault : Line
 strokeDefault =
-    Stroke 1 Color.red
+    Stroke 2 Color.red
 
 
-{-| Get the svg attributes of a line.
+{-| Transform a Line style into the corresponding svg attributes.
 -}
 strokeAttributes : Line -> List (Svg.Attribute msg)
 strokeAttributes line =
@@ -74,25 +91,34 @@ strokeAttributes line =
             ]
 
 
-{-| Color of a fill.
+{-| Styling of a content (fill).
 
-A fill is either not visible, or of a given color and opacity.
+A fill is either not visible, or of a given color.
+Opacity is set using the alpha channel of the color.
 
 -}
 type Fill
     = NoFill
-    | Fill Color Float
+    | Fill Color
 
 
-{-| Get the svg attributes of a filling.
+{-| Default style of a content (fill)
+
+A red with opacity at 20%.
+
 -}
-fillAttributes : Fill -> List (Svg.Attribute msg)
+fillDefault : Fill
+fillDefault =
+    Fill (Color.rgba 255 0 0 0.2)
+
+
+{-| Transform a Fill style into the corresponding svg attribute.
+-}
+fillAttributes : Fill -> Svg.Attribute msg
 fillAttributes fill =
     case fill of
         NoFill ->
-            [ SvgA.fill "none" ]
+            SvgA.fill "none"
 
-        Fill color opacity ->
-            [ SvgA.fill (Color.toStr color)
-            , SvgA.fillOpacity (toString opacity)
-            ]
+        Fill color ->
+            SvgA.fill (Color.toStr color)
