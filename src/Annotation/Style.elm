@@ -3,7 +3,7 @@ module Annotation.Style
         ( Fill(..)
         , Line(..)
         , Point(..)
-        , fillAttributes
+        , fillAttribute
         , fillDefault
         , pointDefault
         , strokeAttributes
@@ -25,7 +25,7 @@ module Annotation.Style
 
 # Styling contents (fill)
 
-@docs Fill, fillDefault, fillAttributes
+@docs Fill, fillDefault, fillAttribute
 
 -}
 
@@ -114,8 +114,8 @@ fillDefault =
 
 {-| Transform a Fill style into the corresponding svg attribute.
 -}
-fillAttributes : Fill -> Svg.Attribute msg
-fillAttributes fill =
+fillAttribute : Fill -> Svg.Attribute msg
+fillAttribute fill =
     case fill of
         NoFill ->
             SvgA.fill "none"
