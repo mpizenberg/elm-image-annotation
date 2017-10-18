@@ -9,7 +9,7 @@
 
 This package aims at easing the annotation of datasets of images.
 An [online demo][demo] is available on my cloud.
-This code of this demo is available in the directory `examples/BackgroundImage`.
+The code of this demo is available in the `examples/BackgroundImage/` folder.
 Below is a screenshot of this demo.
 
 [![][demo-image]][demo]
@@ -25,7 +25,7 @@ No installation needed for users thanks to web applications.
 
 ## Want to contribute?
 
-You also love elm and have many image annotation needs?
+You also love elm and have many image annotation needs (for machine learning stuff)?
 Don't hesitate to reach me on the elm slack (mattpiz) and to give comments
 through github issues.
 
@@ -39,12 +39,12 @@ elm-package install mpizenberg/elm-image-annotation
 
 TODO: usage intro example.
 
-There are simple and more complete examples in the `examples` folder.
+There are simple and more complete examples in the `examples/` folder.
 Also have a look at the package documentation on the [elm package website][doc].
 
 ## License
 
-This Source Code Form is subject to the terms of the Mozilla Public License,v. 2.0.
+This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 If a copy of the MPL was not distributed with this file,
 You can obtain one at https://mozilla.org/MPL/2.0/.
 
