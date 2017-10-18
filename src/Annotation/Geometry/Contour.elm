@@ -1,38 +1,34 @@
 module Annotation.Geometry.Contour
     exposing
         ( empty
-        , addPoint
         , fromPoints
         )
 
 {-| Create and manipulate polygonal contours.
 
-@docs empty, addPoint, fromPoints
+The `Contour` type is an alias for the [OpenSolid Geometry Polygon2d][polygon2d]
+type so if a functionality is not provided by this module,
+you can easily extend it with functions from the OpenSolid/Geometry package.
+
+[polygon2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polygon2d#Polygon2d
+
+@docs empty, fromPoints
 
 -}
 
 import Annotation.Geometry.Types exposing (..)
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Polygon2d as Polygon2d exposing (Polygon2d)
 
 
 {-| Create an empty contour.
 -}
 empty : Contour
 empty =
-    Polygon2d []
-
-
-{-| Add a point to an unfinished contour.
--}
-addPoint : Point -> Contour -> Contour
-addPoint point contour =
-    case contour of
-        Polygon2d contourPoints ->
-            Polygon2d (point :: contourPoints)
+    fromPoints []
 
 
 {-| Create a contour from a list of points.
 -}
 fromPoints : List Point -> Contour
 fromPoints =
-    Polygon2d
+    Polygon2d.fromVertices
