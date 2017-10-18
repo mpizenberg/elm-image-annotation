@@ -1,23 +1,21 @@
 module Annotation.Viewer
     exposing
         ( Viewer
-        , default
-          -- UPDATE
-        , setSize
-        , getCenter
         , centerAt
+        , default
+        , fitImage
+        , getCenter
+        , grabMove
+        , placeIn
+        , positionIn
+        , setSize
         , setZoom
         , setZoomCentered
-        , zoomIn
-        , zoomOut
-        , fitImage
-        , grabMove
-        , positionIn
         , sizeIn
-          -- VIEW
-        , placeIn
         , viewIn
         , viewInWithDetails
+        , zoomIn
+        , zoomOut
         )
 
 {-| This module provides functions to manage the viewing area.
@@ -42,16 +40,15 @@ module Annotation.Viewer
 
 -}
 
+import Annotation.Geometry.Types exposing (..)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
-import Svg exposing (Svg)
-import OpenSolid.Svg as Svg
-import OpenSolid.Geometry.Types exposing (..)
-import OpenSolid.Frame2d as Frame2d
-import OpenSolid.Point2d as Point2d
-import OpenSolid.Vector2d as Vector2d
-import Annotation.Geometry.Types exposing (..)
 import Image exposing (Image)
+import OpenSolid.Frame2d as Frame2d exposing (Frame2d)
+import OpenSolid.Point2d as Point2d exposing (Point2d)
+import OpenSolid.Svg as Svg
+import OpenSolid.Vector2d as Vector2d
+import Svg exposing (Svg)
 
 
 {-| Parameters of the viewer.
@@ -84,8 +81,15 @@ setSize size viewer =
 -}
 getCenter : Viewer -> Point
 getCenter viewer =
+    let
+        sizeVector =
+            Vector2d.fromComponents viewer.size
+
+        translationVector =
+            Vector2d.scaleBy (0.5 / viewer.zoom) sizeVector
+    in
     Frame2d.originPoint viewer.frame
-        |> Point2d.translateBy (Vector2d.scaleBy (0.5 / viewer.zoom) <| Vector2d viewer.size)
+        |> Point2d.translateBy translationVector
 
 
 {-| Recenter the viewing area at a given point.
@@ -93,12 +97,16 @@ getCenter viewer =
 centerAt : Point2d -> Viewer -> Viewer
 centerAt center viewer =
     let
-        origin =
-            Point2d.translateBy
-                (Vector2d.scaleBy (-0.5 / viewer.zoom) <| Vector2d viewer.size)
-                center
+        sizeVector =
+            Vector2d.fromComponents viewer.size
+
+        translationVector =
+            Vector2d.scaleBy (0.5 / viewer.zoom) sizeVector
+
+        newOrigin =
+            Point2d.translateBy translationVector center
     in
-        { viewer | frame = Frame2d.at origin }
+    { viewer | frame = Frame2d.atPoint newOrigin }
 
 
 {-| Set the zoom value.
@@ -116,9 +124,9 @@ setZoomCentered zoom viewer =
         currentCenter =
             getCenter viewer
     in
-        viewer
-            |> setZoom zoom
-            |> centerAt currentCenter
+    viewer
+        |> setZoom zoom
+        |> centerAt currentCenter
 
 
 {-| Zoom in (x2).
@@ -149,9 +157,9 @@ fitImage ratio image viewer =
         zoom =
             ratio * min (vW / imW) (vH / imH)
     in
-        viewer
-            |> setZoom zoom
-            |> centerAt (Point2d ( imW / 2, imH / 2 ))
+    viewer
+        |> setZoom zoom
+        |> centerAt (Point2d.fromCoordinates ( imW / 2, imH / 2 ))
 
 
 {-| Translate the viewer frame opposite to the vector (used for "grab and move").
@@ -160,16 +168,16 @@ grabMove : ( Float, Float ) -> Viewer -> Viewer
 grabMove movement viewer =
     let
         translationVector =
-            Vector2d.scaleBy (-1 / viewer.zoom) (Vector2d movement)
+            Vector2d.scaleBy (-1 / viewer.zoom) (Vector2d.fromComponents movement)
     in
-        { viewer | frame = Frame2d.translateBy translationVector viewer.frame }
+    { viewer | frame = Frame2d.translateBy translationVector viewer.frame }
 
 
 {-| Transform coordinates of a point in the frame to their actual image coordinates.
 -}
 positionIn : Viewer -> ( Float, Float ) -> ( Float, Float )
 positionIn viewer point =
-    Point2d (sizeIn viewer point)
+    Point2d.fromCoordinates (sizeIn viewer point)
         |> Point2d.placeIn viewer.frame
         |> Point2d.coordinates
 
