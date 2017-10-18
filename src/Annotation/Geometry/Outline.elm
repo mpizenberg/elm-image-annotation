@@ -1,30 +1,34 @@
 module Annotation.Geometry.Outline
     exposing
         ( empty
-        , addPoint
+        , fromPoints
         )
 
-{-| Create and manipulate freeline closed outlines.
+{-| Create and manipulate free line closed outlines.
 
-@docs empty, addPoint
+The `Outline` type is an alias for the [OpenSolid Geometry Polygon2d][polygon2d]
+type so if a functionality is not provided by this module,
+you can easily extend it with functions from the OpenSolid/Geometry package.
+
+[polygon2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polygon2d#Polygon2d
+
+@docs empty, fromPoints
 
 -}
 
 import Annotation.Geometry.Types exposing (..)
-import OpenSolid.Geometry.Types exposing (..)
+import OpenSolid.Polygon2d as Polygon2d exposing (Polygon2d)
 
 
 {-| Create an empty outline.
 -}
 empty : Outline
 empty =
-    Polygon2d []
+    fromPoints []
 
 
-{-| Add a point to an unfinished outline.
+{-| Create a closed outline from a list of points.
 -}
-addPoint : Point -> Outline -> Outline
-addPoint point outline =
-    case outline of
-        Polygon2d outlinePoints ->
-            Polygon2d (point :: outlinePoints)
+fromPoints : List Point -> Outline
+fromPoints =
+    Polygon2d.fromVertices
