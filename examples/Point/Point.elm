@@ -1,16 +1,15 @@
 module Point exposing (..)
 
-import Html exposing (..)
-import Html.Attributes as HtmlA exposing (..)
-import Html.Events exposing (..)
-import Svg exposing (..)
-import Svg.Attributes as SvgA
-import Annotation.Geometry.Types exposing (Point)
-import Annotation.Geometry.Point as Point
-import Annotation.Svg as Svg
-import Annotation.Style as Style
 import Annotation.Color as Color
-import Mouse
+import Annotation.Geometry.Point as Point
+import Annotation.Geometry.Types exposing (Point)
+import Annotation.Style as Style
+import Annotation.Svg as Svg
+import Annotation.Viewer as Viewer exposing (Viewer)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Pointer
+import Svg exposing (..)
 
 
 main : Program Never Model Msg
@@ -24,60 +23,72 @@ main =
 
 type alias Model =
     { point : Maybe Point
-    , mouseState : MouseState
+    , pointerState : PointerState
+    , viewer : Viewer
     }
 
 
-type MouseState
+type PointerState
     = Up
     | Down
 
 
 model : Model
 model =
-    Model Nothing Up
+    Model Nothing Up Viewer.default
 
 
 type Msg
-    = MouseAt Mouse.Coordinates
-    | MouseUp
+    = PointerDownAt ( Float, Float )
+    | PointerMoveAt ( Float, Float )
+    | PointerUp
 
 
 update : Msg -> Model -> Model
 update msg model =
-    case msg of
-        MouseAt coordinates ->
-            Model (Just <| Point.fromCoordinates coordinates) Down
+    case ( msg, model.pointerState ) of
+        ( PointerDownAt coordinates, _ ) ->
+            Model (Just <| Point.fromCoordinates coordinates) Down Viewer.default
 
-        MouseUp ->
-            { model | mouseState = Up }
+        ( PointerMoveAt coordinates, Down ) ->
+            { model | point = Just (Point.fromCoordinates coordinates) }
+
+        ( PointerUp, _ ) ->
+            { model | pointerState = Up }
+
+        _ ->
+            model
 
 
 view : Model -> Html Msg
 view model =
-    div (HtmlA.style [ ( "height", "98%" ) ] :: mouseEvents model.mouseState)
-        [ svg [ SvgA.style "width: 100%; height: 100%;" ]
-            [ viewPoint model.point ]
-        ]
+    let
+        htmlAttributes =
+            [ id "viewer"
+
+            -- use the elm-pep polyfill
+            , attribute "elm-pep" "true"
+
+            -- prevent default browser scrolls
+            , Html.Attributes.style [ ( "touch-action", "none" ) ]
+            ]
+    in
+    Viewer.viewInWithDetails
+        (htmlAttributes ++ pointerEvents)
+        model.viewer
+        (viewPoint model.point)
 
 
 viewPoint : Maybe Point -> Svg msg
 viewPoint maybePoint =
     maybePoint
-        |> Maybe.map (Svg.pointStyled <| Style.Disk 10 Color.turquoise)
+        |> Maybe.map (Svg.pointStyled <| Style.Disk 50 Color.turquoise)
         |> Maybe.withDefault (Svg.text "No point")
 
 
-mouseEvents : MouseState -> List (Html.Attribute Msg)
-mouseEvents mouseState =
-    case mouseState of
-        Up ->
-            [ Mouse.onDown (.clientPos >> MouseAt)
-            , onMouseUp MouseUp
-            ]
-
-        Down ->
-            [ Mouse.onDown (.clientPos >> MouseAt)
-            , Mouse.onMove (.clientPos >> MouseAt)
-            , onMouseUp MouseUp
-            ]
+pointerEvents : List (Html.Attribute Msg)
+pointerEvents =
+    [ Pointer.onDown (.pointer >> .offsetPos >> PointerDownAt)
+    , Pointer.onMove (.pointer >> .offsetPos >> PointerMoveAt)
+    , Pointer.onUp (always PointerUp)
+    ]
