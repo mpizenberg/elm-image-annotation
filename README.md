@@ -8,8 +8,7 @@
 [license]: https://www.mozilla.org/en-US/MPL/2.0/
 
 This package aims at easing the annotation of datasets of images.
-An [online demo][demo] is available on my cloud.
-The code of this demo is available in the `examples/BackgroundImage/` folder.
+An [online demo][demo] (changing soon) is available on my cloud.
 Below is a screenshot of this demo.
 
 [![][demo-image]][demo]
