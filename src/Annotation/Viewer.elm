@@ -101,7 +101,7 @@ centerAt center viewer =
             Vector2d.fromComponents viewer.size
 
         translationVector =
-            Vector2d.scaleBy (0.5 / viewer.zoom) sizeVector
+            Vector2d.scaleBy (-0.5 / viewer.zoom) sizeVector
 
         newOrigin =
             Point2d.translateBy translationVector center
