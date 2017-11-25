@@ -1,11 +1,12 @@
 module Annotation.Geometry.Point
     exposing
-        ( fromCoordinates
+        ( coordinates
+        , fromCoordinates
         )
 
 {-| Create and manipulate points.
 
-@docs fromCoordinates
+@docs fromCoordinates, coordinates
 
 -}
 
@@ -18,3 +19,10 @@ import OpenSolid.Point2d as Point2d exposing (Point2d)
 fromCoordinates : ( Float, Float ) -> Point
 fromCoordinates =
     Point2d.fromCoordinates
+
+
+{-| Get the point coordinates.
+-}
+coordinates : Point -> ( Float, Float )
+coordinates =
+    Point2d.coordinates
