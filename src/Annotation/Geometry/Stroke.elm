@@ -4,6 +4,7 @@ module Annotation.Geometry.Stroke
         , close
         , empty
         , fromPoints
+        , points
         )
 
 {-| Create and manipulate free line strokes.
@@ -14,7 +15,7 @@ you can easily extend it with functions from the OpenSolid/Geometry package.
 
 [polyline2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polyline2d#Polyline2d
 
-@docs empty, addPoint, fromPoints, close
+@docs empty, addPoint, fromPoints, points, close
 
 -}
 
@@ -34,7 +35,7 @@ empty =
 -}
 addPoint : Point -> Stroke -> Stroke
 addPoint point stroke =
-    fromPoints (point :: Polyline2d.vertices stroke)
+    fromPoints (point :: points stroke)
 
 
 {-| Create a stroke from a list of points
@@ -42,6 +43,13 @@ addPoint point stroke =
 fromPoints : List Point -> Stroke
 fromPoints =
     Polyline2d.fromVertices
+
+
+{-| Retrieve the list of points of the stroke.
+-}
+points : Stroke -> List Point
+points =
+    Polyline2d.vertices
 
 
 {-| Close a stroke (polyline) into a polygon.

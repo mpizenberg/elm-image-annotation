@@ -2,6 +2,7 @@ module Annotation.Geometry.Contour
     exposing
         ( empty
         , fromPoints
+        , points
         )
 
 {-| Create and manipulate polygonal contours.
@@ -12,7 +13,7 @@ you can easily extend it with functions from the OpenSolid/Geometry package.
 
 [polygon2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polygon2d#Polygon2d
 
-@docs empty, fromPoints
+@docs empty, fromPoints, points
 
 -}
 
@@ -32,3 +33,10 @@ empty =
 fromPoints : List Point -> Contour
 fromPoints =
     Polygon2d.fromVertices
+
+
+{-| Retrieve the list of points of the contour.
+-}
+points : Contour -> List Point
+points =
+    Polygon2d.vertices
