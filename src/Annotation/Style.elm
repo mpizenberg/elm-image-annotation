@@ -2,20 +2,13 @@ module Annotation.Style
     exposing
         ( Fill(..)
         , Line(..)
-        , Point(..)
         , fillAttribute
         , fillDefault
-        , pointDefault
         , strokeAttributes
         , strokeDefault
         )
 
 {-| Styling the annotations.
-
-
-# Styling points
-
-@docs Point, pointDefault
 
 
 # Styling lines
@@ -33,27 +26,6 @@ import Annotation.Color as Color
 import Color exposing (Color)
 import Svg
 import Svg.Attributes as SvgA
-
-
-{-| Styling of a point.
-
-A point is either not visible,
-or displayed as a colored disk of a given radius.
-
--}
-type Point
-    = NoPoint
-    | Disk Float Color
-
-
-{-| Default style of a point.
-
-An orange disk of radius 3 px.
-
--}
-pointDefault : Point
-pointDefault =
-    Disk 3 Color.orange
 
 
 {-| Styling of a line.

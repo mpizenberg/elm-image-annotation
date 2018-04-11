@@ -78,15 +78,12 @@ pointWithDetails attributes point =
 
 {-| Svg view of a point with given style.
 -}
-pointStyled : Style.Point -> Point -> Svg msg
-pointStyled style point =
-    case style of
-        Style.NoPoint ->
-            Svg.text ""
-
-        Style.Disk radius color ->
-            Circle2d.with { centerPoint = point, radius = radius }
-                |> Svg.circle2d [ SvgA.fill (Color.toStr color), SvgA.pointerEvents "none" ]
+pointStyled : Style.Line -> Style.Fill -> Float -> Point -> Svg msg
+pointStyled lineStyle fillStyle radius point =
+    SvgA.pointerEvents "none"
+        :: Style.fillAttribute fillStyle
+        :: Style.strokeAttributes lineStyle
+        |> flip Svg.circle2d (Circle2d.with { centerPoint = point, radius = radius })
 
 
 {-| Svg view of a point with default style.
@@ -94,7 +91,7 @@ Default style is defined in `Annotation.Style`.
 -}
 point : Point -> Svg msg
 point =
-    pointStyled Style.pointDefault
+    pointStyled Style.strokeDefault Style.fillDefault 30
 
 
 
