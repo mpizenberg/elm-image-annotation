@@ -168,7 +168,7 @@ grabMove : ( Float, Float ) -> Viewer -> Viewer
 grabMove movement viewer =
     let
         translationVector =
-            Vector2d.scaleBy (-1 / viewer.zoom) (Vector2d.fromComponents movement)
+            Vector2d.scaleBy -1 (Vector2d.fromComponents movement)
     in
     { viewer | frame = Frame2d.translateBy translationVector viewer.frame }
 
