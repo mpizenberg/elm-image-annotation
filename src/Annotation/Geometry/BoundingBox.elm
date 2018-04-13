@@ -1,17 +1,20 @@
 module Annotation.Geometry.BoundingBox
     exposing
-        ( fromPair
+        ( encode
+        , fromPair
         , svgAttributes
         )
 
 {-| Create and manipulate bounding boxes.
 
-@docs fromPair, svgAttributes
+@docs fromPair, svgAttributes, encode
 
 -}
 
 import Annotation.Geometry.Types exposing (..)
+import Json.Encode as Encode exposing (Value)
 import OpenSolid.BoundingBox2d as BoundingBox2d
+import OpenSolid.Geometry.Encode as Encode
 import OpenSolid.Point2d as Point2d
 import Svg
 import Svg.Attributes as SvgA
@@ -43,3 +46,10 @@ svgAttributes bbox =
     , SvgA.width (toString width)
     , SvgA.height (toString height)
     ]
+
+
+{-| Default encoder.
+-}
+encode : BoundingBox -> Value
+encode =
+    Encode.boundingBox2d

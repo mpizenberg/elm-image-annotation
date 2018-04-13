@@ -3,6 +3,7 @@ module Annotation.Geometry.Stroke
         ( addPoint
         , close
         , empty
+        , encode
         , fromPoints
         , points
         )
@@ -15,12 +16,14 @@ you can easily extend it with functions from the OpenSolid/Geometry package.
 
 [polyline2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polyline2d#Polyline2d
 
-@docs empty, addPoint, fromPoints, points, close
+@docs empty, addPoint, fromPoints, points, close, encode
 
 -}
 
 import Annotation.Geometry.Contour as Contour
 import Annotation.Geometry.Types exposing (..)
+import Json.Encode as Encode exposing (Value)
+import OpenSolid.Geometry.Encode as Encode
 import OpenSolid.Polyline2d as Polyline2d exposing (Polyline2d)
 
 
@@ -61,3 +64,10 @@ since both are OpenSolid polygons type aliases.
 close : Stroke -> Contour
 close stroke =
     Contour.fromPoints (Polyline2d.vertices stroke)
+
+
+{-| Default stroke encoder.
+-}
+encode : Stroke -> Value
+encode =
+    Encode.polyline2d

@@ -1,6 +1,7 @@
 module Annotation.Geometry.Outline
     exposing
         ( empty
+        , encode
         , fromPoints
         , points
         )
@@ -13,11 +14,13 @@ you can easily extend it with functions from the OpenSolid/Geometry package.
 
 [polygon2d]: http://package.elm-lang.org/packages/opensolid/geometry/2.0.1/OpenSolid-Polygon2d#Polygon2d
 
-@docs empty, fromPoints, points
+@docs empty, fromPoints, points, encode
 
 -}
 
 import Annotation.Geometry.Types exposing (..)
+import Json.Encode as Encode exposing (Value)
+import OpenSolid.Geometry.Encode as Encode
 import OpenSolid.Polygon2d as Polygon2d exposing (Polygon2d)
 
 
@@ -40,3 +43,10 @@ fromPoints =
 points : Contour -> List Point
 points =
     Polygon2d.vertices
+
+
+{-| Default encoder.
+-}
+encode : Outline -> Value
+encode =
+    Encode.polygon2d
